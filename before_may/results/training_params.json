@@ -1,0 +1,16 @@
+{
+    "csv_path": "2024_OrderVolume_AsofNow.csv",
+    "categorical_columns": [
+        "CUSTOMER_NAME",
+        "ORDERTYPE",
+        "WAREHOUSE",
+        "CITY",
+        "ORDERWEEK"
+    ],
+    "batch_size": 32,
+    "num_epochs": 100,
+    "learning_rate": 0.001,
+    "early_stopping_patience": 10,
+    "model_save_path": "models/",
+    "results_save_path": "results/"
+}
