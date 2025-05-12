@@ -1,5 +1,0 @@
-simple-term-menu
-pandas
-numpy
-scikit-learn
-tensorflow

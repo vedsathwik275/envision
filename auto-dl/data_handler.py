@@ -1,6 +1,6 @@
 """
 Terminal-Based Neural Network Trainer
-Data Handling Component
+Data Handling Component - Updated with better categorical handling
 """
 
 import pandas as pd
@@ -37,6 +37,8 @@ class DataHandler:
         """
         try:
             self.df = pd.read_csv(filename)
+            # Clean column names (remove whitespace)
+            self.df.columns = self.df.columns.str.strip()
             return True, list(self.df.columns)
         except Exception as e:
             return False, str(e)
@@ -56,13 +58,18 @@ class DataHandler:
             
             # Determine if classification or regression
             target_data = self.df[target_feature]
-            unique_values = target_data.nunique()
             
-            # Heuristic: if fewer than 10 unique values and they're all integers, likely classification
-            if unique_values < 10 and np.all(target_data.dropna().apply(lambda x: float(x).is_integer())):
+            # Check if the column is categorical/object type
+            if pd.api.types.is_object_dtype(target_data) or pd.api.types.is_categorical_dtype(target_data):
                 self.is_classification = True
             else:
-                self.is_classification = False
+                # For numeric columns, check number of unique values
+                unique_values = target_data.nunique()
+                # Heuristic: if fewer than 10 unique values and they're all integers, likely classification
+                if unique_values < 10 and np.all(target_data.dropna().apply(lambda x: float(x) == int(float(x)))):
+                    self.is_classification = True
+                else:
+                    self.is_classification = False
                 
             return True
         return False
@@ -100,39 +107,52 @@ class DataHandler:
             self.input_features = [col for col in self.df.columns if col != self.target_feature]
             
         # Separate features and target
-        X = self.df[self.input_features]
-        y = self.df[self.target_feature]
+        X = self.df[self.input_features].copy()
+        y = self.df[self.target_feature].copy()
         
-        # Identify numeric and categorical columns
-        numeric_features = X.select_dtypes(include=['int64', 'float64']).columns
-        categorical_features = X.select_dtypes(include=['object', 'category', 'bool']).columns
-        
-        # Create preprocessing pipeline
-        numeric_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='mean')),
-            ('scaler', StandardScaler())
-        ])
-        
-        categorical_transformer = Pipeline(steps=[
-            ('imputer', SimpleImputer(strategy='most_frequent')),
-            ('encoder', OneHotEncoder(handle_unknown='ignore'))
-        ])
-        
-        transformers = []
-        if len(numeric_features) > 0:
-            transformers.append(('num', numeric_transformer, numeric_features))
-        if len(categorical_features) > 0:
-            transformers.append(('cat', categorical_transformer, categorical_features))
-            
-        self.preprocessing_pipeline = ColumnTransformer(transformers=transformers)
-        
-        # Fit and transform the data
-        X_processed = self.preprocessing_pipeline.fit_transform(X)
-        
-        # Handle target variable for classification
+        # Handle the target variable first for classification
         if self.is_classification:
+            # Initialize label encoder for the target
             self.label_encoder = LabelEncoder()
             y = self.label_encoder.fit_transform(y)
+            print(f"Encoded target feature '{self.target_feature}' with classes: {list(self.label_encoder.classes_)}")
+        
+        # Identify numeric and categorical columns in features
+        numeric_features = []
+        categorical_features = []
+        
+        for col in X.columns:
+            if pd.api.types.is_numeric_dtype(X[col]):
+                numeric_features.append(col)
+            else:
+                categorical_features.append(col)
+        
+        # Create preprocessing transformers
+        transformers = []
+        
+        # Add numeric transformer if we have numeric features
+        if numeric_features:
+            numeric_transformer = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='mean')),
+                ('scaler', StandardScaler())
+            ])
+            transformers.append(('num', numeric_transformer, numeric_features))
+        
+        # Add categorical transformer if we have categorical features
+        if categorical_features:
+            categorical_transformer = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='most_frequent')),
+                ('encoder', OneHotEncoder(handle_unknown='ignore'))
+            ])
+            transformers.append(('cat', categorical_transformer, categorical_features))
+        
+        # Create and fit the preprocessing pipeline
+        self.preprocessing_pipeline = ColumnTransformer(transformers=transformers)
+        
+        # Transform the features
+        X_processed = self.preprocessing_pipeline.fit_transform(X)
+        
+        print(f"Preprocessed data: {X_processed.shape[0]} samples, {X_processed.shape[1]} features")
         
         return X_processed, y
     

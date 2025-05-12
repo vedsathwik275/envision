@@ -1,0 +1,13 @@
+simple_term_menu
+pandas
+numpy
+scikit-learn
+tensorflow
+openai
+crewai
+crewai-tools
+langchain
+langchain-community
+langchain-openai
+langchain-core
+pydantic
