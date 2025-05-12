@@ -14,6 +14,11 @@
 
 - Created `requirements.txt` to list all necessary Python packages for the project.
 
+- Added `best_model.keras` to store the best model weights from training.
+- Added `future_predictions.csv` to save generated predictions for future order volumes.
+- Added `order_volume_model/` directory to store saved model and preprocessing components.
+- Added `prediction_evaluation.png` to visualize the model's prediction performance.
+
 ### Changed
 - N/A
 
@@ -25,4 +30,4 @@
 
 ---
 
-Timestamp: 2025-05-12 14:28:00 
+Timestamp: 2025-05-12 14:43:00 
