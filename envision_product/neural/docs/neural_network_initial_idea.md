@@ -1,0 +1,9 @@
+First step is to actually create the neural network for the order volume predictions. So we have the order volume data and now we just have to build a neural network file for that data. This data is our test bed for the entire proof of concept / MVP idea that is outlined next.
+
+User is on the frontend page, uploads their data, selects which model they want to train, and clicks "Train". When they upload the data, it's first uploaded to the S3 bucket. When they click "Train", the same data file is sent to the backend server with the parameter of which model to train. In the backend server, the model training has its own .py file. So, we can call that .py file with their data and have it run on our server. Since we already know by then we will know which features to select, which is the target feature, and what the model should be, we don't have to change any of that. We can call the .py file and run it on our server, and it'll train everything. It'll save the model weights to an S3 bucket, then run the predictions for the next 6 months per carrier per lane and save those for the S3 bucket.
+
+Okay, so the initial MVP would then be a front-end UI and a back-end server, all running locally. In the front-end UI, when you upload the data, it is just saved in the main directory where the front-end is being called (e.g., app.py or npm server). The back-end server would then read from the locally saved data.
+
+After that is successful, we can start testing the S3 bucket integration by reading S3 buckets, which we can then call as helper methods in the back-end server.
+
+The front-end UI should be the typical NPM node, TypeScript, or React framework. The backend would then be Python because we can use TensorFlow Keras for our neural network. We would connect the frontend and backend through API routes.
