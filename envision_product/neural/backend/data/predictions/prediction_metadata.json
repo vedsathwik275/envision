@@ -1,0 +1,22 @@
+{
+  "predictions": {
+    "pred_6d7f5415_20250512": {
+      "prediction_id": "pred_6d7f5415_20250512",
+      "model_id": "order_volume_20250512174828",
+      "model_type": "order_volume",
+      "created_at": "2025-05-12T17:57:08.915739",
+      "months_predicted": 6,
+      "prediction_count": 18,
+      "prediction_file": "data/predictions/pred_6d7f5415_20250512/prediction_data.json"
+    },
+    "pred_a70084a3_20250512": {
+      "prediction_id": "pred_a70084a3_20250512",
+      "model_id": "order_volume_20250512180020",
+      "model_type": "order_volume",
+      "created_at": "2025-05-12T18:07:12.153334",
+      "months_predicted": 6,
+      "prediction_count": 13410,
+      "prediction_file": "data/predictions/pred_a70084a3_20250512/prediction_data.json"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "files": {
+    "0bc1d4f2-7717-42f0-9add-b66f06fee4ba": {
+      "file_id": "0bc1d4f2-7717-42f0-9add-b66f06fee4ba",
+      "filename": "OrderVolume_ByMonth_v2.csv",
+      "content_type": "text/csv",
+      "size": 414779,
+      "upload_time": "2025-05-12T17:42:35.351000",
+      "path": "data/uploads/0bc1d4f2-7717-42f0-9add-b66f06fee4ba"
+    },
+    "f8d7ff68-9b55-4636-a259-a13e61d4274a": {
+      "file_id": "f8d7ff68-9b55-4636-a259-a13e61d4274a",
+      "filename": "OrderVolume_ByMonth_v2.csv",
+      "content_type": "text/csv",
+      "size": 414779,
+      "upload_time": "2025-05-12T17:46:34.995240",
+      "path": "data/uploads/f8d7ff68-9b55-4636-a259-a13e61d4274a"
+    },
+    "9cd550de-1767-4d36-a7a9-410c045bf230": {
+      "file_id": "9cd550de-1767-4d36-a7a9-410c045bf230",
+      "filename": "OrderVolume_ByMonth_v2.csv",
+      "content_type": "text/csv",
+      "size": 414779,
+      "upload_time": "2025-05-12T17:59:22.004587",
+      "path": "data/uploads/9cd550de-1767-4d36-a7a9-410c045bf230"
+    }
+  }
+}

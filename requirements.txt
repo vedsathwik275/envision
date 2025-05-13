@@ -11,3 +11,11 @@ langchain-community
 langchain-openai
 langchain-core
 pydantic
+fastapi
+uvicorn
+python-multipart
+pydantic
+email-validator
+python-jose
+passlib
+bcrypt

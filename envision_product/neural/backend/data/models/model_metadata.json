@@ -1,0 +1,61 @@
+{
+  "models": {
+    "order_volume_20250512174741": {
+      "model_type": "order_volume",
+      "training_data": "data/uploads/f8d7ff68-9b55-4636-a259-a13e61d4274a",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 4.516572952270508,
+        "rmse": 8.058109951243413,
+        "r2": 0.19747215509414673
+      },
+      "description": "Order volume prediction model trained on f8d7ff68-9b55-4636-a259-a13e61d4274a",
+      "created_at": "2025-05-12T17:47:41.193595",
+      "model_path": "data/models/order_volume_20250512174741"
+    },
+    "order_volume_20250512174828": {
+      "model_type": "order_volume",
+      "training_data": "data/uploads/f8d7ff68-9b55-4636-a259-a13e61d4274a",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 4.501871585845947,
+        "rmse": 8.039950752676832,
+        "r2": 0.20108520984649658
+      },
+      "description": "Order volume prediction model trained on f8d7ff68-9b55-4636-a259-a13e61d4274a",
+      "created_at": "2025-05-12T17:48:28.216189",
+      "model_path": "data/models/order_volume_20250512174828"
+    },
+    "order_volume_20250512180020": {
+      "model_type": "order_volume",
+      "training_data": "data/uploads/9cd550de-1767-4d36-a7a9-410c045bf230",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 4.459768772125244,
+        "rmse": 8.069014881611507,
+        "r2": 0.1952986717224121
+      },
+      "description": "Order volume prediction model trained on 9cd550de-1767-4d36-a7a9-410c045bf230",
+      "created_at": "2025-05-12T18:00:20.355548",
+      "model_path": "data/models/order_volume_20250512180020"
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "model_id": "order_volume_20250512174828",
+  "prediction_time": "2025-05-12T17:57:08.915167",
+  "months_predicted": 6,
+  "predictions": [
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 4,
+      "PREDICTION DATE": "2023-04",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 5,
+      "PREDICTION DATE": "2023-05",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 6,
+      "PREDICTION DATE": "2023-06",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 7,
+      "PREDICTION DATE": "2023-07",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 8,
+      "PREDICTION DATE": "2023-08",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "New York",
+      "DESTINATION CITY": "Miami",
+      "ORDER TYPE": "Standard",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 9,
+      "PREDICTION DATE": "2023-09",
+      "PREDICTED ORDER VOLUME": 6
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 4,
+      "PREDICTION DATE": "2023-04",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 5,
+      "PREDICTION DATE": "2023-05",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 6,
+      "PREDICTION DATE": "2023-06",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 7,
+      "PREDICTION DATE": "2023-07",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 8,
+      "PREDICTION DATE": "2023-08",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "Chicago",
+      "DESTINATION CITY": "Dallas",
+      "ORDER TYPE": "Express",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 9,
+      "PREDICTION DATE": "2023-09",
+      "PREDICTED ORDER VOLUME": 6
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 4,
+      "PREDICTION DATE": "2023-04",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 5,
+      "PREDICTION DATE": "2023-05",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 6,
+      "PREDICTION DATE": "2023-06",
+      "PREDICTED ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 7,
+      "PREDICTION DATE": "2023-07",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 8,
+      "PREDICTION DATE": "2023-08",
+      "PREDICTED ORDER VOLUME": 5
+    },
+    {
+      "SOURCE CITY": "Los Angeles",
+      "DESTINATION CITY": "Seattle",
+      "ORDER TYPE": "Premium",
+      "PREDICTION YEAR": 2023,
+      "PREDICTION MONTH": 9,
+      "PREDICTION DATE": "2023-09",
+      "PREDICTED ORDER VOLUME": 6
+    }
+  ]
+}

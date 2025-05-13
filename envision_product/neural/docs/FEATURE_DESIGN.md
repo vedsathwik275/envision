@@ -56,7 +56,3 @@ This document outlines the features and design of the frontend application for t
 - **User Authentication**: Implement user authentication for secure access to the platform.
 - **Advanced Analytics**: Add more advanced analytics and visualization features.
 - **Real-time Collaboration**: Enable real-time collaboration features for team-based projects.
-
----
-
-This document serves as a guide for understanding the current features and design of the frontend application. It also outlines potential future enhancements to improve the platform further. 

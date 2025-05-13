@@ -1,0 +1,9 @@
+# FastAPI and server dependencies
+fastapi
+uvicorn
+python-multipart
+pydantic
+email-validator
+python-jose
+passlib
+bcrypt

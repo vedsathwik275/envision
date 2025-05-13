@@ -1,0 +1,134 @@
+{
+  "file_id": "9cd550de-1767-4d36-a7a9-410c045bf230",
+  "total_rows": 11270,
+  "total_columns": 5,
+  "sample_rows": [
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ABINGDON",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 06",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ABINGDON",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 09",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ABINGDON",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 10",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 05",
+      "ORDER VOLUME": 2
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 07",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 08",
+      "ORDER VOLUME": 4
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 09",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 11",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALACHUA",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2025 02",
+      "ORDER VOLUME": 1
+    },
+    {
+      "SOURCE CITY": "ELWOOD",
+      "DESTINATION CITY": "ALBANY",
+      "ORDER TYPE": "Prepaid",
+      "ORDER MONTH": "2024 06",
+      "ORDER VOLUME": 1
+    }
+  ],
+  "column_info": {
+    "SOURCE CITY": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "PHARR": 3002,
+        "ELWOOD": 2739,
+        "RICHMOND": 2614,
+        "REDLANDS": 1348,
+        "LANCASTER": 1200
+      }
+    },
+    "DESTINATION CITY": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "LANCASTER": 101,
+        "REDLANDS": 93,
+        "PHOENIX": 72,
+        "RICHMOND": 69,
+        "AURORA": 66
+      }
+    },
+    "ORDER TYPE": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "Prepaid": 9503,
+        "Collect": 1383,
+        "Transfer": 384
+      }
+    },
+    "ORDER MONTH": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "2025 01": 1000,
+        "2024 10": 982,
+        "2024 08": 964,
+        "2025 03": 964,
+        "2024 07": 954
+      }
+    },
+    "ORDER VOLUME": {
+      "type": "int64",
+      "missing": 0,
+      "min": 1.0,
+      "max": 80.0,
+      "mean": 5.386779059449867,
+      "median": 2.0
+    }
+  },
+  "missing_data_summary": {
+    "total_missing": 0,
+    "columns_with_missing": 0,
+    "missing_by_column": {}
+  }
+}
