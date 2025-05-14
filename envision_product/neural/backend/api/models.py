@@ -51,14 +51,25 @@ class TrainingResponse(BaseModel):
     message: str
     model_id: Optional[str] = None
 
-class PredictionRequest(BaseModel):
+class OrderVolumePredictionRequest(BaseModel):
     model_id: str
     months: int = Field(6, description="Number of months to predict")
 
-class PredictionResponse(BaseModel):
+class TenderPerformancePredictionRequest(BaseModel):
+    model_id: str
+    carriers: List[str] = Field(..., description="List of carriers")
+    source_cities: List[str] = Field(..., description="List of source cities")
+    dest_cities: List[str] = Field(..., description="List of destination cities")
+    
+class OrderVolumePredictionResponse(BaseModel):
     model_id: str
     prediction_time: str
     months_predicted: int
+    predictions: List[Dict[str, Any]]
+
+class TenderPerformancePredictionResponse(BaseModel):
+    model_id: str
+    prediction_time: str
     predictions: List[Dict[str, Any]]
 
 def get_model_service():
@@ -141,9 +152,51 @@ async def train_order_volume_model(
         "message": "Model training started in the background. Check model list for completion status."
     }
 
-@router.post("/predict/order-volume", response_model=PredictionResponse)
+@router.post("/train/tender-performance", response_model=TrainingResponse)
+async def train_tender_performance_model(
+    background_tasks: BackgroundTasks,
+    data_file_id: str,
+    params: Optional[TrainingParams] = None,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """Train a new tender performance prediction model.
+    
+    This is a long-running task that will be executed in the background.
+    """
+    from services.file_service import FileService
+    
+    file_service = FileService()
+    data_path = file_service.get_file_path(data_file_id)
+    
+    if not data_path:
+        raise HTTPException(status_code=404, detail=f"Data file with ID {data_file_id} not found")
+    
+    # Function to run training in the background
+    def train_model_task(data_path: str, params: Dict = None):
+        try:
+            model_id = model_service.train_tender_performance_model(
+                data_path=data_path,
+                params=params.dict() if params else None
+            )
+            logger.info(f"Tender performance model training completed. Model ID: {model_id}")
+        except Exception as e:
+            logger.error(f"Error in background training task: {str(e)}")
+    
+    # Add the training task to background tasks
+    background_tasks.add_task(
+        train_model_task,
+        data_path=data_path,
+        params=params
+    )
+    
+    return {
+        "status": "pending",
+        "message": "Tender performance model training started in the background. Check model list for completion status."
+    }
+
+@router.post("/predict/order-volume", response_model=OrderVolumePredictionResponse)
 async def predict_order_volume(
-    request: PredictionRequest,
+    request: OrderVolumePredictionRequest,
     model_service: ModelService = Depends(get_model_service)
 ):
     """Generate predictions for future order volumes."""
@@ -155,6 +208,39 @@ async def predict_order_volume(
     result = model_service.predict_future_order_volumes(
         model_id=request.model_id,
         months=request.months
+    )
+    
+    if not result:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to generate predictions with model {request.model_id}"
+        )
+    
+    return result
+
+@router.post("/predict/tender-performance", response_model=TenderPerformancePredictionResponse)
+async def predict_tender_performance(
+    request: TenderPerformancePredictionRequest,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """Generate predictions for tender performance."""
+    # Check if model exists
+    if not model_service.get_model_metadata(request.model_id):
+        raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
+    
+    # Check if input lists have the same length
+    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+        raise HTTPException(
+            status_code=400,
+            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+        )
+    
+    # Generate predictions
+    result = model_service.predict_tender_performance(
+        model_id=request.model_id,
+        carriers=request.carriers,
+        source_cities=request.source_cities,
+        dest_cities=request.dest_cities
     )
     
     if not result:

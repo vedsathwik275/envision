@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from models.order_volume_model import OrderVolumeModel
+from models.tender_performance_model import TenderPerformanceModel
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,32 @@ class ModelService:
             logger.error(f"Error loading order volume model {model_id}: {str(e)}")
             return None
     
+    def load_tender_performance_model(self, model_id: str) -> Optional[TenderPerformanceModel]:
+        """Load a tender performance model by ID.
+        
+        Args:
+            model_id: ID of the model to load
+            
+        Returns:
+            Loaded TenderPerformanceModel instance or None if loading fails
+        """
+        model_path = self.get_model_path(model_id)
+        if not model_path or not model_path.exists():
+            logger.error(f"Model path does not exist: {model_path}")
+            return None
+        
+        metadata = self.get_model_metadata(model_id)
+        if not metadata or metadata.get("model_type") != "tender_performance":
+            logger.error(f"Model {model_id} is not a tender performance model")
+            return None
+        
+        try:
+            model = TenderPerformanceModel(model_path=str(model_path))
+            return model
+        except Exception as e:
+            logger.error(f"Error loading tender performance model {model_id}: {str(e)}")
+            return None
+    
     def train_order_volume_model(self, data_path: str, params: Dict = None) -> Optional[str]:
         """Train a new order volume model.
         
@@ -266,6 +293,91 @@ class ModelService:
         except Exception as e:
             logger.error(f"Error training order volume model: {str(e)}")
             return None
+            
+    def train_tender_performance_model(self, data_path: str, params: Dict = None) -> Optional[str]:
+        """Train a new tender performance model.
+        
+        Args:
+            data_path: Path to the training data file
+            params: Dictionary of training parameters
+            
+        Returns:
+            ID of the newly trained model or None if training fails
+        """
+        if not os.path.exists(data_path):
+            logger.error(f"Training data not found: {data_path}")
+            return None
+        
+        # Default parameters
+        default_params = {
+            "epochs": 100,
+            "batch_size": 32,
+            "validation_split": 0.2,
+            "test_size": 0.2
+        }
+        
+        # Override defaults with provided params
+        if params:
+            training_params = {**default_params, **params}
+        else:
+            training_params = default_params
+        
+        try:
+            # Create a temporary directory for the model
+            temp_model_dir = self.base_path / "temp_model"
+            os.makedirs(temp_model_dir, exist_ok=True)
+            
+            # Train the model
+            model = TenderPerformanceModel(data_path=data_path)
+            
+            # Make sure raw_data is loaded and processed
+            if not hasattr(model, 'raw_data') or model.raw_data is None:
+                model.load_data()
+            
+            model.preprocess_data()
+            model.prepare_train_test_split(test_size=training_params["test_size"])
+            model.build_model()
+            
+            # Use a smaller number of epochs for testing
+            actual_epochs = 5 if os.environ.get("TESTING", "0") == "1" else training_params["epochs"]
+            
+            history = model.train(
+                epochs=actual_epochs,
+                batch_size=training_params["batch_size"],
+                validation_split=training_params["validation_split"]
+            )
+            
+            # Evaluate the model
+            evaluation = model.evaluate()
+            
+            # Save the model
+            model.save_model(str(temp_model_dir))
+            
+            # Copy the original data file to ensure it's available
+            training_data_file = os.path.join(temp_model_dir, "training_data.csv")
+            if not os.path.exists(training_data_file):
+                logger.info(f"Copying original training data to model directory")
+                shutil.copy2(data_path, training_data_file)
+            
+            # Register the model with metadata
+            metadata = {
+                "model_type": "tender_performance",
+                "training_data": data_path,
+                "training_params": training_params,
+                "evaluation": evaluation,
+                "description": f"Tender performance prediction model trained on {os.path.basename(data_path)}"
+            }
+            
+            model_id = self.register_model(temp_model_dir, metadata)
+            
+            # Clean up temporary directory
+            shutil.rmtree(temp_model_dir, ignore_errors=True)
+            
+            return model_id
+            
+        except Exception as e:
+            logger.error(f"Error training tender performance model: {str(e)}")
+            return None
     
     def predict_future_order_volumes(self, model_id: str, months: int = 6) -> Optional[Dict]:
         """Generate predictions for future order volumes.
@@ -311,4 +423,72 @@ class ModelService:
             
         except Exception as e:
             logger.error(f"Error generating predictions with model {model_id}: {str(e)}")
+            return None
+            
+    def predict_tender_performance(self, model_id: str, carriers: List[str], source_cities: List[str], dest_cities: List[str]) -> Optional[Dict]:
+        """Generate predictions for tender performance.
+        
+        Args:
+            model_id: ID of the model to use for prediction
+            carriers: List of carriers
+            source_cities: List of source cities
+            dest_cities: List of destination cities
+            
+        Returns:
+            Dictionary with prediction results or None if prediction fails
+        """
+        # Load the model
+        logger.info(f"Loading tender performance model {model_id} for prediction")
+        model = self.load_tender_performance_model(model_id)
+        if not model:
+            logger.error(f"Failed to load model {model_id}")
+            return None
+        
+        try:
+            # Validate input lists have the same length
+            if not (len(carriers) == len(source_cities) == len(dest_cities)):
+                error_msg = "Input lists (carriers, source_cities, dest_cities) must have the same length"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            
+            # Generate predictions
+            logger.info(f"Generating tender performance predictions using model {model_id}")
+            predictions = []
+            
+            for i in range(len(carriers)):
+                logger.info(f"Processing prediction {i+1}/{len(carriers)}: {carriers[i]} from {source_cities[i]} to {dest_cities[i]}")
+                
+                try:
+                    single_prediction = model.predict(
+                        carrier=carriers[i],
+                        source_city=source_cities[i],
+                        dest_city=dest_cities[i]
+                    )
+                    
+                    if single_prediction:
+                        predictions.append(single_prediction)
+                    else:
+                        logger.warning(f"Failed to generate prediction for carrier={carriers[i]}, source={source_cities[i]}, dest={dest_cities[i]}")
+                except Exception as e:
+                    logger.error(f"Error generating single prediction: {str(e)}")
+            
+            if not predictions:
+                logger.warning("No successful predictions were generated")
+                return {
+                    "model_id": model_id,
+                    "prediction_time": datetime.now().isoformat(),
+                    "predictions": [],
+                    "warning": "No valid predictions could be generated. The model may not have enough training data for these carrier-lane combinations."
+                }
+            
+            result = {
+                "model_id": model_id,
+                "prediction_time": datetime.now().isoformat(),
+                "predictions": predictions
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error generating tender performance predictions with model {model_id}: {str(e)}")
             return None 

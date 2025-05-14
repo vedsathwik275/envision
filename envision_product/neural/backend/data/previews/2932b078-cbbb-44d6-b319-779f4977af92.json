@@ -1,0 +1,115 @@
+{
+  "file_id": "2932b078-cbbb-44d6-b319-779f4977af92",
+  "total_rows": 438,
+  "total_columns": 4,
+  "sample_rows": [
+    {
+      "TENDER_PERF_PERCENTAGE": 97,
+      "CARRIER": "LRGR",
+      "SOURCE_CITY": "REDLANDS",
+      "DEST_CITY": "BUCKEYE"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 98,
+      "CARRIER": "RBTW",
+      "SOURCE_CITY": "ELWOOD",
+      "DEST_CITY": "VILLA RICA"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 96,
+      "CARRIER": "RBTW",
+      "SOURCE_CITY": "ELWOOD",
+      "DEST_CITY": "REDLANDS"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 69,
+      "CARRIER": "RBTW",
+      "SOURCE_CITY": "ELWOOD",
+      "DEST_CITY": "SUMNER"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 66,
+      "CARRIER": "FDEG",
+      "SOURCE_CITY": "PHARR",
+      "DEST_CITY": "HAUPPAUGE"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 91,
+      "CARRIER": "ODFL",
+      "SOURCE_CITY": "RICHMOND",
+      "DEST_CITY": "LOGAN TOWNSHIP"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 72,
+      "CARRIER": "FDEG",
+      "SOURCE_CITY": "PHARR",
+      "DEST_CITY": "NEW BERLIN"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 80,
+      "CARRIER": "FDEG",
+      "SOURCE_CITY": "PHARR",
+      "DEST_CITY": "ROCKWALL"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 60,
+      "CARRIER": "LRGR",
+      "SOURCE_CITY": "SUMNER",
+      "DEST_CITY": "REDLANDS"
+    },
+    {
+      "TENDER_PERF_PERCENTAGE": 58,
+      "CARRIER": "FDEG",
+      "SOURCE_CITY": "PHARR",
+      "DEST_CITY": "BERKLEY"
+    }
+  ],
+  "column_info": {
+    "TENDER_PERF_PERCENTAGE": {
+      "type": "int64",
+      "missing": 0,
+      "min": 25.0,
+      "max": 100.0,
+      "mean": 83.46803652968036,
+      "median": 91.0
+    },
+    "CARRIER": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "RBTW": 169,
+        "FDEG": 91,
+        "ODFL": 54,
+        "AFXN": 21,
+        "LRGR": 20
+      }
+    },
+    "SOURCE_CITY": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "PHARR": 127,
+        "RICHMOND": 77,
+        "ELWOOD": 68,
+        "REDLANDS": 60,
+        "LANCASTER": 48
+      }
+    },
+    "DEST_CITY": {
+      "type": "object",
+      "missing": 0,
+      "top_values": {
+        "ELWOOD": 9,
+        "RICHMOND": 9,
+        "REDLANDS": 8,
+        "LANCASTER": 7,
+        "MOUNT PLEASANT": 5
+      }
+    }
+  },
+  "missing_data_summary": {
+    "total_missing": 0,
+    "columns_with_missing": 0,
+    "missing_by_column": {}
+  }
+}

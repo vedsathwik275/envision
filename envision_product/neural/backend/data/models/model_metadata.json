@@ -56,6 +56,46 @@
       "description": "Order volume prediction model trained on 9cd550de-1767-4d36-a7a9-410c045bf230",
       "created_at": "2025-05-12T18:00:20.355548",
       "model_path": "data/models/order_volume_20250512180020"
+    },
+    "tender_performance_20250514093227": {
+      "model_type": "tender_performance",
+      "training_data": "data\\uploads\\2932b078-cbbb-44d6-b319-779f4977af92",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 9.568275798450816,
+        "mse": 143.8332687471914,
+        "rmse": 11.993050852355767,
+        "r2": 0.4064302929103035
+      },
+      "description": "Tender performance prediction model trained on 2932b078-cbbb-44d6-b319-779f4977af92",
+      "created_at": "2025-05-14T09:32:27.637953",
+      "model_path": "data\\models\\tender_performance_20250514093227"
+    },
+    "tender_performance_20250514093814": {
+      "model_type": "tender_performance",
+      "training_data": "data\\uploads\\d87ae262-e111-43d5-9389-9c8fd3c0310d",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 9.223618333989924,
+        "mse": 145.71160198790906,
+        "rmse": 12.071106079722316,
+        "r2": 0.3986788059197014
+      },
+      "description": "Tender performance prediction model trained on d87ae262-e111-43d5-9389-9c8fd3c0310d",
+      "created_at": "2025-05-14T09:38:14.221249",
+      "model_path": "data\\models\\tender_performance_20250514093814"
     }
   }
 }

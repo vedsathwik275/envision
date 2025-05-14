@@ -17,16 +17,22 @@ router = APIRouter(
 
 prediction_service = PredictionService()
 
-class PredictionRequest(BaseModel):
+class OrderVolumePredictionRequest(BaseModel):
     model_id: str
     months: int = Field(6, ge=1, le=24, description="Number of months to predict (1-24)")
+
+class TenderPerformancePredictionRequest(BaseModel):
+    model_id: str
+    carriers: List[str] = Field(..., description="List of carriers")
+    source_cities: List[str] = Field(..., description="List of source cities")
+    dest_cities: List[str] = Field(..., description="List of destination cities")
 
 class PredictionMetadata(BaseModel):
     prediction_id: str
     model_id: str
     model_type: str
     created_at: str
-    months_predicted: int
+    months_predicted: Optional[int] = None
     prediction_count: int
 
 class PredictionList(BaseModel):
@@ -37,7 +43,7 @@ class PredictionDetail(BaseModel):
     model_id: str
     model_type: str
     created_at: str
-    months_predicted: int
+    months_predicted: Optional[int] = None
     prediction_count: int
     data: Dict[str, Any]
 
@@ -45,6 +51,7 @@ class FilterRequest(BaseModel):
     source_cities: Optional[List[str]] = None
     destination_cities: Optional[List[str]] = None
     order_types: Optional[List[str]] = None
+    carriers: Optional[List[str]] = None
     date_range: Optional[Dict[str, str]] = None
 
 def get_prediction_service():
@@ -84,7 +91,7 @@ async def delete_prediction(
 
 @router.post("/order-volume", response_model=PredictionDetail)
 async def create_order_volume_prediction(
-    request: PredictionRequest,
+    request: OrderVolumePredictionRequest,
     prediction_service: PredictionService = Depends(get_prediction_service)
 ):
     """Generate predictions for future order volumes."""
@@ -111,12 +118,51 @@ async def create_order_volume_prediction(
     
     return prediction
 
+@router.post("/tender-performance", response_model=PredictionDetail)
+async def create_tender_performance_prediction(
+    request: TenderPerformancePredictionRequest,
+    prediction_service: PredictionService = Depends(get_prediction_service)
+):
+    """Generate predictions for tender performance."""
+    # Check if input lists have the same length
+    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+        raise HTTPException(
+            status_code=400,
+            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+        )
+    
+    result = prediction_service.predict_tender_performance(
+        model_id=request.model_id,
+        carriers=request.carriers,
+        source_cities=request.source_cities,
+        dest_cities=request.dest_cities
+    )
+    
+    if not result:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to generate predictions with model {request.model_id}"
+        )
+    
+    # Get full prediction details including ID
+    prediction_id = result.get("prediction_id")
+    prediction = prediction_service.get_prediction(prediction_id)
+    
+    if not prediction:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Prediction was created but could not be retrieved: {prediction_id}"
+        )
+    
+    return prediction
+
 @router.get("/{model_id}")
 async def get_predictions(
     model_id: str,
     source_city: Optional[str] = None,
     destination_city: Optional[str] = None,
     order_type: Optional[str] = None,
+    carrier: Optional[str] = None,
     limit: int = 1000,
     offset: int = 0
 ):
@@ -132,6 +178,8 @@ async def get_predictions(
             filters["destination_city"] = destination_city
         if order_type:
             filters["order_type"] = order_type
+        if carrier:
+            filters["carrier"] = carrier
             
         predictions = prediction_service.get_predictions(
             model_id=model_id,
@@ -150,7 +198,7 @@ async def get_predictions(
 @router.post("/{model_id}/generate")
 async def generate_predictions(
     model_id: str,
-    request: PredictionRequest,
+    request: OrderVolumePredictionRequest,
     background_tasks: BackgroundTasks
 ):
     """
@@ -161,7 +209,7 @@ async def generate_predictions(
         job_id = prediction_service.initialize_prediction_job(
             model_id=model_id,
             months=request.months or 6,
-            params=request.params or {}
+            params=request.dict()
         )
         
         background_tasks.add_task(
@@ -183,7 +231,8 @@ async def export_predictions(
     format: str = "csv",
     source_city: Optional[str] = None,
     destination_city: Optional[str] = None,
-    order_type: Optional[str] = None
+    order_type: Optional[str] = None,
+    carrier: Optional[str] = None
 ):
     """
     Export predictions to a file.
@@ -197,43 +246,49 @@ async def export_predictions(
             filters["destination_city"] = destination_city
         if order_type:
             filters["order_type"] = order_type
+        if carrier:
+            filters["carrier"] = carrier
             
-        file_path = prediction_service.export_predictions(
-            model_id=model_id,
-            export_format=format,
-            filters=filters
-        )
-        
-        if file_path is None:
-            raise HTTPException(status_code=404, detail="Predictions not found for this model")
-            
-        # Set appropriate filename based on format
-        filename = f"predictions_{model_id}"
-        if format.lower() == "excel":
-            filename += ".xlsx"
-            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        else:
-            filename += ".csv"
-            media_type = "text/csv"
-            
-        return FileResponse(path=file_path, filename=filename, media_type=media_type)
+        # Additional logic for export will be implemented in the prediction service
+        return {"status": "not_implemented"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error exporting predictions: {str(e)}")
 
 @router.post("/{model_id}/filter")
-async def filter_predictions(model_id: str, filter_request: FilterRequest):
+async def filter_predictions(
+    model_id: str, 
+    filter_request: FilterRequest
+):
     """
-    Get filtered predictions based on complex criteria.
+    Filter predictions by multiple criteria.
     """
     try:
-        predictions = prediction_service.filter_predictions(
+        filters = {}
+        
+        if filter_request.source_cities:
+            filters["source_cities"] = filter_request.source_cities
+        
+        if filter_request.destination_cities:
+            filters["destination_cities"] = filter_request.destination_cities
+        
+        if filter_request.order_types:
+            filters["order_types"] = filter_request.order_types
+            
+        if filter_request.carriers:
+            filters["carriers"] = filter_request.carriers
+        
+        if filter_request.date_range:
+            filters["date_range"] = filter_request.date_range
+        
+        # Call prediction service with filters
+        filtered_predictions = prediction_service.filter_predictions(
             model_id=model_id,
-            filters=filter_request.dict(exclude_none=True)
+            filters=filters
         )
         
-        if predictions is None:
-            raise HTTPException(status_code=404, detail="Predictions not found for this model")
-            
-        return predictions
+        if filtered_predictions is None:
+            raise HTTPException(status_code=404, detail="No predictions found for this model with the given filters")
+        
+        return filtered_predictions
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error filtering predictions: {str(e)}") 

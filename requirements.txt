@@ -3,6 +3,7 @@ pandas
 numpy
 scikit-learn
 tensorflow
+matplotlib
 openai
 crewai
 crewai-tools
@@ -19,3 +20,4 @@ email-validator
 python-jose
 passlib
 bcrypt
+seaborn

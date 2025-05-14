@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased] - 2025-05-14
+
+### Added
+- Added feature column information saving and loading to `TenderPerformanceModel` 
+- Implemented fallback mechanisms for prediction when model is loaded without training data
+- Added enhanced logging throughout the prediction pipeline for better debugging
+- Created a dummy X_train initialization process when feature columns are available but sample data is missing
+
+### Changed
+- Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
+- Improved `PredictionService.predict_tender_performance()` to use consistent directory structure for saved predictions
+- Updated model loading to utilize feature_info.json for initializing necessary preprocessing components
+- Enhanced API response validation to ensure all required fields are properly included
+
+### Fixed
+- Fixed "NoneType has no attribute columns" error during prediction when model loaded from saved state
+- Fixed API validation errors with missing prediction_id in responses
+- Resolved inconsistency in prediction file storage between different prediction types
+- Fixed issues with prediction retrieval when predictions are saved in the wrong location
+- Added missing prediction_id to metadata in prediction responses
+
 ## [Unreleased] - 2025-05-12
 
 ### Added
@@ -30,7 +51,7 @@
 
 ---
 
-## [0.2.0] - 2025-05-12 23:15
+## [Unreleased] - 2025-05-12 23:15
 
 ### Added
 - Created API endpoints for model management and predictions in `api/models.py` and `api/predictions.py`.
@@ -59,4 +80,4 @@
 
 ---
 
-Timestamp: 2025-05-12 23:15:00 
+Timestamp: 2025-05-14 09:55:00 

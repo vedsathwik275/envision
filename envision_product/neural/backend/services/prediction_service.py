@@ -114,7 +114,9 @@ class PredictionService:
             with open(prediction_file, "r") as f:
                 prediction_data = json.load(f)
                 
+            # Include prediction_id in the top level of the response
             return {
+                "prediction_id": prediction_id,  # Ensure prediction_id is included at the top level
                 **metadata,
                 "data": prediction_data
             }
@@ -194,4 +196,431 @@ class PredictionService:
         return {
             "prediction_id": prediction_id,
             **prediction_data
-        } 
+        }
+    
+    def predict_tender_performance(self, model_id: str, carriers: List[str], source_cities: List[str], dest_cities: List[str]) -> Optional[Dict[str, Any]]:
+        """Generate tender performance predictions using a trained model.
+        
+        Args:
+            model_id: ID of the model to use
+            carriers: List of carriers
+            source_cities: List of source cities
+            dest_cities: List of destination cities
+            
+        Returns:
+            Dictionary with prediction results or None if prediction fails
+        """
+        # Get predictions from the model service
+        prediction_data = self.model_service.predict_tender_performance(
+            model_id=model_id,
+            carriers=carriers,
+            source_cities=source_cities,
+            dest_cities=dest_cities
+        )
+        
+        if not prediction_data:
+            logger.error(f"Failed to generate tender performance predictions with model {model_id}")
+            return None
+        
+        # Generate a unique ID for this prediction
+        prediction_id = str(uuid.uuid4())
+        
+        # Create directory for prediction data
+        prediction_dir = self.base_path / prediction_id
+        prediction_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save prediction data as JSON
+        prediction_file = prediction_dir / "prediction_data.json"
+        with open(prediction_file, "w") as f:
+            json.dump(prediction_data, f, indent=2)
+        
+        # Create metadata for the prediction
+        metadata = {
+            "prediction_id": prediction_id,
+            "model_id": model_id,
+            "model_type": "tender_performance",
+            "created_at": datetime.now().isoformat(),
+            "prediction_count": len(prediction_data.get("predictions", [])),
+            "prediction_file": str(prediction_file)
+        }
+        
+        # Save metadata
+        self.metadata["predictions"][prediction_id] = metadata
+        self._save_metadata()
+        
+        # Return the result with prediction ID
+        return {
+            "prediction_id": prediction_id,
+            **prediction_data
+        }
+    
+    def get_predictions(self, model_id: str, filters: Dict = None, limit: int = 1000, offset: int = 0) -> Optional[Dict[str, Any]]:
+        """Get filtered predictions for a model.
+        
+        Args:
+            model_id: ID of the model
+            filters: Dictionary of filters to apply
+            limit: Maximum number of predictions to return
+            offset: Number of predictions to skip
+            
+        Returns:
+            Dictionary with filtered predictions or None if model not found
+        """
+        # Find the latest prediction for this model
+        model_predictions = [p for p in self.list_predictions(model_id=model_id)]
+        
+        if not model_predictions:
+            return None
+        
+        # Sort by creation time (newest first)
+        model_predictions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        latest_prediction = model_predictions[0]
+        
+        # Get the full prediction data
+        prediction_data = self.get_prediction(latest_prediction["prediction_id"])
+        
+        if not prediction_data or "data" not in prediction_data:
+            return None
+        
+        # Extract the predictions
+        predictions = prediction_data["data"].get("predictions", [])
+        
+        # Apply filters if provided
+        if filters:
+            filtered_predictions = []
+            for pred in predictions:
+                match = True
+                
+                # Check each filter
+                for key, value in filters.items():
+                    # Handle special case for carrier filter
+                    if key == "carrier" and "carrier" in pred:
+                        if pred["carrier"].lower() != value.lower():
+                            match = False
+                            break
+                    # Handle regular source/destination/order_type filters
+                    elif key in pred:
+                        if pred[key].lower() != value.lower():
+                            match = False
+                            break
+                
+                if match:
+                    filtered_predictions.append(pred)
+            
+            predictions = filtered_predictions
+        
+        # Apply limit and offset
+        paginated_predictions = predictions[offset:offset+limit]
+        
+        result = {
+            "model_id": model_id,
+            "prediction_id": latest_prediction["prediction_id"],
+            "created_at": latest_prediction["created_at"],
+            "total_predictions": len(predictions),
+            "filtered_predictions": len(paginated_predictions),
+            "predictions": paginated_predictions
+        }
+        
+        return result
+    
+    def initialize_prediction_job(self, model_id: str, months: int = 6, params: Dict = None) -> str:
+        """Initialize a background prediction job.
+        
+        Args:
+            model_id: ID of the model to use
+            months: Number of future months to predict
+            params: Additional parameters for prediction
+            
+        Returns:
+            Job ID for tracking the prediction job
+        """
+        job_id = str(uuid.uuid4())
+        
+        # Create a job file with metadata
+        job_data = {
+            "job_id": job_id,
+            "model_id": model_id,
+            "months": months,
+            "params": params or {},
+            "status": "pending",
+            "created_at": datetime.now().isoformat()
+        }
+        
+        job_path = self.base_path / "jobs" / f"{job_id}.json"
+        os.makedirs(os.path.dirname(job_path), exist_ok=True)
+        
+        with open(job_path, "w") as f:
+            json.dump(job_data, f, indent=2)
+        
+        return job_id
+    
+    def run_prediction_job(self, job_id: str) -> Optional[str]:
+        """Run a prediction job in the background.
+        
+        Args:
+            job_id: ID of the job to run
+            
+        Returns:
+            Prediction ID or None if the job fails
+        """
+        job_path = self.base_path / "jobs" / f"{job_id}.json"
+        
+        if not job_path.exists():
+            logger.error(f"Job file not found: {job_path}")
+            return None
+        
+        try:
+            # Load the job data
+            with open(job_path, "r") as f:
+                job_data = json.load(f)
+            
+            # Update job status
+            job_data["status"] = "running"
+            job_data["started_at"] = datetime.now().isoformat()
+            
+            with open(job_path, "w") as f:
+                json.dump(job_data, f, indent=2)
+            
+            # Get model metadata to determine model type
+            model_id = job_data["model_id"]
+            model_metadata = self.model_service.get_model_metadata(model_id)
+            
+            if not model_metadata:
+                logger.error(f"Model {model_id} not found")
+                job_data["status"] = "failed"
+                job_data["error"] = f"Model {model_id} not found"
+                with open(job_path, "w") as f:
+                    json.dump(job_data, f, indent=2)
+                return None
+            
+            # Run the appropriate prediction method based on model type
+            model_type = model_metadata.get("model_type")
+            
+            if model_type == "order_volume":
+                # Generate order volume predictions
+                result = self.predict_order_volume(
+                    model_id=model_id,
+                    months=job_data.get("months", 6)
+                )
+            elif model_type == "tender_performance":
+                # For tender performance, we need specific parameters from the job
+                params = job_data.get("params", {})
+                carriers = params.get("carriers", [])
+                source_cities = params.get("source_cities", [])
+                dest_cities = params.get("dest_cities", [])
+                
+                if not carriers or not source_cities or not dest_cities:
+                    logger.error("Missing required parameters for tender performance prediction")
+                    job_data["status"] = "failed"
+                    job_data["error"] = "Missing required parameters for tender performance prediction"
+                    with open(job_path, "w") as f:
+                        json.dump(job_data, f, indent=2)
+                    return None
+                
+                result = self.predict_tender_performance(
+                    model_id=model_id,
+                    carriers=carriers,
+                    source_cities=source_cities,
+                    dest_cities=dest_cities
+                )
+            else:
+                logger.error(f"Unsupported model type: {model_type}")
+                job_data["status"] = "failed"
+                job_data["error"] = f"Unsupported model type: {model_type}"
+                with open(job_path, "w") as f:
+                    json.dump(job_data, f, indent=2)
+                return None
+            
+            if not result:
+                logger.error(f"Failed to generate predictions with model {model_id}")
+                job_data["status"] = "failed"
+                job_data["error"] = f"Failed to generate predictions with model {model_id}"
+                with open(job_path, "w") as f:
+                    json.dump(job_data, f, indent=2)
+                return None
+            
+            # Update job status
+            prediction_id = result.get("prediction_id")
+            job_data["status"] = "completed"
+            job_data["completed_at"] = datetime.now().isoformat()
+            job_data["prediction_id"] = prediction_id
+            
+            with open(job_path, "w") as f:
+                json.dump(job_data, f, indent=2)
+            
+            return prediction_id
+            
+        except Exception as e:
+            logger.error(f"Error running prediction job {job_id}: {str(e)}")
+            
+            try:
+                # Update job status with error
+                job_data = {"status": "failed", "error": str(e)}
+                with open(job_path, "w") as f:
+                    json.dump(job_data, f, indent=2)
+            except:
+                pass
+                
+            return None
+            
+    def filter_predictions(self, model_id: str, filters: Dict) -> Optional[Dict[str, Any]]:
+        """Filter predictions using complex criteria.
+        
+        Args:
+            model_id: ID of the model
+            filters: Dictionary of filter criteria
+            
+        Returns:
+            Dictionary with filtered predictions or None if no matches
+        """
+        # Get the latest prediction for this model
+        model_predictions = self.list_predictions(model_id=model_id)
+        
+        if not model_predictions:
+            return None
+        
+        # Sort by creation time (newest first)
+        model_predictions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        latest_prediction = model_predictions[0]
+        
+        # Get the full prediction data
+        prediction_data = self.get_prediction(latest_prediction["prediction_id"])
+        
+        if not prediction_data or "data" not in prediction_data:
+            return None
+        
+        # Extract the predictions
+        predictions = prediction_data["data"].get("predictions", [])
+        
+        # Get model type to determine filtering strategy
+        model_type = prediction_data.get("model_type")
+        
+        # Apply filters based on model type
+        if model_type == "order_volume":
+            filtered_predictions = self._filter_order_volume_predictions(predictions, filters)
+        elif model_type == "tender_performance":
+            filtered_predictions = self._filter_tender_performance_predictions(predictions, filters)
+        else:
+            # Generic filtering
+            filtered_predictions = self._filter_generic_predictions(predictions, filters)
+        
+        result = {
+            "model_id": model_id,
+            "prediction_id": latest_prediction["prediction_id"],
+            "created_at": latest_prediction["created_at"],
+            "model_type": model_type,
+            "total_predictions": len(predictions),
+            "filtered_count": len(filtered_predictions),
+            "predictions": filtered_predictions
+        }
+        
+        return result
+    
+    def _filter_order_volume_predictions(self, predictions: List[Dict], filters: Dict) -> List[Dict]:
+        """Apply filters specific to order volume predictions."""
+        result = []
+        
+        # Extract filter criteria
+        source_cities = filters.get("source_cities", [])
+        destination_cities = filters.get("destination_cities", [])
+        order_types = filters.get("order_types", [])
+        date_range = filters.get("date_range", {})
+        
+        for pred in predictions:
+            match = True
+            
+            # Filter by source city
+            if source_cities and pred.get("source_city") not in source_cities:
+                match = False
+                
+            # Filter by destination city
+            if destination_cities and pred.get("destination_city") not in destination_cities:
+                match = False
+                
+            # Filter by order type
+            if order_types and pred.get("order_type") not in order_types:
+                match = False
+                
+            # Filter by date range
+            if date_range:
+                start_date = date_range.get("start")
+                end_date = date_range.get("end")
+                pred_date = pred.get("month")
+                
+                if start_date and pred_date < start_date:
+                    match = False
+                    
+                if end_date and pred_date > end_date:
+                    match = False
+            
+            if match:
+                result.append(pred)
+                
+        return result
+    
+    def _filter_tender_performance_predictions(self, predictions: List[Dict], filters: Dict) -> List[Dict]:
+        """Apply filters specific to tender performance predictions."""
+        result = []
+        
+        # Extract filter criteria
+        source_cities = filters.get("source_cities", [])
+        destination_cities = filters.get("destination_cities", [])
+        carriers = filters.get("carriers", [])
+        
+        for pred in predictions:
+            match = True
+            
+            # Filter by carrier
+            if carriers and pred.get("carrier") not in carriers:
+                match = False
+                
+            # Filter by source city
+            if source_cities and pred.get("source_city") not in source_cities:
+                match = False
+                
+            # Filter by destination city
+            if destination_cities and pred.get("dest_city") not in destination_cities:
+                match = False
+            
+            if match:
+                result.append(pred)
+                
+        return result
+    
+    def _filter_generic_predictions(self, predictions: List[Dict], filters: Dict) -> List[Dict]:
+        """Apply generic filters to predictions."""
+        result = []
+        
+        for pred in predictions:
+            match = True
+            
+            # Check each filter criterion
+            for key, values in filters.items():
+                if key == "date_range":
+                    # Skip date range for generic filtering
+                    continue
+                    
+                if not values:
+                    # Skip empty filter values
+                    continue
+                    
+                # Check if this prediction matches any of the filter values for this key
+                pred_value = pred.get(key)
+                if pred_value is None:
+                    match = False
+                    break
+                    
+                # Handle list of values vs single value
+                if isinstance(values, list):
+                    if pred_value not in values:
+                        match = False
+                        break
+                else:
+                    if pred_value != values:
+                        match = False
+                        break
+            
+            if match:
+                result.append(pred)
+                
+        return result 
