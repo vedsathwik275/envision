@@ -1,54 +1,5 @@
 # Changelog
 
-## [Unreleased] - 2025-05-17
-### Added
-- **Prediction Caching**: Added optimization to reuse existing tender performance predictions:
-  - Check if prediction files already exist before regenerating
-  - Only regenerate predictions if necessary
-  - Auto-repair missing CSV files if JSON exists
-  - Significant performance improvement for repeated API calls
-
-### Changed
-- **Improved Tender Performance API Endpoints**:
-  - Updated to check for and use existing predictions when available
-  - Better error handling and logging
-  - More descriptive API responses
-
-### Fixed
-- Eliminated redundant prediction generation when predictions already exist
-- Updated API documentation to reflect optimized behavior
-- Better error handling for prediction file access issues
-
-## [Unreleased] - 2025-05-16
-### Added
-- **Lane Handling Utility** (`utils/lane_utils.py`): Comprehensive solution for standardized lane data handling:
-  - Robust city name normalization for consistent matching regardless of case or formatting
-  - Field name standardization with support for multiple naming conventions (SOURCE CITY, source_city, etc.)
-  - Lane component extraction and standardized lane ID generation
-  - Advanced filtering functions for lane-based data
-  - Batch standardization of lane fields in prediction results
-  - Error handling with fallback mechanisms to maintain backward compatibility
-- **Enhanced Documentation** for the Lane Handling Utility in `docs/lane_handling_utility.md`
-- **Improved Order Volume API**: Enhanced error handling and response format standardization
-
-### Changed
-- **Updated Order Volume by Lane endpoint**: Significantly improved robustness:
-  - Case-insensitive matching for lane components (source city, destination city)
-  - Consistent error responses with detailed information
-  - Returns 200 status with empty results instead of 404 errors for better API consistency
-  - Added fallback path for environments where Lane Handling Utility may not be available
-  - Enhanced logging for better debugging and traceability
-- **Improved prediction filtering**: Updated `_filter_order_volume_predictions_advanced` function to use the Lane Handling Utility
-- **Enhanced API response format**: Standardized response structure for lane predictions
-
-### Fixed
-- Fixed 500 Internal Server Error in Order Volume by Lane endpoint caused by case-sensitive matching and field naming inconsistencies
-- Resolved issues with inconsistent field names in predictions (SOURCE CITY vs source_city)
-- Fixed error handling in prediction service to return structured error responses instead of failing silently
-- Added consistent fallback mechanisms to maintain backward compatibility
-- Fixed route path issue in Order Volume by Lane endpoint causing 404 errors due to duplicate `/predictions` prefix
-- Fixed model existence check in Order Volume by Lane endpoint that incorrectly compared model ID with model dictionaries
-
 ## [Unreleased] - 2025-05-15
 ### Added
 - Added JSON to CSV conversion for prediction results
@@ -91,6 +42,20 @@
   - Filter by minimum creation date
   - Filter by minimum accuracy
   - Filter by maximum error
+- **Lane Handling Utility** (`utils/lane_utils.py`): Comprehensive solution for standardized lane data handling:
+  - Robust city name normalization for consistent matching regardless of case or formatting
+  - Field name standardization with support for multiple naming conventions (SOURCE CITY, source_city, etc.)
+  - Lane component extraction and standardized lane ID generation
+  - Advanced filtering functions for lane-based data
+  - Batch standardization of lane fields in prediction results
+  - Error handling with fallback mechanisms to maintain backward compatibility
+- **Enhanced Documentation** for the Lane Handling Utility in `docs/lane_handling_utility.md`
+- **Improved Order Volume API**: Enhanced error handling and response format standardization
+- **Prediction Caching**: Added optimization to reuse existing tender performance predictions:
+  - Check if prediction files already exist before regenerating
+  - Only regenerate predictions if necessary
+  - Auto-repair missing CSV files if JSON exists
+  - Significant performance improvement for repeated API calls
 
 ### Changed
 - Modified prediction saving to generate both JSON and CSV formats
@@ -119,6 +84,18 @@
 - **Improved lane filtering logic** in `_filter_order_volume_predictions_advanced` function to use the new Lane Handling Utility
 - **Updated API documentation** with examples for the new endpoints
 - Tender Performance predictions now use a training data approach for more accurate results
+- **Updated Order Volume by Lane endpoint**: Significantly improved robustness:
+  - Case-insensitive matching for lane components (source city, destination city)
+  - Consistent error responses with detailed information
+  - Returns 200 status with empty results instead of 404 errors for better API consistency
+  - Added fallback path for environments where Lane Handling Utility may not be available
+  - Enhanced logging for better debugging and traceability
+- **Improved prediction filtering**: Updated `_filter_order_volume_predictions_advanced` function to use the Lane Handling Utility
+- **Enhanced API response format**: Standardized response structure for lane predictions
+- **Improved Tender Performance API Endpoints**:
+  - Updated to check for and use existing predictions when available
+  - Better error handling and logging
+  - More descriptive API responses
 
 ### Fixed
 - Fixed issues with missing CSV files in Order Volume API endpoints
@@ -130,6 +107,15 @@
 - Case sensitivity issues in lane matching for Order Volume predictions
 - Fixed inconsistent field naming in predictions (SOURCE CITY vs Source City)
 - Added fallback mechanisms for Lane Handling Utility to maintain backward compatibility
+- Fixed 500 Internal Server Error in Order Volume by Lane endpoint caused by case-sensitive matching and field naming inconsistencies
+- Resolved issues with inconsistent field names in predictions (SOURCE CITY vs source_city)
+- Fixed error handling in prediction service to return structured error responses instead of failing silently
+- Added consistent fallback mechanisms to maintain backward compatibility
+- Fixed route path issue in Order Volume by Lane endpoint causing 404 errors due to duplicate `/predictions` prefix
+- Fixed model existence check in Order Volume by Lane endpoint that incorrectly compared model ID with model dictionaries
+- Eliminated redundant prediction generation when predictions already exist
+- Updated API documentation to reflect optimized behavior
+- Better error handling for prediction file access issues
 
 ## [Unreleased] - 2025-05-14
 
@@ -211,4 +197,4 @@
 
 ---
 
-Timestamp: 2025-05-15 15:05:00
+Timestamp: 2025-05-15 15:20:00
