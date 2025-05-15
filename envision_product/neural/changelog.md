@@ -27,6 +27,9 @@
 - Added Latest Model Retrieval API endpoint (`GET /api/models/latest`) to get the most recent model of a specific type
 - Implemented filtering options for latest model retrieval by creation date, accuracy, and error metrics
 - Created test script for the Latest Model Retrieval API endpoint
+- Enhanced Model List API endpoint with pagination support, filtering by creation date and performance metrics
+- Added new `/models/list` endpoint for backward compatibility with API specifications
+- Created comprehensive test script for testing model listing functionality with various filters and pagination
 
 ### Changed
 - Modified prediction saving to generate both JSON and CSV formats
@@ -44,6 +47,8 @@
 - Modified Tender Performance API responses to return simplified data by default (without error metrics and actual values)
 - Updated model service to generate both complete and simplified CSVs when predictions are created
 - Updated test script to support testing both simplified and complete formats
+- Enhanced the existing model listing endpoint to support advanced filtering by performance metrics and creation date
+- Added standardized pagination structure with metadata for all listing endpoints
 
 ### Fixed
 - Fixed issues with missing CSV files in Order Volume API endpoints

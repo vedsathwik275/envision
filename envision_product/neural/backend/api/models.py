@@ -44,8 +44,15 @@ class ModelMetadata(BaseModel):
     training_data: Optional[str] = None
     training_params: Optional[Dict[str, Any]] = None
 
+class PaginationMetadata(BaseModel):
+    total: int = Field(..., description="Total number of items available")
+    page: int = Field(..., description="Current page number")
+    page_size: int = Field(..., description="Number of items per page")
+    pages: int = Field(..., description="Total number of pages")
+
 class ModelList(BaseModel):
     models: List[ModelMetadata]
+    pagination: Optional[PaginationMetadata] = None
 
 class TrainingResponse(BaseModel):
     status: str
@@ -79,11 +86,149 @@ def get_model_service():
 @router.get("/", response_model=ModelList)
 async def list_models(
     model_type: Optional[str] = None,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    min_created_at: Optional[str] = None,
+    min_accuracy: Optional[float] = None,
+    max_error: Optional[float] = None,
     model_service: ModelService = Depends(get_model_service)
 ):
-    """List all available models with optional filtering by model type."""
-    models = model_service.list_models(model_type=model_type)
-    return {"models": models}
+    """
+    List all available models with optional filtering and pagination.
+    
+    Args:
+        model_type: Optional filter by model type
+        page: Page number (starts from 1)
+        page_size: Number of items per page
+        min_created_at: Optional minimum creation date (format: YYYY-MM-DD)
+        min_accuracy: Optional minimum accuracy/r2 score
+        max_error: Optional maximum error (MAE/RMSE)
+    """
+    # Get all models with the specified type
+    all_models = model_service.list_models(model_type=model_type)
+    
+    # Apply date filter if provided
+    if min_created_at:
+        try:
+            min_date = datetime.datetime.fromisoformat(min_created_at.replace('Z', '+00:00'))
+            filtered_models = []
+            
+            for model in all_models:
+                model_date_str = model.get("created_at", "")
+                if model_date_str:
+                    # Handle both formats with and without timezone
+                    model_date_str = model_date_str.replace('Z', '+00:00')
+                    try:
+                        model_date = datetime.datetime.fromisoformat(model_date_str)
+                        if model_date >= min_date:
+                            filtered_models.append(model)
+                    except ValueError:
+                        # If date parsing fails, keep the model in the list
+                        filtered_models.append(model)
+                else:
+                    filtered_models.append(model)
+                    
+            all_models = filtered_models
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format for min_created_at. Expected format: YYYY-MM-DD"
+            )
+    
+    # Apply performance metric filters if provided
+    if min_accuracy is not None or max_error is not None:
+        filtered_models = []
+        
+        for model in all_models:
+            evaluation = model.get("evaluation", {})
+            if not evaluation:
+                continue
+                
+            # Check R² score (accuracy) if min_accuracy is provided
+            if min_accuracy is not None:
+                r2 = evaluation.get("r2")
+                if r2 is None or r2 < min_accuracy:
+                    continue
+            
+            # Check error metrics if max_error is provided
+            if max_error is not None:
+                mae = evaluation.get("mae")
+                rmse = evaluation.get("rmse")
+                
+                # If both metrics exist, use the smaller one
+                if mae is not None and rmse is not None:
+                    error = min(mae, rmse)
+                elif mae is not None:
+                    error = mae
+                elif rmse is not None:
+                    error = rmse
+                else:
+                    error = None
+                
+                if error is None or error > max_error:
+                    continue
+            
+            filtered_models.append(model)
+        
+        all_models = filtered_models
+    
+    # Calculate pagination
+    total_models = len(all_models)
+    total_pages = (total_models + page_size - 1) // page_size  # Ceiling division
+    
+    # Ensure page is within valid range
+    if page > total_pages and total_pages > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Page {page} exceeds the total number of pages ({total_pages})"
+        )
+    
+    # Paginate the results
+    start_idx = (page - 1) * page_size
+    end_idx = min(start_idx + page_size, total_models)
+    paginated_models = all_models[start_idx:end_idx]
+    
+    # Create pagination metadata
+    pagination = PaginationMetadata(
+        total=total_models,
+        page=page,
+        page_size=page_size,
+        pages=total_pages
+    )
+    
+    return {"models": paginated_models, "pagination": pagination}
+
+@router.get("/list", response_model=ModelList)
+async def list_models_alt(
+    model_type: Optional[str] = None,
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    min_created_at: Optional[str] = None,
+    min_accuracy: Optional[float] = None,
+    max_error: Optional[float] = None,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """
+    Alternative endpoint for listing all available models with optional filtering and pagination.
+    This endpoint is provided for backward compatibility with API specs.
+    
+    Args:
+        model_type: Optional filter by model type
+        page: Page number (starts from 1)
+        page_size: Number of items per page
+        min_created_at: Optional minimum creation date (format: YYYY-MM-DD)
+        min_accuracy: Optional minimum accuracy/r2 score
+        max_error: Optional maximum error (MAE/RMSE)
+    """
+    return await list_models(
+        model_type=model_type,
+        page=page,
+        page_size=page_size,
+        min_created_at=min_created_at,
+        min_accuracy=min_accuracy,
+        max_error=max_error,
+        model_service=model_service
+    )
 
 @router.get("/latest", response_model=ModelMetadata)
 async def get_latest_model(
