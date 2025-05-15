@@ -60,48 +60,52 @@
 - [x] **Update Changelog**
    - Document all implemented changes
 
-## Implementation Details
+## 6. Carrier Performance Data Analysis and Model
 
-### File Structure Considerations
+- [ ] **Data Collection and Analysis**
+   - Perform exploratory data analysis to identify key performance indicators and patterns
+   - Generate statistical insights and correlations between different performance metrics
+   - Create standardized performance score methodology
 
-The filesystem structure for predictions should be consistent for both model types:
-```
-data/
-  predictions/
-    {prediction_id}/
-      prediction_data.json
-      prediction_data.csv
-```
+- [ ] **Carrier Performance Model Development**
+   - Design a neural network architecture for carrier performance prediction
+   - Create `carrier_performance_model.py` with appropriate model classes and methods
+   - Implement evaluation metrics specific to carrier performance (reliability score, cost-efficiency)
+   - Create model saving/loading functionality that preserves preprocessing components
+
+- [ ] **API Integration**
+   - Add carrier performance model type to the model service
+   - Create endpoints for carrier performance predictions:
+     - `GET /api/predictions/carrier-performance/{model_id}`
+     - `GET /api/predictions/carrier-performance/{model_id}/by-lane`
+     - `GET /api/predictions/carrier-performance/{model_id}/by-carrier`
+     - `GET /api/predictions/carrier-performance/{model_id}/download`
+   - Add carrier comparison endpoints to allow ranking and benchmarking
+   - Extend existing CSV conversion utilities to support carrier performance data formats
+
+### Implementation Details
+
+The model should generate both:
+- Overall carrier performance scores (0-100)
+- Specific performance predictions for lane-carrier combinations
+- Comparative rankings between carriers
+- Confidence intervals for performance predictions
 
 ### API Route Structure
 
-1. **Order Volume Predictions**
-   - `GET /api/predictions/order-volume/{model_id}`
-   - `GET /api/predictions/order-volume/{model_id}?source_city={city}&destination_city={city}&carrier={carrier}`
+1. **Carrier Performance Predictions**
+   - `GET /api/predictions/carrier-performance/{model_id}`
+   - `GET /api/predictions/carrier-performance/{model_id}/by-lane?source_city={city}&destination_city={city}`
+   - `GET /api/predictions/carrier-performance/{model_id}/by-carrier?carrier={carrier}`
+   - `GET /api/predictions/carrier-performance/{model_id}/compare?carriers={carrier1},{carrier2}&lane={lane_id}`
 
-2. **Tender Performance Predictions**
-   - `GET /api/predictions/tender-performance/{model_id}`
-   - `GET /api/predictions/tender-performance/{model_id}?source_city={city}&dest_city={city}&carrier={carrier}`
-   - `GET /api/predictions/tender-performance/{model_id}/by-lane?source_city={city}&dest_city={city}` (all carriers)
+2. **Model Management Extensions**
+   - Extend existing model management endpoints to handle carrier performance models
+   - Add specialized filtering options for carrier performance models
 
-3. **Model Management**
-   - `GET /api/models/latest?model_type={type}`
-   - `GET /api/models/list?model_type={type}`
+### Integration with Existing Systems
 
-### Enhanced Functionality
-
-Both model types will need to:
-1. Generate predictions in both JSON and CSV formats
-2. Support filtering by various criteria
-3. Provide both individual and bulk access to predictions
-
-## Priority Order
-
-1. Implement JSON to CSV conversion for both model types
-2. Create API route for latest model retrieval
-3. Implement training data prediction for Tender Performance model
-4. Create API routes for Tender Performance predictions
-5. Create API routes for Order Volume predictions
-6. Add filtering and pagination capabilities
-7. Implement remaining model management routes
-8. Update documentation and testing 
+The carrier performance model should integrate with:
+1. Existing Lane Handling Utility
+2. Order Volume predictions to provide capacity-aware recommendations
+3. Tender Performance predictions to create comprehensive carrier selection strategies
