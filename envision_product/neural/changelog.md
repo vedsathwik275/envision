@@ -24,6 +24,9 @@
 - Redesigned the POST endpoint for Tender Performance predictions to use the training data approach
 - Added simplified CSV format option for tender performance predictions with only essential fields (carrier, source/destination cities, and predicted performance)
 - Implemented a new `simplified` parameter (defaults to True) in tender performance API endpoints to control response format
+- Added Latest Model Retrieval API endpoint (`GET /api/models/latest`) to get the most recent model of a specific type
+- Implemented filtering options for latest model retrieval by creation date, accuracy, and error metrics
+- Created test script for the Latest Model Retrieval API endpoint
 
 ### Changed
 - Modified prediction saving to generate both JSON and CSV formats
@@ -46,6 +49,8 @@
 - Fixed issues with missing CSV files in Order Volume API endpoints
 - Resolved inconsistency in file format handling between different API routes
 - Added fallback mechanisms to ensure proper content delivery regardless of file availability
+- Fixed routing issue with Latest Model Retrieval API endpoint by reordering route definitions to ensure `/latest` is recognized as a separate endpoint and not interpreted as a model ID
+- Resolved 404 errors when accessing the Latest Model API endpoint by ensuring proper route precedence in FastAPI
 
 ## [Unreleased] - 2025-05-14
 

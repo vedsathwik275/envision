@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import uuid
 import logging
+import datetime
 
 
 from services.model_service import ModelService
@@ -83,6 +84,125 @@ async def list_models(
     """List all available models with optional filtering by model type."""
     models = model_service.list_models(model_type=model_type)
     return {"models": models}
+
+@router.get("/latest", response_model=ModelMetadata)
+async def get_latest_model(
+    model_type: str,
+    min_created_at: Optional[str] = None,
+    min_accuracy: Optional[float] = None,
+    max_error: Optional[float] = None,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """
+    Get the latest model by type with optional filtering.
+    
+    This endpoint returns the most recently created model of the specified type
+    that matches the provided filters.
+    
+    - **model_type**: The type of model to retrieve (required)
+    - **min_created_at**: Optional minimum creation date (format: YYYY-MM-DD)
+    - **min_accuracy**: Optional minimum accuracy/r2 score
+    - **max_error**: Optional maximum error (MAE/RMSE)
+    """
+    models = model_service.list_models(model_type=model_type)
+    
+    if not models:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"No models found for type: {model_type}"
+        )
+    
+    # Apply date filter if provided
+    if min_created_at:
+        try:
+            min_date = datetime.datetime.fromisoformat(min_created_at.replace('Z', '+00:00'))
+            filtered_models = []
+            
+            for model in models:
+                model_date_str = model.get("created_at", "")
+                if model_date_str:
+                    # Handle both formats with and without timezone
+                    model_date_str = model_date_str.replace('Z', '+00:00')
+                    try:
+                        model_date = datetime.datetime.fromisoformat(model_date_str)
+                        if model_date >= min_date:
+                            filtered_models.append(model)
+                    except ValueError:
+                        # If date parsing fails, keep the model in the list
+                        filtered_models.append(model)
+                else:
+                    filtered_models.append(model)
+                    
+            models = filtered_models
+            
+            if not models:
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"No models found for type: {model_type} created after {min_created_at}"
+                )
+                
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format for min_created_at. Expected format: YYYY-MM-DD"
+            )
+    
+    # Apply performance metric filters if provided
+    if min_accuracy is not None or max_error is not None:
+        filtered_models = []
+        
+        for model in models:
+            evaluation = model.get("evaluation", {})
+            if not evaluation:
+                continue
+                
+            # Check R² score (accuracy) if min_accuracy is provided
+            if min_accuracy is not None:
+                r2 = evaluation.get("r2")
+                if r2 is None or r2 < min_accuracy:
+                    continue
+            
+            # Check error metrics if max_error is provided
+            if max_error is not None:
+                mae = evaluation.get("mae")
+                rmse = evaluation.get("rmse")
+                
+                # If both metrics exist, use the smaller one
+                if mae is not None and rmse is not None:
+                    error = min(mae, rmse)
+                elif mae is not None:
+                    error = mae
+                elif rmse is not None:
+                    error = rmse
+                else:
+                    error = None
+                
+                if error is None or error > max_error:
+                    continue
+            
+            filtered_models.append(model)
+        
+        models = filtered_models
+        
+        if not models:
+            error_detail = f"No models found for type: {model_type} matching the performance criteria"
+            if min_accuracy is not None:
+                error_detail += f", min_accuracy: {min_accuracy}"
+            if max_error is not None:
+                error_detail += f", max_error: {max_error}"
+                
+            raise HTTPException(
+                status_code=404,
+                detail=error_detail
+            )
+    
+    # The models are already sorted by creation time (newest first) from list_models
+    latest_model = models[0]
+    
+    return {
+        "model_id": latest_model["model_id"],
+        **latest_model
+    }
 
 @router.get("/{model_id}", response_model=ModelMetadata)
 async def get_model(
