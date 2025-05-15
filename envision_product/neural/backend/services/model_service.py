@@ -491,4 +491,61 @@ class ModelService:
             
         except Exception as e:
             logger.error(f"Error generating tender performance predictions with model {model_id}: {str(e)}")
+            return None
+
+    def predict_tender_performance_on_training_data(self, model_id: str) -> Optional[Dict]:
+        """Generate predictions for tender performance on the training data.
+        
+        This method loads the tender performance model and predicts on the data
+        that was used for training. This can be useful for analyzing model performance
+        and understanding prediction accuracy.
+        
+        Args:
+            model_id: ID of the model to use for prediction
+            
+        Returns:
+            Dictionary with prediction results or None if prediction fails
+        """
+        # Load the model
+        logger.info(f"Loading tender performance model {model_id} for training data prediction")
+        model = self.load_tender_performance_model(model_id)
+        if not model:
+            logger.error(f"Failed to load model {model_id}")
+            return None
+        
+        try:
+            # Get model directory to save predictions
+            model_path = self.get_model_path(model_id)
+            if not model_path:
+                logger.error(f"Model directory for {model_id} not found")
+                return None
+            
+            # Create training predictions directory
+            training_predictions_dir = os.path.join(model_path, "training_predictions")
+            os.makedirs(training_predictions_dir, exist_ok=True)
+            
+            # Generate predictions on training data
+            logger.info(f"Generating predictions on training data for model {model_id}")
+            result = model.predict_on_training_data(output_dir=training_predictions_dir)
+            
+            if not result:
+                logger.error("Failed to generate predictions on training data")
+                return None
+            
+            # Add model_id to the result
+            result["model_id"] = model_id
+            
+            # Ensure CSV file is created
+            try:
+                from utils.file_converters import convert_tender_performance_training_predictions
+                csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
+                if csv_path:
+                    logger.info(f"Training predictions CSV created at {csv_path}")
+            except Exception as e:
+                logger.error(f"Error creating CSV for training predictions: {str(e)}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error generating predictions on training data for model {model_id}: {str(e)}")
             return None 

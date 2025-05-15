@@ -374,6 +374,128 @@ class TenderPerformanceModel:
         
         return results
     
+    def predict_on_training_data(self, output_dir=None):
+        """Predict tender performance on the training data.
+        
+        This method uses the trained model to make predictions on the same data
+        that was used for training, which can help evaluate model performance.
+        
+        Args:
+            output_dir: Directory to save the prediction files. If None,
+                       a default directory will be created in the model path.
+                       
+        Returns:
+            Dictionary with prediction results including input features and predictions
+        """
+        logger.info("Generating predictions on training data...")
+        
+        if self.model is None:
+            logger.error("Model not trained or loaded. Cannot make predictions.")
+            return None
+        
+        if self.raw_data is None:
+            logger.error("No training data available for prediction.")
+            return None
+        
+        try:
+            # Create output directory if not provided
+            if output_dir is None and self.model_path:
+                output_dir = os.path.join(self.model_path, "training_predictions")
+            elif output_dir is None:
+                output_dir = "training_predictions"
+            
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Get the relevant columns for prediction
+            carrier_col = 'CARRIER'
+            source_col = 'SOURCE_CITY'
+            dest_col = 'DEST_CITY'
+            
+            # Ensure we have the necessary columns
+            if not all(col in self.raw_data.columns for col in [carrier_col, source_col, dest_col, self.target_column]):
+                logger.error("Training data missing required columns for prediction.")
+                return None
+            
+            # Get unique combinations to predict on
+            predictions = []
+            total_rows = len(self.raw_data)
+            
+            logger.info(f"Processing {total_rows} training data rows for prediction")
+            
+            # Iterate through each row in the training data
+            for index, row in self.raw_data.iterrows():
+                try:
+                    carrier = row[carrier_col]
+                    source_city = row[source_col]
+                    dest_city = row[dest_col]
+                    actual_performance = row[self.target_column]
+                    
+                    # Make the prediction
+                    prediction = self.predict(carrier, source_city, dest_city)
+                    
+                    if prediction:
+                        # Add the actual performance value for comparison
+                        prediction['actual_performance'] = float(actual_performance)
+                        
+                        # Calculate error metrics
+                        predicted = prediction['predicted_performance']
+                        actual = prediction['actual_performance']
+                        prediction['absolute_error'] = abs(predicted - actual)
+                        prediction['percent_error'] = (abs(predicted - actual) / max(1, actual)) * 100
+                        
+                        predictions.append(prediction)
+                    
+                    # Log progress for large datasets
+                    if (index + 1) % 100 == 0 or (index + 1) == total_rows:
+                        logger.info(f"Processed {index + 1}/{total_rows} training data rows")
+                    
+                except Exception as e:
+                    logger.warning(f"Error predicting row {index}: {str(e)}")
+                    continue
+            
+            # Calculate summary metrics
+            if predictions:
+                mae = sum(p['absolute_error'] for p in predictions) / len(predictions)
+                mape = sum(p['percent_error'] for p in predictions) / len(predictions)
+                
+                # Create the prediction result
+                result = {
+                    "prediction_time": datetime.now().isoformat(),
+                    "predictions": predictions,
+                    "metrics": {
+                        "count": len(predictions),
+                        "mae": float(mae),
+                        "mape": float(mape)
+                    }
+                }
+                
+                # Save as JSON
+                json_path = os.path.join(output_dir, "prediction_data.json")
+                with open(json_path, "w") as f:
+                    json.dump(result, f, indent=2)
+                logger.info(f"Training predictions saved to {json_path}")
+                
+                # Save as CSV
+                csv_path = os.path.join(output_dir, "prediction_data.csv")
+                
+                # Convert to DataFrame for CSV export
+                df = pd.DataFrame(predictions)
+                df.to_csv(csv_path, index=False)
+                logger.info(f"Training predictions saved to {csv_path}")
+                
+                return result
+            else:
+                logger.warning("No valid predictions generated from training data")
+                return {
+                    "prediction_time": datetime.now().isoformat(),
+                    "predictions": [],
+                    "warning": "No valid predictions could be generated from training data."
+                }
+        
+        except Exception as e:
+            logger.error(f"Error generating predictions on training data: {str(e)}")
+            return None
+    
     def save_model(self, path="tender_performance_model"):
         """Save the model, encoders, and preprocessing info."""
         logger.info(f"Saving model to {path}...")

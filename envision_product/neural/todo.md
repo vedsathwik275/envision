@@ -15,7 +15,7 @@
 
 ## 2. Tender Performance Model Enhancements
 
-- [ ] **Training Data Prediction**
+- [x] **Training Data Prediction**
    - Implement functionality to predict on the training data itself
    - Create a prediction file with input features and predicted output
    - Save both JSON and CSV versions of the predictions

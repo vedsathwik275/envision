@@ -158,6 +158,142 @@ async def create_tender_performance_prediction(
     
     return prediction
 
+@router.get("/tender-performance/{model_id}/full-predictions")
+async def get_tender_performance_training_predictions(
+    model_id: str
+):
+    """
+    Generate predictions for tender performance on the training data.
+    
+    This endpoint uses the model to predict on the data that was used for training,
+    which can help evaluate model performance and understand prediction accuracy.
+    
+    Returns both JSON and CSV formatted predictions with actual vs predicted values.
+    
+    - **model_id**: The ID of the model
+    """
+    try:
+        # Use the model service directly since this is a special case
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        result = model_service.predict_tender_performance_on_training_data(model_id=model_id)
+        
+        if not result:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate training data predictions with model {model_id}"
+            )
+            
+        # Prepare the response
+        return {
+            "model_id": model_id,
+            "prediction_count": len(result.get("predictions", [])),
+            "metrics": result.get("metrics", {}),
+            "predictions": result.get("predictions", [])[:100],  # Limit to first 100 for API response
+            "note": "Only showing first 100 predictions in the API response. Full data available in CSV format."
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating training data predictions: {str(e)}"
+        )
+
+@router.get("/tender-performance/{model_id}/full-predictions/download")
+async def download_tender_performance_training_predictions(
+    model_id: str,
+    format: str = "csv"
+):
+    """
+    Download tender performance training data predictions.
+    
+    This endpoint provides download access to the full set of predictions made on the training data.
+    
+    - **model_id**: The ID of the model
+    - **format**: The format to download (csv or json, defaults to csv)
+    """
+    try:
+        # Get the model path
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        model_path = model_service.get_model_path(model_id)
+        if not model_path:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model {model_id} not found"
+            )
+            
+        # Check for the training predictions directory
+        training_predictions_dir = os.path.join(model_path, "training_predictions")
+        if not os.path.exists(training_predictions_dir):
+            # Try to generate them if they don't exist
+            result = model_service.predict_tender_performance_on_training_data(model_id=model_id)
+            if not result:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Training predictions not found for model {model_id} and could not be generated"
+                )
+        
+        # Check for the specific format requested
+        json_file = os.path.join(training_predictions_dir, "prediction_data.json")
+        csv_file = os.path.join(training_predictions_dir, "prediction_data.csv")
+        
+        if format.lower() == "json" and os.path.exists(json_file):
+            return FileResponse(
+                path=json_file,
+                filename=f"tender_performance_training_predictions_{model_id}.json",
+                media_type="application/json"
+            )
+        elif format.lower() == "csv" and os.path.exists(csv_file):
+            return FileResponse(
+                path=csv_file,
+                filename=f"tender_performance_training_predictions_{model_id}.csv",
+                media_type="text/csv"
+            )
+        elif os.path.exists(json_file) and format.lower() == "csv":
+            # Try to generate CSV if it doesn't exist but JSON does
+            try:
+                from utils.file_converters import convert_tender_performance_training_predictions
+                csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
+                if csv_path and os.path.exists(csv_path):
+                    return FileResponse(
+                        path=str(csv_path),
+                        filename=f"tender_performance_training_predictions_{model_id}.csv",
+                        media_type="text/csv"
+                    )
+            except Exception as e:
+                logger.error(f"Failed to generate CSV on demand: {str(e)}")
+                
+            # Fallback to JSON if CSV generation failed
+            return FileResponse(
+                path=json_file,
+                filename=f"tender_performance_training_predictions_{model_id}.json",
+                media_type="application/json",
+                headers={"X-File-Format-Fallback": "true"}
+            )
+        elif os.path.exists(csv_file) and format.lower() == "json":
+            # Return CSV if JSON doesn't exist
+            return FileResponse(
+                path=csv_file,
+                filename=f"tender_performance_training_predictions_{model_id}.csv",
+                media_type="text/csv",
+                headers={"X-File-Format-Fallback": "true"}
+            )
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No prediction files found for model {model_id}"
+            )
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        logger.error(f"Error downloading training predictions: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error downloading training predictions: {str(e)}"
+        )
+
 @router.get("/{model_id}")
 async def get_predictions(
     model_id: str,

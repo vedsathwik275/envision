@@ -17,6 +17,11 @@
 - Added dynamic CSV generation capability for Order Volume predictions
 - Implemented fallback to JSON when CSV is unavailable with clear notification headers
 - Added support for explicitly requesting JSON format in download endpoints
+- Added training data prediction capability for the Tender Performance Model
+- Created utility for converting training data predictions to CSV format
+- Added API endpoints for generating and downloading training data predictions
+- Implemented metrics calculation on training data predictions including MAE and MAPE
+- Added comparison of actual vs predicted values in training data predictions
 
 ### Changed
 - Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training

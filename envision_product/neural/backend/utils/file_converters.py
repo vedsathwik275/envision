@@ -200,4 +200,89 @@ def convert_tender_performance_predictions(prediction_dir: Union[str, Path]) -> 
     
     except Exception as e:
         logger.error(f"Error converting tender performance predictions to CSV: {str(e)}")
-        return None 
+        return None
+
+def convert_tender_performance_training_predictions(prediction_dir: Union[str, Path]) -> Optional[Path]:
+    """Convert tender performance training data predictions JSON to CSV.
+    
+    This function handles the specific format of training data predictions, which include
+    actual performance values and error metrics.
+    
+    Args:
+        prediction_dir: Directory containing the prediction files
+    
+    Returns:
+        Path to the generated CSV file or None if conversion fails
+    """
+    try:
+        prediction_dir = Path(prediction_dir)
+        json_file = prediction_dir / "prediction_data.json"
+        csv_file = prediction_dir / "prediction_data.csv"
+        
+        if not json_file.exists():
+            logger.error(f"Training prediction JSON file not found: {json_file}")
+            return None
+        
+        # Read the JSON file
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+        
+        # Extract predictions
+        predictions = data.get('predictions', [])
+        
+        if not predictions:
+            logger.warning(f"No predictions found in {json_file}")
+            # Create an empty CSV with expected headers
+            empty_df = pd.DataFrame(columns=[
+                'carrier', 'source_city', 'dest_city', 
+                'predicted_performance', 'actual_performance',
+                'absolute_error', 'percent_error'
+            ])
+            empty_df.to_csv(csv_file, index=False)
+            logger.info(f"Created empty CSV with headers for training predictions: {csv_file}")
+            return csv_file
+        
+        # Training predictions have additional fields compared to regular predictions
+        # Normalize the data for CSV format
+        csv_data = []
+        for pred in predictions:
+            row = {
+                'carrier': pred.get('carrier', ''),
+                'source_city': pred.get('source_city', ''),
+                'dest_city': pred.get('dest_city', ''),
+                'predicted_performance': pred.get('predicted_performance', 0),
+                'actual_performance': pred.get('actual_performance', 0),
+                'absolute_error': pred.get('absolute_error', 0),
+                'percent_error': pred.get('percent_error', 0)
+            }
+            csv_data.append(row)
+        
+        # Convert to DataFrame and save as CSV
+        df = pd.DataFrame(csv_data)
+        df.to_csv(csv_file, index=False)
+        
+        # Also create summary CSV with metrics
+        if 'metrics' in data:
+            metrics_file = prediction_dir / "prediction_metrics.csv"
+            metrics_data = data.get('metrics', {})
+            metrics_df = pd.DataFrame([metrics_data])
+            metrics_df.to_csv(metrics_file, index=False)
+            logger.info(f"Created metrics summary CSV: {metrics_file}")
+        
+        logger.info(f"Successfully converted tender performance training predictions to CSV: {csv_file}")
+        return csv_file
+    
+    except Exception as e:
+        logger.error(f"Error converting tender performance training predictions to CSV: {str(e)}")
+        try:
+            # Create a minimal CSV with basic headers as fallback
+            empty_df = pd.DataFrame(columns=[
+                'carrier', 'source_city', 'dest_city', 
+                'predicted_performance', 'actual_performance',
+                'absolute_error', 'percent_error'
+            ])
+            empty_df.to_csv(csv_file, index=False)
+            logger.warning(f"Created fallback empty CSV due to conversion error: {csv_file}")
+            return csv_file
+        except:
+            return None 
