@@ -96,6 +96,25 @@
       "description": "Tender performance prediction model trained on d87ae262-e111-43d5-9389-9c8fd3c0310d",
       "created_at": "2025-05-14T09:38:14.221249",
       "model_path": "data\\models\\tender_performance_20250514093814"
+    },
+    "order_volume_20250514125849": {
+      "model_type": "order_volume",
+      "training_data": "data\\uploads\\a6395e5f-9bd9-412c-87fe-c4d604cd66ec",
+      "training_params": {
+        "epochs": 100,
+        "batch_size": 32,
+        "validation_split": 0.2,
+        "test_size": 0.2,
+        "description": "string"
+      },
+      "evaluation": {
+        "mae": 4.471913814544678,
+        "rmse": 8.065730903932293,
+        "r2": 0.19595354795455933
+      },
+      "description": "Order volume prediction model trained on a6395e5f-9bd9-412c-87fe-c4d604cd66ec",
+      "created_at": "2025-05-14T12:58:49.371932",
+      "model_path": "data\\models\\order_volume_20250514125849"
     }
   }
 }

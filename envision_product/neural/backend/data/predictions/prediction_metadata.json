@@ -38,6 +38,14 @@
       "created_at": "2025-05-14T09:44:55.659378",
       "prediction_count": 1,
       "prediction_file": "data\\predictions\\3a0aa461-3020-4d4b-a66e-6d40b20e5480\\prediction_data.json"
+    },
+    "b31afd29-d296-4625-900f-1c242747854f": {
+      "prediction_id": "b31afd29-d296-4625-900f-1c242747854f",
+      "model_id": "tender_performance_20250514093814",
+      "model_type": "tender_performance",
+      "created_at": "2025-05-14T13:13:25.404738",
+      "prediction_count": 1,
+      "prediction_file": "data\\predictions\\b31afd29-d296-4625-900f-1c242747854f\\prediction_data.json"
     }
   }
 }
