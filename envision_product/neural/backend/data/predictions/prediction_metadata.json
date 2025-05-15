@@ -62,6 +62,14 @@
       "created_at": "2025-05-15T09:14:10.006191",
       "prediction_count": 100,
       "prediction_file": "data\\predictions\\pred_5d35e0c6_20250515\\prediction_data.json"
+    },
+    "pred_3c94517e_20250515": {
+      "prediction_id": "pred_3c94517e_20250515",
+      "model_id": "tender_performance_20250515080638",
+      "model_type": "tender_performance",
+      "created_at": "2025-05-15T09:20:37.403681",
+      "prediction_count": 100,
+      "prediction_file": "data\\predictions\\pred_3c94517e_20250515\\prediction_data.json"
     }
   }
 }

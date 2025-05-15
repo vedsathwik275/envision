@@ -535,14 +535,23 @@ class ModelService:
             # Add model_id to the result
             result["model_id"] = model_id
             
-            # Ensure CSV file is created
+            # Ensure complete CSV file is created
             try:
                 from utils.file_converters import convert_tender_performance_training_predictions
                 csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
                 if csv_path:
-                    logger.info(f"Training predictions CSV created at {csv_path}")
+                    logger.info(f"Complete training predictions CSV created at {csv_path}")
             except Exception as e:
-                logger.error(f"Error creating CSV for training predictions: {str(e)}")
+                logger.error(f"Error creating complete CSV for training predictions: {str(e)}")
+            
+            # Also generate simplified CSV
+            try:
+                from utils.file_converters import convert_tender_performance_simplified
+                simplified_csv_path = convert_tender_performance_simplified(training_predictions_dir)
+                if simplified_csv_path:
+                    logger.info(f"Simplified training predictions CSV created at {simplified_csv_path}")
+            except Exception as e:
+                logger.error(f"Error creating simplified CSV for training predictions: {str(e)}")
             
             return result
             

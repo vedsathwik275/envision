@@ -17,13 +17,14 @@ logger = logging.getLogger(__name__)
 # API base URL
 API_BASE_URL = "http://localhost:8000/api"
 
-def test_get_predictions(model_id):
+def test_get_predictions(model_id, simplified=True):
     """Test getting tender performance predictions."""
     endpoint = f"{API_BASE_URL}/predictions/tender-performance/{model_id}"
+    params = {"simplified": simplified}
     
-    logger.info(f"Testing GET {endpoint}")
+    logger.info(f"Testing GET {endpoint} with simplified={simplified}")
     
-    response = requests.get(endpoint)
+    response = requests.get(endpoint, params=params)
     
     if response.status_code == 200:
         data = response.json()
@@ -32,12 +33,14 @@ def test_get_predictions(model_id):
         logger.info(f"Successfully retrieved {prediction_count} predictions")
         
         # Show metrics if available
-        if 'metrics' in data:
+        if 'metrics' in data and data['metrics']:
             metrics = data.get('metrics', {})
             logger.info(f"Prediction metrics:")
             logger.info(f"  - MAE: {metrics.get('mae', 'N/A')}")
             logger.info(f"  - MAPE: {metrics.get('mape', 'N/A')}%")
             logger.info(f"  - Count: {metrics.get('count', 'N/A')} predictions")
+        elif simplified:
+            logger.info(f"Metrics not included in simplified format")
         
         # Show sample predictions
         predictions = data.get('predictions', [])
@@ -48,8 +51,9 @@ def test_get_predictions(model_id):
                 logger.info(f"    - Carrier: {pred.get('carrier', 'N/A')}")
                 logger.info(f"    - Lane: {pred.get('source_city', 'N/A')} to {pred.get('dest_city', 'N/A')}")
                 logger.info(f"    - Predicted: {pred.get('predicted_performance', 'N/A')}%")
-                logger.info(f"    - Actual: {pred.get('actual_performance', 'N/A')}%")
-                logger.info(f"    - Error: {pred.get('absolute_error', 'N/A')}%")
+                if not simplified:
+                    logger.info(f"    - Actual: {pred.get('actual_performance', 'N/A')}%")
+                    logger.info(f"    - Error: {pred.get('absolute_error', 'N/A')}%")
         
         return True
     else:
@@ -98,12 +102,13 @@ def test_create_predictions(model_id):
         logger.error(f"Error: {response.status_code} - {response.text}")
         return None
 
-def test_get_predictions_by_lane(model_id, source_city, dest_city, carrier=None):
+def test_get_predictions_by_lane(model_id, source_city, dest_city, carrier=None, simplified=True):
     """Test getting tender performance predictions for a specific lane."""
     endpoint = f"{API_BASE_URL}/predictions/tender-performance/{model_id}/by-lane"
     params = {
         "source_city": source_city,
-        "dest_city": dest_city
+        "dest_city": dest_city,
+        "simplified": simplified
     }
     if carrier:
         params["carrier"] = carrier
@@ -127,21 +132,26 @@ def test_get_predictions_by_lane(model_id, source_city, dest_city, carrier=None)
             logger.info(f"  - Carrier: {lane.get('carrier')}")
         
         # Show lane-specific metrics
-        if 'metrics' in data:
+        if 'metrics' in data and data['metrics']:
             metrics = data.get('metrics', {})
             logger.info(f"Lane metrics:")
             logger.info(f"  - MAE: {metrics.get('mae', 'N/A')}")
             logger.info(f"  - MAPE: {metrics.get('mape', 'N/A')}%")
+        elif simplified:
+            logger.info(f"Metrics not included in simplified format")
         
         return True
     else:
         logger.error(f"Error: {response.status_code} - {response.text}")
         return False
 
-def test_download_predictions(model_id, format="csv", source_city=None, dest_city=None, carrier=None):
+def test_download_predictions(model_id, format="csv", simplified=True, source_city=None, dest_city=None, carrier=None):
     """Test downloading tender performance predictions in the specified format."""
     endpoint = f"{API_BASE_URL}/predictions/tender-performance/{model_id}/download"
-    params = {"format": format}
+    params = {
+        "format": format,
+        "simplified": simplified
+    }
     
     # Add filter parameters if provided
     if source_city:
@@ -161,7 +171,7 @@ def test_download_predictions(model_id, format="csv", source_city=None, dest_cit
         if carrier:
             filter_desc += f" carrier={carrier}"
     
-    logger.info(f"Testing GET {endpoint} with format={format}{filter_desc}")
+    logger.info(f"Testing GET {endpoint} with format={format}, simplified={simplified}{filter_desc}")
     
     response = requests.get(endpoint, params=params)
     
@@ -184,6 +194,8 @@ def test_download_predictions(model_id, format="csv", source_city=None, dest_cit
         filename_base = f"tender_performance_predictions_{model_id}"
         if source_city or dest_city or carrier:
             filename_base += "_filtered"
+        if simplified and extension == "csv":
+            filename_base += "_simplified"
         filename = f"{filename_base}.{extension}"
         
         with open(filename, 'wb') as f:
@@ -206,7 +218,7 @@ def test_download_predictions(model_id, format="csv", source_city=None, dest_cit
 def main():
     """Run tests for tender performance prediction API endpoints."""
     if len(sys.argv) < 2:
-        print("Usage: python test_tender_performance_predictions.py <model_id> [source_city] [dest_city] [carrier] [format]")
+        print("Usage: python test_tender_performance_predictions.py <model_id> [source_city] [dest_city] [carrier] [format] [simplified]")
         return
     
     model_id = sys.argv[1]
@@ -214,6 +226,9 @@ def main():
     dest_city = sys.argv[3] if len(sys.argv) > 3 else None
     carrier = sys.argv[4] if len(sys.argv) > 4 else None
     format = sys.argv[5] if len(sys.argv) > 5 else "csv"
+    simplified = True
+    if len(sys.argv) > 6:
+        simplified = sys.argv[6].lower() in ["true", "1", "yes"]
     
     logger.info(f"Testing tender performance prediction API with model_id: {model_id}")
     
@@ -221,13 +236,13 @@ def main():
     new_prediction_id = test_create_predictions(model_id)
     
     # Test getting predictions
-    if test_get_predictions(model_id):
+    if test_get_predictions(model_id, simplified=simplified):
         # Test by-lane if source and destination are provided
         if source_city and dest_city:
-            test_get_predictions_by_lane(model_id, source_city, dest_city, carrier)
+            test_get_predictions_by_lane(model_id, source_city, dest_city, carrier, simplified=simplified)
         
         # Test downloading predictions
-        test_download_predictions(model_id, format, source_city, dest_city, carrier)
+        test_download_predictions(model_id, format, simplified, source_city, dest_city, carrier)
     
     logger.info("Tests completed")
 

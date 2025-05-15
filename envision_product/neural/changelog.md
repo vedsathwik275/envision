@@ -1,12 +1,7 @@
 # Changelog
 
 ## [Unreleased] - 2025-05-15
-
 ### Added
-- Added feature column information saving and loading to `TenderPerformanceModel` 
-- Implemented fallback mechanisms for prediction when model is loaded without training data
-- Added enhanced logging throughout the prediction pipeline for better debugging
-- Created a dummy X_train initialization process when feature columns are available but sample data is missing
 - Added JSON to CSV conversion for prediction results
 - Created utility functions for file format conversions
 - Implemented automatic CSV file generation for both order volume and tender performance predictions
@@ -27,12 +22,10 @@
 - Implemented enhanced filtering options (source city, destination city, carrier) for Tender Performance predictions
 - Added lane-specific metrics calculation for Tender Performance predictions
 - Redesigned the POST endpoint for Tender Performance predictions to use the training data approach
+- Added simplified CSV format option for tender performance predictions with only essential fields (carrier, source/destination cities, and predicted performance)
+- Implemented a new `simplified` parameter (defaults to True) in tender performance API endpoints to control response format
 
 ### Changed
-- Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
-- Improved `PredictionService.predict_tender_performance()` to use consistent directory structure for saved predictions
-- Updated model loading to utilize feature_info.json for initializing necessary preprocessing components
-- Enhanced API response validation to ensure all required fields are properly included
 - Modified prediction saving to generate both JSON and CSV formats
 - Extended PredictionService with advanced filtering for order volume predictions
 - Improved error handling and logging in prediction retrieval routes
@@ -45,6 +38,28 @@
 - Updated test scripts to match the new API structure and provide better testing coverage
 - Improved documentation of API endpoints to clarify their purpose and relationship to industry standards
 - Simplified Tender Performance prediction API by removing the need to specify individual lanes and carriers
+- Modified Tender Performance API responses to return simplified data by default (without error metrics and actual values)
+- Updated model service to generate both complete and simplified CSVs when predictions are created
+- Updated test script to support testing both simplified and complete formats
+
+### Fixed
+- Fixed issues with missing CSV files in Order Volume API endpoints
+- Resolved inconsistency in file format handling between different API routes
+- Added fallback mechanisms to ensure proper content delivery regardless of file availability
+
+## [Unreleased] - 2025-05-14
+
+### Added
+- Added feature column information saving and loading to `TenderPerformanceModel` 
+- Implemented fallback mechanisms for prediction when model is loaded without training data
+- Added enhanced logging throughout the prediction pipeline for better debugging
+- Created a dummy X_train initialization process when feature columns are available but sample data is missing
+
+### Changed
+- Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
+- Improved `PredictionService.predict_tender_performance()` to use consistent directory structure for saved predictions
+- Updated model loading to utilize feature_info.json for initializing necessary preprocessing components
+- Enhanced API response validation to ensure all required fields are properly included
 
 ### Fixed
 - Fixed "NoneType has no attribute columns" error during prediction when model loaded from saved state
@@ -52,9 +67,6 @@
 - Resolved inconsistency in prediction file storage between different prediction types
 - Fixed issues with prediction retrieval when predictions are saved in the wrong location
 - Added missing prediction_id to metadata in prediction responses
-- Fixed issues with missing CSV files in Order Volume API endpoints
-- Resolved inconsistency in file format handling between different API routes
-- Added fallback mechanisms to ensure proper content delivery regardless of file availability
 
 ## [Unreleased] - 2025-05-12
 
@@ -115,4 +127,4 @@
 
 ---
 
-Timestamp: 2025-05-14 09:55:00 
+Timestamp: 2025-05-15 09:25:00

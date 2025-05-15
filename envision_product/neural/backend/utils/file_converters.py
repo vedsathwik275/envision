@@ -285,4 +285,74 @@ def convert_tender_performance_training_predictions(prediction_dir: Union[str, P
             logger.warning(f"Created fallback empty CSV due to conversion error: {csv_file}")
             return csv_file
         except:
+            return None
+
+def convert_tender_performance_simplified(prediction_dir: Union[str, Path]) -> Optional[Path]:
+    """Convert tender performance prediction JSON to simplified CSV.
+    
+    This function creates a simplified CSV with just the essential fields:
+    carrier, source_city, dest_city, and predicted_performance.
+    No error metrics or actual performance is included.
+    
+    Args:
+        prediction_dir: Directory containing the prediction files
+    
+    Returns:
+        Path to the generated simplified CSV file or None if conversion fails
+    """
+    try:
+        prediction_dir = Path(prediction_dir)
+        json_file = prediction_dir / "prediction_data.json"
+        simplified_csv_file = prediction_dir / "prediction_data_simplified.csv"
+        
+        if not json_file.exists():
+            logger.error(f"Prediction JSON file not found: {json_file}")
+            return None
+        
+        # Read the JSON file
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+        
+        # Extract predictions
+        predictions = data.get('predictions', [])
+        
+        if not predictions:
+            logger.warning(f"No predictions found in {json_file}")
+            # Create an empty CSV with expected headers
+            empty_df = pd.DataFrame(columns=[
+                'carrier', 'source_city', 'dest_city', 'predicted_performance'
+            ])
+            empty_df.to_csv(simplified_csv_file, index=False)
+            logger.info(f"Created empty simplified CSV with headers: {simplified_csv_file}")
+            return simplified_csv_file
+        
+        # Create simplified data with only the essential fields
+        csv_data = []
+        for pred in predictions:
+            row = {
+                'carrier': pred.get('carrier', ''),
+                'source_city': pred.get('source_city', ''),
+                'dest_city': pred.get('dest_city', ''),
+                'predicted_performance': pred.get('predicted_performance', 0)
+            }
+            csv_data.append(row)
+        
+        # Convert to DataFrame and save as CSV
+        df = pd.DataFrame(csv_data)
+        df.to_csv(simplified_csv_file, index=False)
+        
+        logger.info(f"Successfully created simplified CSV: {simplified_csv_file}")
+        return simplified_csv_file
+    
+    except Exception as e:
+        logger.error(f"Error creating simplified CSV: {str(e)}")
+        try:
+            # Create a minimal CSV with basic headers as fallback
+            empty_df = pd.DataFrame(columns=[
+                'carrier', 'source_city', 'dest_city', 'predicted_performance'
+            ])
+            empty_df.to_csv(simplified_csv_file, index=False)
+            logger.warning(f"Created fallback empty simplified CSV due to conversion error: {simplified_csv_file}")
+            return simplified_csv_file
+        except:
             return None 

@@ -163,13 +163,21 @@ async def create_tender_performance_prediction(
         with open(prediction_file, "w") as f:
             json.dump(result, f, indent=2)
         
-        # Also save as CSV
+        # Generate complete CSV with all metrics
         try:
             from utils.file_converters import convert_tender_performance_training_predictions
             csv_file = convert_tender_performance_training_predictions(prediction_dir)
-            logger.info(f"Generated CSV prediction file: {csv_file}")
+            logger.info(f"Generated complete CSV prediction file: {csv_file}")
         except Exception as e:
-            logger.error(f"Error generating CSV file: {str(e)}")
+            logger.error(f"Error generating complete CSV file: {str(e)}")
+            
+        # Also generate simplified CSV with only essential fields
+        try:
+            from utils.file_converters import convert_tender_performance_simplified
+            simplified_csv_file = convert_tender_performance_simplified(prediction_dir)
+            logger.info(f"Generated simplified CSV prediction file: {simplified_csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating simplified CSV file: {str(e)}")
         
         # Create metadata for the prediction
         metadata = {
@@ -206,7 +214,8 @@ async def create_tender_performance_prediction(
 
 @router.get("/tender-performance/{model_id}")
 async def get_tender_performance_predictions(
-    model_id: str
+    model_id: str,
+    simplified: bool = True
 ):
     """
     Get predictions for tender performance.
@@ -217,6 +226,7 @@ async def get_tender_performance_predictions(
     actual historical performance.
     
     - **model_id**: The ID of the model
+    - **simplified**: Whether to return simplified predictions with only essential fields (defaults to True)
     """
     try:
         # Use the model service directly
@@ -230,14 +240,32 @@ async def get_tender_performance_predictions(
                 status_code=500, 
                 detail=f"Failed to generate predictions with model {model_id}"
             )
+        
+        # Get all predictions
+        predictions = result.get("predictions", [])
+        
+        # Simplify predictions if requested
+        if simplified:
+            simplified_predictions = []
+            for pred in predictions:
+                simplified_pred = {
+                    'carrier': pred.get('carrier', ''),
+                    'source_city': pred.get('source_city', ''),
+                    'dest_city': pred.get('dest_city', ''),
+                    'predicted_performance': pred.get('predicted_performance', 0)
+                }
+                simplified_predictions.append(simplified_pred)
             
+            # Replace full predictions with simplified ones
+            predictions = simplified_predictions
+        
         # Prepare the response
         return {
             "model_id": model_id,
-            "prediction_count": len(result.get("predictions", [])),
-            "metrics": result.get("metrics", {}),
-            "predictions": result.get("predictions", [])[:100],  # Limit to first 100 for API response
-            "note": "Only showing first 100 predictions in the API response. Full data available in CSV format."
+            "prediction_count": len(predictions),
+            "metrics": result.get("metrics", {}) if not simplified else {},
+            "predictions": predictions[:100],  # Limit to first 100 for API response
+            "note": "Only showing first 100 predictions in the API response. Full data available via download endpoint."
         }
     except Exception as e:
         raise HTTPException(
@@ -250,7 +278,8 @@ async def get_tender_performance_by_lane(
     model_id: str,
     source_city: str,
     dest_city: str,
-    carrier: Optional[str] = None
+    carrier: Optional[str] = None,
+    simplified: bool = True
 ):
     """
     Get tender performance predictions for a specific lane.
@@ -262,6 +291,7 @@ async def get_tender_performance_by_lane(
     - **source_city**: The source city (required)
     - **destination_city**: The destination city (required)
     - **carrier**: Optional carrier filter
+    - **simplified**: Whether to return simplified predictions with only essential fields (defaults to True)
     """
     try:
         # Get all predictions first
@@ -305,6 +335,21 @@ async def get_tender_performance_by_lane(
                 "mape": float(mape)
             }
         
+        # Simplify predictions if requested
+        if simplified:
+            simplified_predictions = []
+            for pred in filtered_predictions:
+                simplified_pred = {
+                    'carrier': pred.get('carrier', ''),
+                    'source_city': pred.get('source_city', ''),
+                    'dest_city': pred.get('dest_city', ''),
+                    'predicted_performance': pred.get('predicted_performance', 0)
+                }
+                simplified_predictions.append(simplified_pred)
+            
+            # Replace full predictions with simplified ones
+            filtered_predictions = simplified_predictions
+        
         return {
             "model_id": model_id,
             "lane": {
@@ -313,7 +358,7 @@ async def get_tender_performance_by_lane(
                 "carrier": carrier
             },
             "prediction_count": len(filtered_predictions),
-            "metrics": lane_metrics,
+            "metrics": lane_metrics if not simplified else {},
             "predictions": filtered_predictions
         }
     except Exception as e:
@@ -329,6 +374,7 @@ async def get_tender_performance_by_lane(
 async def download_tender_performance_predictions(
     model_id: str,
     format: str = "csv",
+    simplified: bool = True,
     source_city: Optional[str] = None,
     dest_city: Optional[str] = None,
     carrier: Optional[str] = None
@@ -340,6 +386,7 @@ async def download_tender_performance_predictions(
     
     - **model_id**: The ID of the model
     - **format**: The format to download (csv or json, defaults to csv)
+    - **simplified**: Whether to provide a simplified CSV with only essential fields (defaults to True)
     - **source_city**: Optional filter by source city
     - **dest_city**: Optional filter by destination city
     - **carrier**: Optional filter by carrier
@@ -370,6 +417,7 @@ async def download_tender_performance_predictions(
         # Check for the specific format requested
         json_file = os.path.join(training_predictions_dir, "prediction_data.json")
         csv_file = os.path.join(training_predictions_dir, "prediction_data.csv")
+        simplified_csv_file = os.path.join(training_predictions_dir, "prediction_data_simplified.csv")
         
         # Handle filtering if requested
         if source_city or dest_city or carrier:
@@ -410,6 +458,22 @@ async def download_tender_performance_predictions(
                 filtered_df = pd.DataFrame(filtered_predictions)
                 filtered_df.to_csv(filtered_csv_path, index=False)
                 
+                # Also create simplified filtered CSV if needed
+                if simplified and format.lower() == "csv":
+                    simplified_filtered_csv_path = os.path.join(training_predictions_dir, "filtered_predictions_simplified.csv")
+                    # Keep only the essential fields
+                    simplified_data = []
+                    for pred in filtered_predictions:
+                        simplified_data.append({
+                            'carrier': pred.get('carrier', ''),
+                            'source_city': pred.get('source_city', ''),
+                            'dest_city': pred.get('dest_city', ''),
+                            'predicted_performance': pred.get('predicted_performance', 0)
+                        })
+                    simplified_df = pd.DataFrame(simplified_data)
+                    simplified_df.to_csv(simplified_filtered_csv_path, index=False)
+                    filtered_csv_path = simplified_filtered_csv_path
+                
                 # Update file paths to use filtered data
                 json_file = filtered_json_path
                 csv_file = filtered_csv_path
@@ -417,6 +481,23 @@ async def download_tender_performance_predictions(
             except Exception as e:
                 logger.error(f"Error filtering predictions: {str(e)}")
                 # Continue with unfiltered data if filtering fails
+                
+        # For unfiltered CSV, generate the simplified version if needed
+        if simplified and format.lower() == "csv" and not (source_city or dest_city or carrier):
+            # Check if simplified file exists, if not generate it
+            if not os.path.exists(simplified_csv_file):
+                try:
+                    from utils.file_converters import convert_tender_performance_simplified
+                    simplified_csv_path = convert_tender_performance_simplified(training_predictions_dir)
+                    if simplified_csv_path:
+                        csv_file = str(simplified_csv_path)
+                        logger.info(f"Generated simplified CSV file: {csv_file}")
+                except Exception as e:
+                    logger.error(f"Error generating simplified CSV: {str(e)}")
+                    # Continue with regular CSV if simplified generation fails
+            else:
+                csv_file = simplified_csv_file
+                logger.info(f"Using existing simplified CSV file: {csv_file}")
         
         if format.lower() == "json" and os.path.exists(json_file):
             filename = f"tender_performance_predictions_{model_id}.json"
@@ -432,6 +513,10 @@ async def download_tender_performance_predictions(
             filename = f"tender_performance_predictions_{model_id}.csv"
             if source_city or dest_city or carrier:
                 filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+            if simplified:
+                filename = f"tender_performance_predictions_{model_id}_simplified.csv"
+                if source_city or dest_city or carrier:
+                    filename = f"tender_performance_predictions_{model_id}_filtered_simplified.csv"
                 
             return FileResponse(
                 path=csv_file,
@@ -441,12 +526,21 @@ async def download_tender_performance_predictions(
         elif os.path.exists(json_file) and format.lower() == "csv":
             # Try to generate CSV if it doesn't exist but JSON does
             try:
-                from utils.file_converters import convert_tender_performance_training_predictions
-                csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
+                if simplified:
+                    from utils.file_converters import convert_tender_performance_simplified
+                    csv_path = convert_tender_performance_simplified(training_predictions_dir)
+                else:
+                    from utils.file_converters import convert_tender_performance_training_predictions
+                    csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
+                
                 if csv_path and os.path.exists(csv_path):
                     filename = f"tender_performance_predictions_{model_id}.csv"
                     if source_city or dest_city or carrier:
                         filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+                    if simplified:
+                        filename = f"tender_performance_predictions_{model_id}_simplified.csv"
+                        if source_city or dest_city or carrier:
+                            filename = f"tender_performance_predictions_{model_id}_filtered_simplified.csv"
                     
                     return FileResponse(
                         path=str(csv_path),
@@ -472,6 +566,10 @@ async def download_tender_performance_predictions(
             filename = f"tender_performance_predictions_{model_id}.csv"
             if source_city or dest_city or carrier:
                 filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+            if simplified:
+                filename = f"tender_performance_predictions_{model_id}_simplified.csv"
+                if source_city or dest_city or carrier:
+                    filename = f"tender_performance_predictions_{model_id}_filtered_simplified.csv"
                 
             return FileResponse(
                 path=csv_file,

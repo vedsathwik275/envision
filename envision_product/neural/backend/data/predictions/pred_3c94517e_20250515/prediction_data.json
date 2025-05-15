@@ -1,5 +1,5 @@
 {
-  "prediction_time": "2025-05-15T09:20:43.822774",
+  "prediction_time": "2025-05-15T09:20:37.380990",
   "predictions": [
     {
       "carrier": "LRGR",
@@ -906,5 +906,6 @@
     "count": 100,
     "mae": 11.740441665649413,
     "mape": 19.197585770177668
-  }
+  },
+  "model_id": "tender_performance_20250515080638"
 }
