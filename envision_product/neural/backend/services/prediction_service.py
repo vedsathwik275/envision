@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 
 from services.model_service import ModelService
+from utils.file_converters import json_to_csv, convert_order_volume_predictions, convert_tender_performance_predictions
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,14 @@ class PredictionService:
         prediction_file = prediction_dir / "prediction_data.json"
         with open(prediction_file, "w") as f:
             json.dump(prediction_data, f, indent=2)
+        
+        # Also save as CSV
+        try:
+            csv_file = prediction_dir / "prediction_data.csv"
+            json_to_csv(prediction_file, csv_file)
+            logger.info(f"Generated CSV prediction file: {csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating CSV file: {str(e)}")
         
         # Extract and save metadata
         metadata = {
@@ -192,6 +201,13 @@ class PredictionService:
         # Save the prediction
         prediction_id = self.save_prediction(prediction_data)
         
+        # Generate CSV file specifically for order volume
+        try:
+            prediction_dir = self.base_path / prediction_id
+            convert_order_volume_predictions(prediction_dir)
+        except Exception as e:
+            logger.error(f"Error generating order volume CSV: {str(e)}")
+        
         # Return the full prediction with ID
         return {
             "prediction_id": prediction_id,
@@ -233,6 +249,14 @@ class PredictionService:
         prediction_file = prediction_dir / "prediction_data.json"
         with open(prediction_file, "w") as f:
             json.dump(prediction_data, f, indent=2)
+        
+        # Also save as CSV
+        try:
+            csv_file = prediction_dir / "prediction_data.csv"
+            convert_tender_performance_predictions(prediction_dir)
+            logger.info(f"Generated CSV prediction file: {csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating CSV file: {str(e)}")
         
         # Create metadata for the prediction
         metadata = {

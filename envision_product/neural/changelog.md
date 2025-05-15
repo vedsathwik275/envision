@@ -7,12 +7,16 @@
 - Implemented fallback mechanisms for prediction when model is loaded without training data
 - Added enhanced logging throughout the prediction pipeline for better debugging
 - Created a dummy X_train initialization process when feature columns are available but sample data is missing
+- Added JSON to CSV conversion for prediction results
+- Created utility functions for file format conversions
+- Implemented automatic CSV file generation for both order volume and tender performance predictions
 
 ### Changed
 - Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
 - Improved `PredictionService.predict_tender_performance()` to use consistent directory structure for saved predictions
 - Updated model loading to utilize feature_info.json for initializing necessary preprocessing components
 - Enhanced API response validation to ensure all required fields are properly included
+- Modified prediction saving to generate both JSON and CSV formats
 
 ### Fixed
 - Fixed "NoneType has no attribute columns" error during prediction when model loaded from saved state

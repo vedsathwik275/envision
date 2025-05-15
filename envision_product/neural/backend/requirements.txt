@@ -7,3 +7,12 @@ email-validator
 python-jose
 passlib
 bcrypt
+
+# Data processing dependencies
+pandas
+numpy
+
+# ML dependencies
+tensorflow
+scikit-learn
+matplotlib

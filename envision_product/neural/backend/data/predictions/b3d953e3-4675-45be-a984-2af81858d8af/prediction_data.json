@@ -1,0 +1,12 @@
+{
+  "model_id": "tender_performance_20250515080638",
+  "prediction_time": "2025-05-15T08:07:15.705235",
+  "predictions": [
+    {
+      "carrier": "RBTW",
+      "source_city": "PHARR",
+      "dest_city": "ELWOOD",
+      "predicted_performance": 90.8677978515625
+    }
+  ]
+}

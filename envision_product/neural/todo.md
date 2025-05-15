@@ -2,7 +2,7 @@
 
 ## 1. Order Volume Model Enhancements
 
-- [ ] **JSON to CSV Conversion**
+- [x] **JSON to CSV Conversion**
    - Implement functionality to convert order volume prediction JSON files to CSV format
    - Save both formats when predictions are generated
    - Ensure CSV headers match the expected format

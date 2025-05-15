@@ -47,6 +47,14 @@
       "size": 414779,
       "upload_time": "2025-05-14T12:58:05.952712",
       "path": "data\\uploads\\a6395e5f-9bd9-412c-87fe-c4d604cd66ec"
+    },
+    "a38b0e65-cb6b-49ea-b50f-9108f9b70222": {
+      "file_id": "a38b0e65-cb6b-49ea-b50f-9108f9b70222",
+      "filename": "TenderPerformance.csv",
+      "content_type": "text/csv",
+      "size": 11683,
+      "upload_time": "2025-05-15T08:06:13.235725",
+      "path": "data\\uploads\\a38b0e65-cb6b-49ea-b50f-9108f9b70222"
     }
   }
 }
