@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] - 2025-05-14
+## [Unreleased] - 2025-05-15
 
 ### Added
 - Added feature column information saving and loading to `TenderPerformanceModel` 
@@ -10,6 +10,13 @@
 - Added JSON to CSV conversion for prediction results
 - Created utility functions for file format conversions
 - Implemented automatic CSV file generation for both order volume and tender performance predictions
+- Added API routes for retrieving order volume predictions with filtering capabilities
+- Created dedicated endpoints for order volume predictions by lane
+- Added CSV download capability for order volume predictions
+- Enhanced Order Volume API with format selection options for file downloads
+- Added dynamic CSV generation capability for Order Volume predictions
+- Implemented fallback to JSON when CSV is unavailable with clear notification headers
+- Added support for explicitly requesting JSON format in download endpoints
 
 ### Changed
 - Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
@@ -17,6 +24,12 @@
 - Updated model loading to utilize feature_info.json for initializing necessary preprocessing components
 - Enhanced API response validation to ensure all required fields are properly included
 - Modified prediction saving to generate both JSON and CSV formats
+- Extended PredictionService with advanced filtering for order volume predictions
+- Improved error handling and logging in prediction retrieval routes
+- Improved CSV conversion to handle missing fields and empty datasets
+- Enhanced test suite to gracefully handle both CSV and JSON responses
+- Modified file handling to attempt on-demand CSV generation when files are missing
+- Added more robust error handling for file conversions
 
 ### Fixed
 - Fixed "NoneType has no attribute columns" error during prediction when model loaded from saved state
@@ -24,6 +37,9 @@
 - Resolved inconsistency in prediction file storage between different prediction types
 - Fixed issues with prediction retrieval when predictions are saved in the wrong location
 - Added missing prediction_id to metadata in prediction responses
+- Fixed issues with missing CSV files in Order Volume API endpoints
+- Resolved inconsistency in file format handling between different API routes
+- Added fallback mechanisms to ensure proper content delivery regardless of file availability
 
 ## [Unreleased] - 2025-05-12
 

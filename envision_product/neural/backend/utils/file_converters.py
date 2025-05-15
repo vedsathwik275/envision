@@ -94,21 +94,39 @@ def convert_order_volume_predictions(prediction_dir: Union[str, Path]) -> Option
         predictions = data.get('predictions', [])
         
         if not predictions:
-            logger.warning(f"No predictions found in {json_file}")
-            return None
+            logger.warning(f"No predictions found in {json_file}. Creating empty CSV with headers.")
+            # Create a minimal CSV with expected headers even if there are no predictions
+            empty_df = pd.DataFrame(columns=[
+                'source_city', 'destination_city', 'order_type', 'month', 
+                'predicted_volume', 'confidence'
+            ])
+            empty_df.to_csv(csv_file, index=False)
+            logger.info(f"Created empty CSV with headers: {csv_file}")
+            return csv_file
         
-        # Order volume predictions typically have these fields
-        # Normalize the data for CSV format
+        # Extract a sample prediction to get all available fields
+        sample = predictions[0]
+        all_fields = list(sample.keys())
+        
+        # Ensure standard fields are present, add empty ones if missing
+        standard_fields = [
+            'source_city', 'destination_city', 'order_type', 'month', 
+            'predicted_volume', 'confidence'
+        ]
+        
+        # Create a normalized dataset ensuring all standard fields exist
         csv_data = []
         for pred in predictions:
-            row = {
-                'source_city': pred.get('source_city', ''),
-                'destination_city': pred.get('destination_city', ''),
-                'order_type': pred.get('order_type', ''),
-                'month': pred.get('month', ''),
-                'predicted_volume': pred.get('predicted_volume', 0),
-                'confidence': pred.get('confidence', 0)
-            }
+            row = {}
+            # Add all existing fields from the prediction
+            for field in all_fields:
+                row[field] = pred.get(field, '')
+                
+            # Ensure standard fields exist, even if empty
+            for field in standard_fields:
+                if field not in row:
+                    row[field] = ''
+                    
             csv_data.append(row)
         
         # Convert to DataFrame and save as CSV
@@ -120,7 +138,17 @@ def convert_order_volume_predictions(prediction_dir: Union[str, Path]) -> Option
     
     except Exception as e:
         logger.error(f"Error converting order volume predictions to CSV: {str(e)}")
-        return None
+        try:
+            # Create a minimal CSV with basic headers as fallback
+            empty_df = pd.DataFrame(columns=[
+                'source_city', 'destination_city', 'order_type', 'month', 
+                'predicted_volume', 'confidence'
+            ])
+            empty_df.to_csv(csv_file, index=False)
+            logger.warning(f"Created fallback empty CSV due to conversion error: {csv_file}")
+            return csv_file
+        except:
+            return None
 
 def convert_tender_performance_predictions(prediction_dir: Union[str, Path]) -> Optional[Path]:
     """Convert tender performance prediction JSON to CSV.

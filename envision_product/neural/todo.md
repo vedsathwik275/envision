@@ -7,11 +7,11 @@
    - Save both formats when predictions are generated
    - Ensure CSV headers match the expected format
 
-- [ ] **API Routes for Order Volume Predictions**
+- [x] **API Routes for Order Volume Predictions**
    - Create route to get predictions by model ID, lane, and carrier
    - Create route to get all predictions for a specific model ID
    - Implement filtering capabilities (by source city, destination city, carrier)
-   - Add pagination support for large prediction sets
+   - Add pagination support for large prediction sets (do this at the very end)
 
 ## 2. Tender Performance Model Enhancements
 
@@ -24,7 +24,7 @@
    - Create route to get predictions by model ID, lane, and carrier
    - Create route to get predictions by model ID and lane (for all carriers)
    - Implement filtering capabilities similar to order volume
-   - Add pagination support for large prediction sets
+   - Add pagination support for large prediction sets (do this at the very end)
 
 ## 3. Model Management API Routes
 
@@ -39,7 +39,7 @@
 
 ## 4. Common Utilities
 
-- [ ] **File Format Conversion Utility**
+- [x] **File Format Conversion Utility**
    - Create a shared utility for JSON to CSV conversion
    - Ensure consistent handling of nested data structures
 

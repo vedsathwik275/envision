@@ -647,4 +647,204 @@ class PredictionService:
             if match:
                 result.append(pred)
                 
+        return result
+    
+    def get_order_volume_predictions(
+        self, 
+        model_id: str,
+        source_city: Optional[str] = None,
+        destination_city: Optional[str] = None,
+        order_type: Optional[str] = None,
+        month: Optional[str] = None,
+        limit: int = 1000,
+        offset: int = 0
+    ) -> Optional[Dict[str, Any]]:
+        """Get order volume predictions for a specific model with optional filtering.
+        
+        Args:
+            model_id: ID of the model
+            source_city: Optional source city filter
+            destination_city: Optional destination city filter
+            order_type: Optional order type filter
+            month: Optional month filter (format: YYYY-MM)
+            limit: Maximum number of predictions to return
+            offset: Number of predictions to skip
+            
+        Returns:
+            Dictionary with filtered predictions or None if model not found
+        """
+        logger.info(f"Getting order volume predictions for model {model_id} with filters: "
+                  f"source_city={source_city}, destination_city={destination_city}, "
+                  f"order_type={order_type}, month={month}")
+        
+        # Find the latest prediction for this model
+        model_predictions = [p for p in self.list_predictions(model_id=model_id) 
+                           if p.get("model_type") == "order_volume"]
+        
+        if not model_predictions:
+            logger.warning(f"No order volume predictions found for model {model_id}")
+            return None
+        
+        # Sort by creation time (newest first)
+        model_predictions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        latest_prediction = model_predictions[0]
+        
+        # Get the full prediction data
+        prediction_data = self.get_prediction(latest_prediction["prediction_id"])
+        
+        if not prediction_data or "data" not in prediction_data:
+            logger.error(f"Prediction data not found for ID {latest_prediction['prediction_id']}")
+            return None
+        
+        # Extract the predictions
+        predictions = prediction_data["data"].get("predictions", [])
+        
+        # Apply filters
+        filtered_predictions = self._filter_order_volume_predictions_advanced(
+            predictions=predictions,
+            source_city=source_city,
+            destination_city=destination_city,
+            order_type=order_type,
+            month=month
+        )
+        
+        # Apply limit and offset
+        paginated_predictions = filtered_predictions[offset:offset+limit]
+        
+        # Check if CSV file exists
+        prediction_id = latest_prediction["prediction_id"]
+        prediction_dir = self.base_path / prediction_id
+        csv_file = prediction_dir / "prediction_data.csv"
+        json_file = prediction_dir / "prediction_data.json"
+        
+        # Generate CSV file if it doesn't exist
+        if not csv_file.exists() and json_file.exists():
+            logger.info(f"CSV file not found for prediction {prediction_id}. Generating it now.")
+            try:
+                from utils.file_converters import convert_order_volume_predictions
+                csv_path = convert_order_volume_predictions(prediction_dir)
+                csv_exists = csv_path is not None and csv_path.exists()
+            except Exception as e:
+                logger.error(f"Failed to generate CSV file on demand: {str(e)}")
+                csv_exists = False
+        else:
+            csv_exists = csv_file.exists()
+            
+        # Always check again after potential generation
+        if csv_file.exists():
+            csv_exists = True
+            csv_path = str(csv_file)
+        else:
+            csv_exists = False
+            csv_path = None
+        
+        result = {
+            "model_id": model_id,
+            "prediction_id": prediction_id,
+            "created_at": latest_prediction["created_at"],
+            "total_predictions": len(predictions),
+            "filtered_predictions": len(filtered_predictions),
+            "returned_predictions": len(paginated_predictions),
+            "has_csv_export": csv_exists,
+            "csv_path": csv_path,
+            "json_path": str(json_file) if json_file.exists() else None,
+            "predictions": paginated_predictions
+        }
+        
+        return result
+    
+    def get_order_volume_by_lane(
+        self,
+        model_id: str,
+        source_city: str,
+        destination_city: str,
+        order_type: Optional[str] = None,
+        month: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Get order volume predictions for a specific lane.
+        
+        Args:
+            model_id: ID of the model
+            source_city: Source city
+            destination_city: Destination city
+            order_type: Optional order type filter
+            month: Optional month filter (format: YYYY-MM)
+            
+        Returns:
+            Dictionary with lane predictions or None if not found
+        """
+        if not source_city or not destination_city:
+            logger.error("Source city and destination city are required for lane predictions")
+            return None
+        
+        # Get predictions with filtering
+        result = self.get_order_volume_predictions(
+            model_id=model_id,
+            source_city=source_city,
+            destination_city=destination_city,
+            order_type=order_type,
+            month=month
+        )
+        
+        if not result or not result.get("predictions"):
+            logger.warning(f"No predictions found for lane {source_city} to {destination_city}")
+            return None
+        
+        # Format the response specifically for lane view
+        lane_data = {
+            "model_id": model_id,
+            "lane": {
+                "source_city": source_city,
+                "destination_city": destination_city
+            },
+            "predictions": result["predictions"],
+            "prediction_count": len(result["predictions"])
+        }
+        
+        return lane_data
+    
+    def _filter_order_volume_predictions_advanced(
+        self,
+        predictions: List[Dict],
+        source_city: Optional[str] = None,
+        destination_city: Optional[str] = None,
+        order_type: Optional[str] = None,
+        month: Optional[str] = None
+    ) -> List[Dict]:
+        """Apply advanced filters to order volume predictions.
+        
+        Args:
+            predictions: List of prediction dictionaries
+            source_city: Optional source city filter
+            destination_city: Optional destination city filter
+            order_type: Optional order type filter
+            month: Optional month filter (format: YYYY-MM)
+            
+        Returns:
+            Filtered list of predictions
+        """
+        result = []
+        
+        for pred in predictions:
+            match = True
+            
+            # Filter by source city (case-insensitive)
+            if source_city and pred.get("source_city", "").upper() != source_city.upper():
+                match = False
+                
+            # Filter by destination city (case-insensitive)
+            if destination_city and pred.get("destination_city", "").upper() != destination_city.upper():
+                match = False
+                
+            # Filter by order type (case-insensitive)
+            if order_type and pred.get("order_type", "").upper() != order_type.upper():
+                match = False
+                
+            # Filter by month
+            if month and pred.get("month", "") != month:
+                match = False
+            
+            if match:
+                result.append(pred)
+                
         return result 
