@@ -22,6 +22,11 @@
 - Added API endpoints for generating and downloading training data predictions
 - Implemented metrics calculation on training data predictions including MAE and MAPE
 - Added comparison of actual vs predicted values in training data predictions
+- Created dedicated API routes for Tender Performance predictions using the training data approach
+- Added by-lane filtering for Tender Performance predictions
+- Implemented enhanced filtering options (source city, destination city, carrier) for Tender Performance predictions
+- Added lane-specific metrics calculation for Tender Performance predictions
+- Redesigned the POST endpoint for Tender Performance predictions to use the training data approach
 
 ### Changed
 - Enhanced `TenderPerformanceModel.predict()` to handle cases where model is loaded without going through training
@@ -35,6 +40,11 @@
 - Enhanced test suite to gracefully handle both CSV and JSON responses
 - Modified file handling to attempt on-demand CSV generation when files are missing
 - Added more robust error handling for file conversions
+- Changed Tender Performance predictions to use the training data approach as the primary prediction method
+- Enhanced file naming for filtered prediction downloads to indicate when filters are applied
+- Updated test scripts to match the new API structure and provide better testing coverage
+- Improved documentation of API endpoints to clarify their purpose and relationship to industry standards
+- Simplified Tender Performance prediction API by removing the need to specify individual lanes and carriers
 
 ### Fixed
 - Fixed "NoneType has no attribute columns" error during prediction when model loaded from saved state

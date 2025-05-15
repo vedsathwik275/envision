@@ -20,7 +20,7 @@
    - Create a prediction file with input features and predicted output
    - Save both JSON and CSV versions of the predictions
 
-- [ ] **API Routes for Tender Performance Predictions**
+- [x] **API Routes for Tender Performance Predictions**
    - Create route to get predictions by model ID, lane, and carrier
    - Create route to get predictions by model ID and lane (for all carriers)
    - Implement filtering capabilities similar to order volume

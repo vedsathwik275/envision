@@ -6,6 +6,9 @@ from typing import List, Optional, Dict, Any
 import logging
 from pathlib import Path
 import os
+import json
+import pandas as pd
+from datetime import datetime
 
 from services.prediction_service import PredictionService
 
@@ -25,9 +28,6 @@ class OrderVolumePredictionRequest(BaseModel):
 
 class TenderPerformancePredictionRequest(BaseModel):
     model_id: str
-    carriers: List[str] = Field(..., description="List of carriers")
-    source_cities: List[str] = Field(..., description="List of source cities")
-    dest_cities: List[str] = Field(..., description="List of destination cities")
 
 class PredictionMetadata(BaseModel):
     prediction_id: str
@@ -120,60 +120,106 @@ async def create_order_volume_prediction(
     
     return prediction
 
-@router.post("/tender-performance", response_model=PredictionDetail)
+@router.post("/tender-performance")
 async def create_tender_performance_prediction(
     request: TenderPerformancePredictionRequest,
     prediction_service: PredictionService = Depends(get_prediction_service)
 ):
-    """Generate predictions for tender performance."""
-    # Check if input lists have the same length
-    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+    """
+    Generate predictions for tender performance.
+    
+    This endpoint creates a new prediction using the specified model by
+    predicting performance across all lanes and carriers in the training data.
+    
+    In the transportation industry, the prediction set is typically the same
+    as the training data, with model-generated predictions compared against 
+    actual historical performance.
+    
+    - **model_id**: The ID of the model to use for prediction
+    """
+    try:
+        # Use the model service to generate predictions on the training data
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        logger.info(f"Generating tender performance predictions using model {request.model_id}")
+        result = model_service.predict_tender_performance_on_training_data(model_id=request.model_id)
+        
+        if not result:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate predictions with model {request.model_id}"
+            )
+        
+        # Create a new prediction record using the prediction service
+        prediction_id = prediction_service._generate_prediction_id()
+        
+        # Create directory for prediction data
+        prediction_dir = prediction_service.base_path / prediction_id
+        prediction_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save prediction data as JSON
+        prediction_file = prediction_dir / "prediction_data.json"
+        with open(prediction_file, "w") as f:
+            json.dump(result, f, indent=2)
+        
+        # Also save as CSV
+        try:
+            from utils.file_converters import convert_tender_performance_training_predictions
+            csv_file = convert_tender_performance_training_predictions(prediction_dir)
+            logger.info(f"Generated CSV prediction file: {csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating CSV file: {str(e)}")
+        
+        # Create metadata for the prediction
+        metadata = {
+            "prediction_id": prediction_id,
+            "model_id": request.model_id,
+            "model_type": "tender_performance",
+            "created_at": datetime.now().isoformat(),
+            "prediction_count": len(result.get("predictions", [])),
+            "prediction_file": str(prediction_file)
+        }
+        
+        # Save metadata
+        prediction_service.metadata["predictions"][prediction_id] = metadata
+        prediction_service._save_metadata()
+        
+        # Get full prediction details including ID
+        prediction = {
+            "prediction_id": prediction_id,
+            "model_id": request.model_id,
+            "model_type": "tender_performance",
+            "created_at": metadata["created_at"],
+            "prediction_count": metadata["prediction_count"],
+            "metrics": result.get("metrics", {}),
+            "data": result
+        }
+        
+        return prediction
+    except Exception as e:
+        logger.error(f"Error generating tender performance predictions: {str(e)}")
         raise HTTPException(
-            status_code=400,
-            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+            status_code=500,
+            detail=f"Error generating tender performance predictions: {str(e)}"
         )
-    
-    result = prediction_service.predict_tender_performance(
-        model_id=request.model_id,
-        carriers=request.carriers,
-        source_cities=request.source_cities,
-        dest_cities=request.dest_cities
-    )
-    
-    if not result:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to generate predictions with model {request.model_id}"
-        )
-    
-    # Get full prediction details including ID
-    prediction_id = result.get("prediction_id")
-    prediction = prediction_service.get_prediction(prediction_id)
-    
-    if not prediction:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Prediction was created but could not be retrieved: {prediction_id}"
-        )
-    
-    return prediction
 
-@router.get("/tender-performance/{model_id}/full-predictions")
-async def get_tender_performance_training_predictions(
+@router.get("/tender-performance/{model_id}")
+async def get_tender_performance_predictions(
     model_id: str
 ):
     """
-    Generate predictions for tender performance on the training data.
+    Get predictions for tender performance.
     
-    This endpoint uses the model to predict on the data that was used for training,
-    which can help evaluate model performance and understand prediction accuracy.
-    
-    Returns both JSON and CSV formatted predictions with actual vs predicted values.
+    This endpoint returns predictions for the given model ID.
+    In the transportation industry, the prediction set is typically the same
+    as the training data, with model-generated predictions compared against 
+    actual historical performance.
     
     - **model_id**: The ID of the model
     """
     try:
-        # Use the model service directly since this is a special case
+        # Use the model service directly
         from services.model_service import ModelService
         model_service = ModelService()
         
@@ -182,7 +228,7 @@ async def get_tender_performance_training_predictions(
         if not result:
             raise HTTPException(
                 status_code=500, 
-                detail=f"Failed to generate training data predictions with model {model_id}"
+                detail=f"Failed to generate predictions with model {model_id}"
             )
             
         # Prepare the response
@@ -196,21 +242,107 @@ async def get_tender_performance_training_predictions(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error generating training data predictions: {str(e)}"
+            detail=f"Error generating predictions: {str(e)}"
         )
 
-@router.get("/tender-performance/{model_id}/full-predictions/download")
-async def download_tender_performance_training_predictions(
+@router.get("/tender-performance/{model_id}/by-lane")
+async def get_tender_performance_by_lane(
     model_id: str,
-    format: str = "csv"
+    source_city: str,
+    dest_city: str,
+    carrier: Optional[str] = None
 ):
     """
-    Download tender performance training data predictions.
+    Get tender performance predictions for a specific lane.
     
-    This endpoint provides download access to the full set of predictions made on the training data.
+    This endpoint filters predictions for a specific source-destination pair,
+    with an optional carrier filter.
+    
+    - **model_id**: The ID of the model
+    - **source_city**: The source city (required)
+    - **destination_city**: The destination city (required)
+    - **carrier**: Optional carrier filter
+    """
+    try:
+        # Get all predictions first
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        result = model_service.predict_tender_performance_on_training_data(model_id=model_id)
+        
+        if not result:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate predictions with model {model_id}"
+            )
+        
+        # Filter predictions by lane
+        predictions = result.get("predictions", [])
+        filtered_predictions = []
+        
+        for pred in predictions:
+            if (pred.get("source_city") == source_city and 
+                pred.get("dest_city") == dest_city and
+                (carrier is None or pred.get("carrier") == carrier)):
+                filtered_predictions.append(pred)
+        
+        if not filtered_predictions:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No predictions found for lane {source_city} to {dest_city}"
+                + (f" with carrier {carrier}" if carrier else "")
+            )
+        
+        # Calculate lane-specific metrics
+        lane_metrics = {}
+        if filtered_predictions:
+            # Calculate MAE and MAPE for this lane
+            mae = sum(p.get('absolute_error', 0) for p in filtered_predictions) / len(filtered_predictions)
+            mape = sum(p.get('percent_error', 0) for p in filtered_predictions) / len(filtered_predictions)
+            lane_metrics = {
+                "count": len(filtered_predictions),
+                "mae": float(mae),
+                "mape": float(mape)
+            }
+        
+        return {
+            "model_id": model_id,
+            "lane": {
+                "source_city": source_city,
+                "dest_city": dest_city,
+                "carrier": carrier
+            },
+            "prediction_count": len(filtered_predictions),
+            "metrics": lane_metrics,
+            "predictions": filtered_predictions
+        }
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        logger.error(f"Error retrieving predictions by lane: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving predictions by lane: {str(e)}"
+        )
+
+@router.get("/tender-performance/{model_id}/download")
+async def download_tender_performance_predictions(
+    model_id: str,
+    format: str = "csv",
+    source_city: Optional[str] = None,
+    dest_city: Optional[str] = None,
+    carrier: Optional[str] = None
+):
+    """
+    Download tender performance predictions.
+    
+    This endpoint provides download access to the full set of predictions.
     
     - **model_id**: The ID of the model
     - **format**: The format to download (csv or json, defaults to csv)
+    - **source_city**: Optional filter by source city
+    - **dest_city**: Optional filter by destination city
+    - **carrier**: Optional filter by carrier
     """
     try:
         # Get the model path
@@ -232,23 +364,78 @@ async def download_tender_performance_training_predictions(
             if not result:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"Training predictions not found for model {model_id} and could not be generated"
+                    detail=f"Predictions not found for model {model_id} and could not be generated"
                 )
         
         # Check for the specific format requested
         json_file = os.path.join(training_predictions_dir, "prediction_data.json")
         csv_file = os.path.join(training_predictions_dir, "prediction_data.csv")
         
+        # Handle filtering if requested
+        if source_city or dest_city or carrier:
+            # Need to load, filter and re-save
+            try:
+                # Load the predictions
+                with open(json_file, 'r') as f:
+                    data = json.load(f)
+                
+                predictions = data.get('predictions', [])
+                # Apply filters
+                filtered_predictions = []
+                for pred in predictions:
+                    if ((not source_city or pred.get('source_city') == source_city) and
+                        (not dest_city or pred.get('dest_city') == dest_city) and
+                        (not carrier or pred.get('carrier') == carrier)):
+                        filtered_predictions.append(pred)
+                
+                # Create filtered files
+                filtered_json = {
+                    "model_id": model_id,
+                    "prediction_time": data.get("prediction_time", datetime.now().isoformat()),
+                    "predictions": filtered_predictions,
+                    "filter_applied": {
+                        "source_city": source_city,
+                        "dest_city": dest_city,
+                        "carrier": carrier
+                    }
+                }
+                
+                # Save filtered JSON
+                filtered_json_path = os.path.join(training_predictions_dir, "filtered_predictions.json")
+                with open(filtered_json_path, 'w') as f:
+                    json.dump(filtered_json, f, indent=2)
+                
+                # Save filtered CSV
+                filtered_csv_path = os.path.join(training_predictions_dir, "filtered_predictions.csv")
+                filtered_df = pd.DataFrame(filtered_predictions)
+                filtered_df.to_csv(filtered_csv_path, index=False)
+                
+                # Update file paths to use filtered data
+                json_file = filtered_json_path
+                csv_file = filtered_csv_path
+                
+            except Exception as e:
+                logger.error(f"Error filtering predictions: {str(e)}")
+                # Continue with unfiltered data if filtering fails
+        
         if format.lower() == "json" and os.path.exists(json_file):
+            filename = f"tender_performance_predictions_{model_id}.json"
+            if source_city or dest_city or carrier:
+                filename = f"tender_performance_predictions_{model_id}_filtered.json"
+            
             return FileResponse(
                 path=json_file,
-                filename=f"tender_performance_training_predictions_{model_id}.json",
+                filename=filename,
                 media_type="application/json"
             )
         elif format.lower() == "csv" and os.path.exists(csv_file):
+            filename = f"tender_performance_predictions_{model_id}.csv"
+            if source_city or dest_city or carrier:
+                filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+                
             return FileResponse(
                 path=csv_file,
-                filename=f"tender_performance_training_predictions_{model_id}.csv",
+                filename=filename,
                 media_type="text/csv"
             )
         elif os.path.exists(json_file) and format.lower() == "csv":
@@ -257,26 +444,38 @@ async def download_tender_performance_training_predictions(
                 from utils.file_converters import convert_tender_performance_training_predictions
                 csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
                 if csv_path and os.path.exists(csv_path):
+                    filename = f"tender_performance_predictions_{model_id}.csv"
+                    if source_city or dest_city or carrier:
+                        filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+                    
                     return FileResponse(
                         path=str(csv_path),
-                        filename=f"tender_performance_training_predictions_{model_id}.csv",
+                        filename=filename,
                         media_type="text/csv"
                     )
             except Exception as e:
                 logger.error(f"Failed to generate CSV on demand: {str(e)}")
                 
             # Fallback to JSON if CSV generation failed
+            filename = f"tender_performance_predictions_{model_id}.json"
+            if source_city or dest_city or carrier:
+                filename = f"tender_performance_predictions_{model_id}_filtered.json"
+                
             return FileResponse(
                 path=json_file,
-                filename=f"tender_performance_training_predictions_{model_id}.json",
+                filename=filename,
                 media_type="application/json",
                 headers={"X-File-Format-Fallback": "true"}
             )
         elif os.path.exists(csv_file) and format.lower() == "json":
             # Return CSV if JSON doesn't exist
+            filename = f"tender_performance_predictions_{model_id}.csv"
+            if source_city or dest_city or carrier:
+                filename = f"tender_performance_predictions_{model_id}_filtered.csv"
+                
             return FileResponse(
                 path=csv_file,
-                filename=f"tender_performance_training_predictions_{model_id}.csv",
+                filename=filename,
                 media_type="text/csv",
                 headers={"X-File-Format-Fallback": "true"}
             )
@@ -288,10 +487,10 @@ async def download_tender_performance_training_predictions(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        logger.error(f"Error downloading training predictions: {str(e)}")
+        logger.error(f"Error downloading predictions: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error downloading training predictions: {str(e)}"
+            detail=f"Error downloading predictions: {str(e)}"
         )
 
 @router.get("/{model_id}")
