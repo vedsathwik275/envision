@@ -233,12 +233,22 @@ async def get_tender_performance_predictions(
         from services.model_service import ModelService
         model_service = ModelService()
         
+        # Check if model exists
+        model_metadata = model_service.get_model_metadata(model_id)
+        if not model_metadata:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Model {model_id} not found"
+            )
+        
+        # Get or generate predictions
+        logger.info(f"Fetching tender performance predictions for model {model_id}")
         result = model_service.predict_tender_performance_on_training_data(model_id=model_id)
         
         if not result:
             raise HTTPException(
                 status_code=500, 
-                detail=f"Failed to generate predictions with model {model_id}"
+                detail=f"Failed to retrieve or generate predictions with model {model_id}"
             )
         
         # Get all predictions
@@ -268,9 +278,10 @@ async def get_tender_performance_predictions(
             "note": "Only showing first 100 predictions in the API response. Full data available via download endpoint."
         }
     except Exception as e:
+        logger.error(f"Error retrieving predictions: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error generating predictions: {str(e)}"
+            detail=f"Error retrieving predictions: {str(e)}"
         )
 
 @router.get("/tender-performance/{model_id}/by-lane")
@@ -294,16 +305,25 @@ async def get_tender_performance_by_lane(
     - **simplified**: Whether to return simplified predictions with only essential fields (defaults to True)
     """
     try:
-        # Get all predictions first
+        # Check if model exists first
         from services.model_service import ModelService
         model_service = ModelService()
         
+        model_metadata = model_service.get_model_metadata(model_id)
+        if not model_metadata:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Model {model_id} not found"
+            )
+        
+        # Get existing or generate new predictions
+        logger.info(f"Fetching tender performance predictions for model {model_id} and lane {source_city} to {dest_city}")
         result = model_service.predict_tender_performance_on_training_data(model_id=model_id)
         
         if not result:
             raise HTTPException(
                 status_code=500, 
-                detail=f"Failed to generate predictions with model {model_id}"
+                detail=f"Failed to retrieve or generate predictions with model {model_id}"
             )
         
         # Filter predictions by lane
@@ -776,31 +796,40 @@ async def get_order_volume_predictions(
         )
 
 @router.get("/order-volume/{model_id}/by-lane", response_model=Dict[str, Any])
-async def get_order_volume_by_lane(
-    model_id: str,
-    source_city: str,
-    destination_city: str,
-    order_type: Optional[str] = None,
-    month: Optional[str] = None,
-    prediction_service: PredictionService = Depends(get_prediction_service)
+async def order_volume_by_lane(
+    model_id: str, 
+    source_city: str = Query(..., description="Source city name"),
+    destination_city: str = Query(..., description="Destination city name"),
+    order_type: Optional[str] = Query(None, description="Order type filter (optional)"),
+    month: Optional[str] = Query(None, description="Month filter in YYYY-MM format (optional)")
 ):
-    """
-    Get order volume predictions for a specific lane.
+    """Get order volume predictions for a specific lane.
     
-    - **model_id**: The ID of the model
-    - **source_city**: The source city (required)
-    - **destination_city**: The destination city (required)
-    - **order_type**: Optional filter by order type (e.g., FTL, LTL)
-    - **month**: Optional filter by month (format: YYYY-MM)
+    Returns order volume predictions filtered by source city, destination city, and optionally by order type and month.
     """
     try:
+        # Import the lane utility here to avoid circular imports
+        from utils.lane_utils import normalize_city_name
+        
+        # Validate required parameters
         if not source_city or not destination_city:
-            raise HTTPException(
-                status_code=400,
-                detail="Both source_city and destination_city are required for lane predictions"
-            )
+            logger.error(f"Missing required parameters: source_city={source_city}, destination_city={destination_city}")
+            raise HTTPException(status_code=400, detail="Source city and destination city are required")
             
-        result = prediction_service.get_order_volume_by_lane(
+        # Log the lane request with normalized city names
+        logger.info(f"Lane prediction request: {normalize_city_name(source_city)} to {normalize_city_name(destination_city)}")
+        
+        # Check if model exists and is of correct type
+        prediction_service = PredictionService()
+        models = prediction_service.model_service.list_models(model_type="order_volume")
+        model_ids = [model["model_id"] for model in models]
+        if model_id not in model_ids:
+            logger.error(f"Model {model_id} not found or is not an order volume model")
+            logger.debug(f"Available order volume models: {model_ids}")
+            raise HTTPException(status_code=404, detail=f"Model {model_id} not found or is not an order volume model")
+            
+        # Get predictions for the lane
+        lane_predictions = prediction_service.get_order_volume_by_lane(
             model_id=model_id,
             source_city=source_city,
             destination_city=destination_city,
@@ -808,19 +837,65 @@ async def get_order_volume_by_lane(
             month=month
         )
         
-        if not result:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No predictions found for lane {source_city} to {destination_city}"
-            )
+        # Handle case where no predictions are found
+        if lane_predictions is None:
+            logger.warning(f"No predictions found for lane {source_city} to {destination_city}")
+            # Return empty result with 200 status instead of 404
+            return {
+                "model_id": model_id,
+                "lane": {
+                    "source_city": source_city,
+                    "destination_city": destination_city
+                },
+                "predictions": [],
+                "prediction_count": 0,
+                "message": "No predictions found for this lane"
+            }
             
-        return result
-    except Exception as e:
-        logger.error(f"Error getting order volume lane predictions: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting order volume lane predictions: {str(e)}"
+        # Check if there was an error in the prediction service
+        if lane_predictions.get("error") is True:
+            logger.error(f"Error retrieving predictions: {lane_predictions.get('error_details', 'Unknown error')}")
+            # Return the error details but with a 200 status code for API consistency
+            return lane_predictions
+            
+        return lane_predictions
+    except ImportError:
+        # Fallback if lane utility is not available
+        logger.warning("Lane utility not available, using original implementation")
+        
+        # Validate required parameters
+        if not source_city or not destination_city:
+            raise HTTPException(status_code=400, detail="Source city and destination city are required")
+        
+        # Get predictions for the lane
+        prediction_service = PredictionService()
+        lane_predictions = prediction_service.get_order_volume_by_lane(
+            model_id=model_id,
+            source_city=source_city,
+            destination_city=destination_city,
+            order_type=order_type,
+            month=month
         )
+        
+        # Handle case where no predictions are found
+        if lane_predictions is None:
+            # Return empty result with 200 status instead of 404
+            return {
+                "model_id": model_id,
+                "lane": {
+                    "source_city": source_city,
+                    "destination_city": destination_city
+                },
+                "predictions": [],
+                "prediction_count": 0,
+                "message": "No predictions found for this lane"
+            }
+            
+        return lane_predictions
+    except Exception as e:
+        # Log the full error details for debugging
+        logger.error(f"Unexpected error in order_volume_by_lane endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @router.get("/order-volume/{model_id}/download")
 async def download_order_volume_predictions(

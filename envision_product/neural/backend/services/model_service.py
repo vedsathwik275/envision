@@ -506,6 +506,54 @@ class ModelService:
         Returns:
             Dictionary with prediction results or None if prediction fails
         """
+        # Get model directory to check for existing predictions
+        model_path = self.get_model_path(model_id)
+        if not model_path:
+            logger.error(f"Model directory for {model_id} not found")
+            return None
+        
+        # Create training predictions directory
+        training_predictions_dir = os.path.join(model_path, "training_predictions")
+        os.makedirs(training_predictions_dir, exist_ok=True)
+        
+        # Check if predictions already exist
+        json_file = os.path.join(training_predictions_dir, "prediction_data.json")
+        csv_file = os.path.join(training_predictions_dir, "prediction_data.csv")
+        simplified_csv_file = os.path.join(training_predictions_dir, "prediction_data_simplified.csv")
+        
+        if os.path.exists(json_file):
+            logger.info(f"Found existing training predictions for model {model_id}")
+            try:
+                # Load existing predictions
+                with open(json_file, 'r') as f:
+                    result = json.load(f)
+                
+                # Ensure CSV files exist
+                if not os.path.exists(csv_file):
+                    try:
+                        from utils.file_converters import convert_tender_performance_training_predictions
+                        csv_path = convert_tender_performance_training_predictions(training_predictions_dir)
+                        if csv_path:
+                            logger.info(f"Generated missing complete CSV file: {csv_path}")
+                    except Exception as e:
+                        logger.error(f"Error creating complete CSV for training predictions: {str(e)}")
+                
+                if not os.path.exists(simplified_csv_file):
+                    try:
+                        from utils.file_converters import convert_tender_performance_simplified
+                        simplified_csv_path = convert_tender_performance_simplified(training_predictions_dir)
+                        if simplified_csv_path:
+                            logger.info(f"Generated missing simplified CSV file: {simplified_csv_path}")
+                    except Exception as e:
+                        logger.error(f"Error creating simplified CSV for training predictions: {str(e)}")
+                
+                return result
+            except Exception as e:
+                logger.warning(f"Error loading existing predictions, will regenerate: {str(e)}")
+                # Continue to regenerate predictions if loading fails
+        else:
+            logger.info(f"No existing predictions found for model {model_id}, generating new predictions")
+        
         # Load the model
         logger.info(f"Loading tender performance model {model_id} for training data prediction")
         model = self.load_tender_performance_model(model_id)
@@ -514,16 +562,6 @@ class ModelService:
             return None
         
         try:
-            # Get model directory to save predictions
-            model_path = self.get_model_path(model_id)
-            if not model_path:
-                logger.error(f"Model directory for {model_id} not found")
-                return None
-            
-            # Create training predictions directory
-            training_predictions_dir = os.path.join(model_path, "training_predictions")
-            os.makedirs(training_predictions_dir, exist_ok=True)
-            
             # Generate predictions on training data
             logger.info(f"Generating predictions on training data for model {model_id}")
             result = model.predict_on_training_data(output_dir=training_predictions_dir)

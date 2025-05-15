@@ -773,35 +773,127 @@ class PredictionService:
         Returns:
             Dictionary with lane predictions or None if not found
         """
-        if not source_city or not destination_city:
-            logger.error("Source city and destination city are required for lane predictions")
-            return None
-        
-        # Get predictions with filtering
-        result = self.get_order_volume_predictions(
-            model_id=model_id,
-            source_city=source_city,
-            destination_city=destination_city,
-            order_type=order_type,
-            month=month
-        )
-        
-        if not result or not result.get("predictions"):
-            logger.warning(f"No predictions found for lane {source_city} to {destination_city}")
-            return None
-        
-        # Format the response specifically for lane view
-        lane_data = {
-            "model_id": model_id,
-            "lane": {
-                "source_city": source_city,
-                "destination_city": destination_city
-            },
-            "predictions": result["predictions"],
-            "prediction_count": len(result["predictions"])
-        }
-        
-        return lane_data
+        try:
+            # Import the lane utility here to avoid circular imports
+            from utils.lane_utils import normalize_city_name, standardize_lane_fields
+            
+            if not source_city or not destination_city:
+                logger.error("Source city and destination city are required for lane predictions")
+                return None
+                
+            # Log with normalized city names for debugging
+            logger.info(f"Getting order volume predictions for lane {normalize_city_name(source_city)} to "
+                       f"{normalize_city_name(destination_city)} with model {model_id}")
+            
+            # Get predictions with filtering
+            try:
+                result = self.get_order_volume_predictions(
+                    model_id=model_id,
+                    source_city=source_city,
+                    destination_city=destination_city,
+                    order_type=order_type,
+                    month=month
+                )
+            except Exception as e:
+                logger.error(f"Error getting order volume predictions for filtering: {str(e)}")
+                # Check if model exists
+                models = self.model_service.list_models(model_type="order_volume")
+                model_ids = [model["model_id"] for model in models]
+                if model_id not in model_ids:
+                    logger.error(f"Model {model_id} not found or is not an order volume model")
+                    logger.debug(f"Available order volume models: {model_ids}")
+                    return None
+                # If model exists but predictions failed, return empty result
+                return {
+                    "model_id": model_id,
+                    "lane": {
+                        "source_city": source_city,
+                        "destination_city": destination_city
+                    },
+                    "predictions": [],
+                    "prediction_count": 0,
+                    "error_details": str(e)
+                }
+            
+            if not result:
+                logger.warning(f"No prediction data found for model {model_id}")
+                return None
+            
+            if not result.get("predictions"):
+                logger.warning(f"No predictions found for lane {source_city} to {destination_city}")
+                # Return empty result instead of None for better API response
+                return {
+                    "model_id": model_id,
+                    "lane": {
+                        "source_city": source_city,
+                        "destination_city": destination_city
+                    },
+                    "predictions": [],
+                    "prediction_count": 0
+                }
+            
+            # Log some information about the predictions for debugging
+            logger.info(f"Found {len(result['predictions'])} predictions for lane {source_city} to {destination_city}")
+            
+            # Format the response specifically for lane view, ensuring field names are standardized
+            lane_data = {
+                "model_id": model_id,
+                "lane": {
+                    "source_city": source_city,
+                    "destination_city": destination_city
+                },
+                "predictions": result["predictions"],
+                "prediction_count": len(result["predictions"])
+            }
+            
+            return lane_data
+        except ImportError:
+            # Fallback to original implementation if lane utility is not available
+            logger.warning("Lane utility not available, using original implementation")
+            
+            if not source_city or not destination_city:
+                logger.error("Source city and destination city are required for lane predictions")
+                return None
+            
+            # Get predictions with filtering
+            result = self.get_order_volume_predictions(
+                model_id=model_id,
+                source_city=source_city,
+                destination_city=destination_city,
+                order_type=order_type,
+                month=month
+            )
+            
+            if not result or not result.get("predictions"):
+                logger.warning(f"No predictions found for lane {source_city} to {destination_city}")
+                return None
+            
+            # Format the response specifically for lane view
+            lane_data = {
+                "model_id": model_id,
+                "lane": {
+                    "source_city": source_city,
+                    "destination_city": destination_city
+                },
+                "predictions": result["predictions"],
+                "prediction_count": len(result["predictions"])
+            }
+            
+            return lane_data
+        except Exception as e:
+            logger.error(f"Unexpected error in get_order_volume_by_lane: {str(e)}")
+            # Return a structured error response
+            return {
+                "model_id": model_id,
+                "lane": {
+                    "source_city": source_city,
+                    "destination_city": destination_city
+                },
+                "predictions": [],
+                "prediction_count": 0,
+                "error": True,
+                "error_details": str(e)
+            }
     
     def _filter_order_volume_predictions_advanced(
         self,
@@ -823,28 +915,83 @@ class PredictionService:
         Returns:
             Filtered list of predictions
         """
-        result = []
-        
-        for pred in predictions:
-            match = True
+        try:
+            # Import the lane utility here to avoid circular imports
+            from utils.lane_utils import filter_by_lane, batch_standardize_lane_fields
             
-            # Filter by source city (case-insensitive)
-            if source_city and pred.get("source_city", "").upper() != source_city.upper():
-                match = False
+            if not predictions:
+                return []
                 
-            # Filter by destination city (case-insensitive)
-            if destination_city and pred.get("destination_city", "").upper() != destination_city.upper():
-                match = False
-                
-            # Filter by order type (case-insensitive)
-            if order_type and pred.get("order_type", "").upper() != order_type.upper():
-                match = False
-                
-            # Filter by month
-            if month and pred.get("month", "") != month:
-                match = False
+            # First, filter by lane components (source, destination, order_type)
+            filtered_by_lane = filter_by_lane(
+                data_list=predictions,
+                source_city=source_city,
+                destination_city=destination_city,
+                order_type=order_type
+            )
             
-            if match:
-                result.append(pred)
+            # Next, filter by month if specified
+            if month:
+                month_filtered = []
                 
-        return result 
+                for pred in filtered_by_lane:
+                    # Try various month field names
+                    month_match = False
+                    month_fields = ["month", "MONTH", "prediction_month", "PREDICTION MONTH", 
+                                   "prediction_date", "PREDICTION DATE", "date", "DATE"]
+                    
+                    for field in month_fields:
+                        if field in pred and pred[field]:
+                            pred_month = str(pred[field])
+                            # Check exact match or if the month string contains the filter value
+                            if pred_month == month or month in pred_month:
+                                month_match = True
+                                break
+                    
+                    if month_match:
+                        month_filtered.append(pred)
+                
+                # Use month-filtered results
+                result = month_filtered
+            else:
+                # Use just the lane-filtered results
+                result = filtered_by_lane
+            
+            # Standardize field names in the results for consistent output
+            standardized_results = batch_standardize_lane_fields(result)
+            
+            return standardized_results
+            
+        except ImportError:
+            # Fallback to original implementation if lane utility is not available
+            logger.warning("Lane utility not available, using fallback filtering logic")
+            result = []
+            
+            for pred in predictions:
+                match = True
+                
+                # Filter by source city (case-insensitive)
+                if source_city and pred.get("source_city", "").upper() != source_city.upper():
+                    match = False
+                    
+                # Filter by destination city (case-insensitive)
+                if destination_city and pred.get("destination_city", "").upper() != destination_city.upper():
+                    match = False
+                    
+                # Filter by order type (case-insensitive)
+                if order_type and pred.get("order_type", "").upper() != order_type.upper():
+                    match = False
+                    
+                # Filter by month
+                if month and pred.get("month", "") != month:
+                    match = False
+                
+                if match:
+                    result.append(pred)
+                    
+            return result
+        except Exception as e:
+            # Log error but don't break the function in case of problems
+            logger.error(f"Error in advanced filtering: {str(e)}")
+            # Return original predictions if filtering fails
+            return predictions 

@@ -43,7 +43,7 @@
    - Create a shared utility for JSON to CSV conversion
    - Ensure consistent handling of nested data structures
 
-- [ ] **Lane Handling Utility**
+- [x] **Lane Handling Utility**
    - Implement standardized functions for lane identification and matching
    - Create helper functions for lane-based filtering
 
@@ -57,7 +57,7 @@
    - Document all new API routes in README.md
    - Add examples of API usage for different scenarios
 
-- [ ] **Update Changelog**
+- [x] **Update Changelog**
    - Document all implemented changes
 
 ## Implementation Details
