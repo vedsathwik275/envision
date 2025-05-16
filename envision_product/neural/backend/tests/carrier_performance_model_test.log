@@ -1,0 +1,63 @@
+2025-05-16 08:26:02,721 - __main__ - INFO - Starting test with data file: ../../data/Carrier_Performance_New.csv
+2025-05-16 08:26:02,721 - backend.models.carrier_performance_model - INFO - Loading data from ../../data/Carrier_Performance_New.csv...
+2025-05-16 08:26:02,723 - backend.models.carrier_performance_model - INFO - Data loaded successfully. Shape: (1322, 8)
+2025-05-16 08:26:02,724 - __main__ - INFO - Preprocessing data...
+2025-05-16 08:26:02,724 - backend.models.carrier_performance_model - INFO - Preprocessing data...
+2025-05-16 08:26:02,724 - backend.models.carrier_performance_model - INFO - Encoding categorical variables...
+2025-05-16 08:26:02,732 - backend.models.carrier_performance_model - INFO - Data preprocessing complete. Processed shape: (1322, 79)
+2025-05-16 08:26:02,732 - __main__ - INFO - Preparing train/test split...
+2025-05-16 08:26:02,732 - backend.models.carrier_performance_model - INFO - Splitting data with test_size=0.2...
+2025-05-16 08:26:02,733 - backend.models.carrier_performance_model - INFO - Train set: 1057 samples
+2025-05-16 08:26:02,734 - backend.models.carrier_performance_model - INFO - Test set: 265 samples
+2025-05-16 08:26:02,734 - __main__ - INFO - Building and training the model...
+2025-05-16 08:26:02,734 - backend.models.carrier_performance_model - INFO - Building neural network model...
+2025-05-16 08:26:02,822 - backend.models.carrier_performance_model - INFO - Training model with 100 epochs and batch_size=16...
+2025-05-16 08:26:06,210 - backend.models.carrier_performance_model - INFO - Model training completed
+2025-05-16 08:26:06,210 - __main__ - INFO - Plotting training history...
+2025-05-16 08:26:06,551 - __main__ - INFO - Evaluating the model...
+2025-05-16 08:26:06,551 - backend.models.carrier_performance_model - INFO - Evaluating model performance...
+2025-05-16 08:26:06,658 - backend.models.carrier_performance_model - INFO - Mean Absolute Error (MAE): 22.30
+2025-05-16 08:26:06,658 - backend.models.carrier_performance_model - INFO - Mean Squared Error (MSE): 712.44
+2025-05-16 08:26:06,659 - backend.models.carrier_performance_model - INFO - Root Mean Squared Error (RMSE): 26.69
+2025-05-16 08:26:06,659 - backend.models.carrier_performance_model - INFO - R-squared (R²): 0.2975
+2025-05-16 08:26:06,782 - backend.models.carrier_performance_model - INFO - Evaluation plot saved to model_output_20250516_082602\evaluation_plot.png
+2025-05-16 08:26:06,782 - __main__ - INFO - Evaluation metrics: {'mae': 22.303746288227586, 'mse': 712.4438916221741, 'rmse': 26.691644603174495, 'r2': 0.2974570371001152}
+2025-05-16 08:26:06,783 - __main__ - INFO - Saving the model...
+2025-05-16 08:26:06,783 - backend.models.carrier_performance_model - INFO - Saving model to model_output_20250516_082602\carrier_performance_model...
+2025-05-16 08:26:06,806 - backend.models.carrier_performance_model - INFO - Neural network model saved to model_output_20250516_082602\carrier_performance_model\model.keras
+2025-05-16 08:26:06,810 - backend.models.carrier_performance_model - INFO - Model and components successfully saved to model_output_20250516_082602\carrier_performance_model
+2025-05-16 08:26:06,810 - __main__ - INFO - Testing predictions on a few examples...
+2025-05-16 08:26:06,861 - __main__ - INFO - Carrier: ODFL, Lane: LANCASTER to LOGAN TOWNSHIP
+2025-05-16 08:26:06,861 - __main__ - INFO - Actual On-Time Performance: 50.00%
+2025-05-16 08:26:06,861 - __main__ - INFO - Predicted On-Time Performance: 68.66%
+2025-05-16 08:26:06,861 - __main__ - INFO - Difference: 18.66%
+2025-05-16 08:26:06,861 - __main__ - INFO - ----------------------------------------
+2025-05-16 08:26:06,911 - __main__ - INFO - Carrier: ODFL, Lane: RICHMOND to WILLIAMSTON
+2025-05-16 08:26:06,912 - __main__ - INFO - Actual On-Time Performance: 86.00%
+2025-05-16 08:26:06,912 - __main__ - INFO - Predicted On-Time Performance: 60.66%
+2025-05-16 08:26:06,912 - __main__ - INFO - Difference: 25.34%
+2025-05-16 08:26:06,912 - __main__ - INFO - ----------------------------------------
+2025-05-16 08:26:06,962 - __main__ - INFO - Carrier: AEQC, Lane: GRAND RAPIDS to RICHMOND
+2025-05-16 08:26:06,962 - __main__ - INFO - Actual On-Time Performance: 15.00%
+2025-05-16 08:26:06,963 - __main__ - INFO - Predicted On-Time Performance: 12.29%
+2025-05-16 08:26:06,963 - __main__ - INFO - Difference: 2.71%
+2025-05-16 08:26:06,963 - __main__ - INFO - ----------------------------------------
+2025-05-16 08:26:07,013 - __main__ - INFO - Carrier: ODFL, Lane: ELWOOD to KILGORE
+2025-05-16 08:26:07,013 - __main__ - INFO - Actual On-Time Performance: 13.00%
+2025-05-16 08:26:07,013 - __main__ - INFO - Predicted On-Time Performance: 31.01%
+2025-05-16 08:26:07,013 - __main__ - INFO - Difference: 18.01%
+2025-05-16 08:26:07,013 - __main__ - INFO - ----------------------------------------
+2025-05-16 08:26:07,064 - __main__ - INFO - Carrier: ODFL, Lane: LANCASTER to LUGOFF
+2025-05-16 08:26:07,064 - __main__ - INFO - Actual On-Time Performance: 40.00%
+2025-05-16 08:26:07,064 - __main__ - INFO - Predicted On-Time Performance: 58.99%
+2025-05-16 08:26:07,064 - __main__ - INFO - Difference: 18.99%
+2025-05-16 08:26:07,064 - __main__ - INFO - ----------------------------------------
+2025-05-16 08:26:07,064 - __main__ - INFO - Generating predictions on all training data...
+2025-05-16 08:26:07,064 - backend.models.carrier_performance_model - INFO - Generating predictions on training data...
+2025-05-16 08:26:07,181 - backend.models.carrier_performance_model - INFO - Predictions saved to JSON: model_output_20250516_082602\training_predictions\prediction_data.json
+2025-05-16 08:26:07,186 - backend.models.carrier_performance_model - INFO - Predictions saved to CSV: model_output_20250516_082602\training_predictions\prediction_data.csv
+2025-05-16 08:26:07,187 - __main__ - INFO - Overall MAE on training data: 19.050123964243326
+2025-05-16 08:26:07,187 - __main__ - INFO - Overall MAPE on training data: 59.269397734949365
+2025-05-16 08:26:07,187 - __main__ - INFO - Overall RMSE on training data: 23.143256285532722
+2025-05-16 08:26:07,187 - __main__ - INFO - Test completed successfully!
+2025-05-16 08:26:07,188 - __main__ - INFO - Model and outputs saved to: model_output_20250516_082602

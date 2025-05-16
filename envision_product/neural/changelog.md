@@ -1,5 +1,30 @@
 # Changelog
 
+## [Unreleased] - 2025-05-16
+### Added
+- **Carrier Performance Model**: Implemented a neural network model for predicting carrier on-time performance:
+  - Created `carrier_performance_model.py` with comprehensive data preprocessing, model training, and evaluation capabilities
+  - Implemented one-hot encoding for categorical features (carrier, source city, destination city, quarter)
+  - Added high-cardinality handling for destination cities, grouping less frequent cities as 'OTHER'
+  - Designed neural network architecture with dense layers, batch normalization, and dropout for regularization
+  - Added early stopping and learning rate reduction functionality to prevent overfitting
+  - Implemented comprehensive evaluation metrics including MAE, MSE, RMSE, and R²
+- **Advanced Prediction Capabilities** for the Carrier Performance Model:
+  - Single prediction method for specific carrier-lane combinations
+  - Batch prediction for multiple carrier-lane combinations simultaneously
+  - Training data prediction with detailed performance metrics
+  - JSON and CSV output formats for prediction results
+- **Carrier Performance Model Testing**: Created test script `test_carrier_performance_model.py`:
+  - Comprehensive testing workflow for model training and evaluation
+  - Visualization of training history and model performance
+  - Random sampling for prediction validation
+  - Detailed logging of performance metrics
+- **Enhanced Model Registry**: Updated model package `__init__.py` to include the new `CarrierPerformanceModel`
+
+### Changed
+
+### Fixed
+
 ## [Unreleased] - 2025-05-15
 ### Added
 - Added JSON to CSV conversion for prediction results
