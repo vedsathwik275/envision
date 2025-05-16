@@ -60,6 +60,7 @@
 - **Improved training data handling in carrier performance prediction generation**: Added robust data loading in `predict_carrier_performance_on_training_data`
 - **Added multiple fallback mechanisms for loading carrier performance training data**: Implemented in `predict_carrier_performance_on_training_data` function
 - **Fixed carrier performance model prediction issues**: Resolved by ensuring training data is available before generating predictions
+- **Fixed 500 Internal Server Error in carrier performance by lane endpoint**: Corrected parameter passing to `filter_by_lane` function to avoid type error with dictionary values
 
 ## [Unreleased] - 2025-05-15
 ### Added

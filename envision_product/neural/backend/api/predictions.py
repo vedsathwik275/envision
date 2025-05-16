@@ -1249,19 +1249,13 @@ async def get_carrier_performance_by_lane(
         try:
             from utils.lane_utils import filter_by_lane
             
-            # Create lane criteria
-            lane_criteria = {
-                "source_city": source_city,
-                "dest_city": dest_city
-            }
-            
-            if carrier:
-                lane_criteria["carrier"] = carrier
-                
-            # Apply lane filtering
+            # Apply lane filtering with individual parameters (not as a dictionary)
             filtered_predictions = filter_by_lane(
-                prediction["data"]["predictions"], 
-                lane_criteria
+                data_list=prediction["data"]["predictions"],
+                source_city=source_city,
+                destination_city=dest_city,
+                carrier=carrier,
+                order_type=None
             )
             
             logger.info(f"Filtered predictions using lane utils: {len(filtered_predictions)} results")
