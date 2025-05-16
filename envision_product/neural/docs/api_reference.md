@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Envision Neural API provides access to machine learning models for transportation logistics predictions, specifically focused on Order Volume forecasting and Tender Performance prediction. This API enables clients to train models, generate predictions, and access historical prediction data.
+The Envision Neural API provides access to machine learning models for transportation logistics predictions, specifically focused on Order Volume forecasting, Tender Performance prediction, and Carrier Performance prediction. This API enables clients to train models, generate predictions, and access historical prediction data.
 
 ## Base URL
 
@@ -45,7 +45,7 @@ Lists all available models with optional filtering.
 **Endpoint:** `GET /models/list`
 
 **Query Parameters:**
-- `model_type` (optional): Filter by model type (e.g., "order_volume", "tender_performance")
+- `model_type` (optional): Filter by model type (e.g., "order_volume", "tender_performance", "carrier_performance")
 - `min_created_at` (optional): Filter by minimum creation date (ISO format, e.g., "2025-05-01T00:00:00")
 - `min_accuracy` (optional): Filter by minimum accuracy (0.0-1.0)
 - `max_error` (optional): Filter by maximum error
@@ -90,7 +90,7 @@ Retrieves the latest model of a specified type with optional filtering.
 **Endpoint:** `GET /models/latest`
 
 **Query Parameters:**
-- `model_type` (required): Model type to retrieve (e.g., "order_volume", "tender_performance")
+- `model_type` (required): Model type to retrieve (e.g., "order_volume", "tender_performance", "carrier_performance")
 - `min_created_at` (optional): Minimum creation date in ISO format
 - `min_accuracy` (optional): Minimum accuracy threshold (0.0-1.0)
 - `max_error` (optional): Maximum error threshold
@@ -494,9 +494,157 @@ Generates new tender performance predictions on training data.
 }
 ```
 
-### 4. Prediction Management
+### 4. Carrier Performance Predictions
 
-#### 4.1 List All Predictions
+#### 4.1 Get Carrier Performance Predictions
+
+Retrieves carrier performance predictions for a specified model.
+
+**Endpoint:** `GET /predictions/carrier-performance/{model_id}`
+
+**Path Parameters:**
+- `model_id` (required): ID of the model
+
+**Query Parameters:**
+- `simplified` (optional): Whether to return simplified predictions with only essential fields (default: true)
+
+**Response:**
+```json
+{
+  "prediction_id": "pred_d80195a3_20250516",
+  "model_id": "carrier_performance_20250516091734",
+  "model_type": "carrier_performance",
+  "created_at": "2025-05-16T09:17:34.123456",
+  "prediction_count": 450,
+  "data": {
+    "prediction_time": "2025-05-16T09:17:34.123456",
+    "metrics": {
+      "mae": 3.42,
+      "mape": 4.87,
+      "rmse": 5.21,
+      "records_analyzed": 450
+    },
+    "predictions": [
+      {
+        "carrier": "RBTW",
+        "source_city": "ELWOOD",
+        "dest_city": "PLANO",
+        "predicted_ontime_performance": 89.7
+      },
+      // More predictions...
+    ]
+  }
+}
+```
+
+**Example:**
+```
+GET /api/predictions/carrier-performance/carrier_performance_20250516091734?simplified=true
+```
+
+#### 4.2 Get Carrier Performance Predictions by Lane
+
+Retrieves carrier performance predictions for a specific lane.
+
+**Endpoint:** `GET /predictions/carrier-performance/{model_id}/by-lane`
+
+**Path Parameters:**
+- `model_id` (required): ID of the model
+
+**Query Parameters:**
+- `source_city` (required): Source city name
+- `dest_city` (required): Destination city name
+- `carrier` (optional): Carrier filter
+- `simplified` (optional): Whether to return simplified predictions (default: true)
+
+**Response:**
+```json
+{
+  "prediction_id": "pred_d80195a3_20250516",
+  "model_id": "carrier_performance_20250516091734",
+  "source_city": "ELWOOD",
+  "dest_city": "PLANO",
+  "carrier": null,
+  "metrics": {
+    "avg_predicted_ontime_performance": 85.6,
+    "carrier_count": 3,
+    "carriers": ["RBTW", "BTRH", "ALMO"]
+  },
+  "predictions": [
+    {
+      "carrier": "RBTW",
+      "source_city": "ELWOOD",
+      "dest_city": "PLANO",
+      "predicted_ontime_performance": 89.7
+    },
+    // More predictions...
+  ],
+  "prediction_count": 3
+}
+```
+
+**Example:**
+```
+GET /api/predictions/carrier-performance/carrier_performance_20250516091734/by-lane?source_city=ELWOOD&dest_city=PLANO
+```
+
+#### 4.3 Download Carrier Performance Predictions
+
+Downloads carrier performance predictions in the specified format.
+
+**Endpoint:** `GET /predictions/carrier-performance/{model_id}/download`
+
+**Path Parameters:**
+- `model_id` (required): ID of the model
+
+**Query Parameters:**
+- `format` (optional): Format to download (csv or json, default: csv)
+- `simplified` (optional): Whether to provide a simplified CSV with only essential fields (default: true)
+- `source_city` (optional): Filter by source city
+- `dest_city` (optional): Filter by destination city
+- `carrier` (optional): Filter by carrier
+
+**Response:**
+File download (CSV or JSON)
+
+**Example:**
+```
+GET /api/predictions/carrier-performance/carrier_performance_20250516091734/download?format=csv&simplified=true
+```
+
+#### 4.4 Create New Carrier Performance Predictions
+
+Generates new carrier performance predictions on training data.
+
+**Endpoint:** `POST /predictions/carrier-performance`
+
+**Request Body:**
+```json
+{
+  "model_id": "carrier_performance_20250516091734"
+}
+```
+
+**Response:**
+```json
+{
+  "prediction_id": "pred_d80195a3_20250516",
+  "model_id": "carrier_performance_20250516091734",
+  "model_type": "carrier_performance",
+  "created_at": "2025-05-16T09:22:15.987654",
+  "prediction_count": 450,
+  "metrics": {
+    "mae": 3.42,
+    "mape": 4.87,
+    "rmse": 5.21,
+    "records_analyzed": 450
+  }
+}
+```
+
+### 5. Prediction Management
+
+#### 5.1 List All Predictions
 
 Lists all available predictions with optional filtering by model ID.
 
@@ -527,7 +675,7 @@ Lists all available predictions with optional filtering by model ID.
 GET /api/predictions?model_id=order_volume_20250512180020
 ```
 
-#### 4.2 Get Prediction Details
+#### 5.2 Get Prediction Details
 
 Gets detailed information about a specific prediction.
 
@@ -556,7 +704,7 @@ Gets detailed information about a specific prediction.
 GET /api/predictions/pred_a70084a3_20250512
 ```
 
-#### 4.3 Delete Prediction
+#### 5.3 Delete Prediction
 
 Deletes a prediction and all its associated files.
 
@@ -578,9 +726,9 @@ Deletes a prediction and all its associated files.
 DELETE /api/predictions/pred_a70084a3_20250512
 ```
 
-### 5. Advanced Features
+### 6. Advanced Features
 
-#### 5.1 Filter Predictions by Multiple Criteria
+#### 6.1 Filter Predictions by Multiple Criteria
 
 Filters predictions using complex criteria.
 
