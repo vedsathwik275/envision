@@ -355,4 +355,98 @@ def convert_tender_performance_simplified(prediction_dir: Union[str, Path]) -> O
             logger.warning(f"Created fallback empty simplified CSV due to conversion error: {simplified_csv_file}")
             return simplified_csv_file
         except:
-            return None 
+            return None
+
+def convert_carrier_performance_training_predictions(prediction_dir: Union[str, Path]) -> Optional[Path]:
+    """Convert carrier performance training data predictions to CSV with complete metrics.
+    
+    Args:
+        prediction_dir: Directory containing the prediction files
+    
+    Returns:
+        Path to the generated CSV file or None if conversion fails
+    """
+    try:
+        prediction_dir = Path(prediction_dir)
+        json_file = prediction_dir / "prediction_data.json"
+        csv_file = prediction_dir / "prediction_data.csv"
+        
+        if not json_file.exists():
+            logger.error(f"Prediction JSON file not found: {json_file}")
+            return None
+        
+        # Read the JSON file
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+        
+        # Extract predictions
+        predictions = data.get('predictions', [])
+        
+        if not predictions:
+            logger.warning(f"No predictions found in {json_file}")
+            return None
+        
+        # Convert to DataFrame and save as CSV
+        df = pd.DataFrame(predictions)
+        df.to_csv(csv_file, index=False)
+        
+        logger.info(f"Successfully converted carrier performance training predictions to CSV: {csv_file}")
+        return csv_file
+        
+    except Exception as e:
+        logger.error(f"Error converting carrier performance training predictions to CSV: {str(e)}")
+        return None
+
+def convert_carrier_performance_simplified(prediction_dir: Union[str, Path]) -> Optional[Path]:
+    """Convert carrier performance predictions to simplified CSV format.
+    
+    This version includes only essential fields: carrier, source_city, dest_city, 
+    and predicted on-time performance.
+    
+    Args:
+        prediction_dir: Directory containing the prediction files
+    
+    Returns:
+        Path to the generated CSV file or None if conversion fails
+    """
+    try:
+        prediction_dir = Path(prediction_dir)
+        json_file = prediction_dir / "prediction_data.json"
+        simplified_csv_file = prediction_dir / "prediction_data_simplified.csv"
+        
+        if not json_file.exists():
+            logger.error(f"Prediction JSON file not found: {json_file}")
+            return None
+        
+        # Read the JSON file
+        with open(json_file, 'r') as f:
+            data = json.load(f)
+        
+        # Extract predictions
+        predictions = data.get('predictions', [])
+        
+        if not predictions:
+            logger.warning(f"No predictions found in {json_file}")
+            return None
+        
+        # Create simplified data with only essential fields
+        simplified_data = []
+        for pred in predictions:
+            row = {
+                'carrier': pred.get('carrier', ''),
+                'source_city': pred.get('source_city', ''),
+                'dest_city': pred.get('dest_city', ''),
+                'predicted_ontime_performance': pred.get('predicted_performance', 0)
+            }
+            simplified_data.append(row)
+        
+        # Convert to DataFrame and save as CSV
+        df = pd.DataFrame(simplified_data)
+        df.to_csv(simplified_csv_file, index=False)
+        
+        logger.info(f"Successfully converted to simplified carrier performance CSV: {simplified_csv_file}")
+        return simplified_csv_file
+        
+    except Exception as e:
+        logger.error(f"Error converting to simplified carrier performance CSV: {str(e)}")
+        return None 

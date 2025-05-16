@@ -70,6 +70,14 @@
       "created_at": "2025-05-15T09:20:37.403681",
       "prediction_count": 100,
       "prediction_file": "data\\predictions\\pred_3c94517e_20250515\\prediction_data.json"
+    },
+    "pred_43f4a2d6_20250516": {
+      "prediction_id": "pred_43f4a2d6_20250516",
+      "model_id": "carrier_performance_20250516091734",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-16T09:22:06.086642",
+      "prediction_count": 1322,
+      "prediction_file": "data\\predictions\\pred_43f4a2d6_20250516\\prediction_data.json"
     }
   }
 }

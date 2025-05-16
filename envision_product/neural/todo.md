@@ -73,14 +73,15 @@
    - Implement evaluation metrics specific to carrier performance (reliability score, cost-efficiency)
    - Create model saving/loading functionality that preserves preprocessing components
 
-- [ ] **API Integration**
+- [x] **API Integration**
    - Add carrier performance model type to the model service
    - Create endpoints for carrier performance predictions:
      - `GET /api/predictions/carrier-performance/{model_id}`
      - `GET /api/predictions/carrier-performance/{model_id}/by-lane`
-     - `GET /api/predictions/carrier-performance/{model_id}/by-carrier`
      - `GET /api/predictions/carrier-performance/{model_id}/download`
-   - Add carrier comparison endpoints to allow ranking and benchmarking
+   - Add model management endpoints:
+     - `POST /api/models/train/carrier-performance`
+     - `POST /api/models/predict/carrier-performance`
    - Extend existing CSV conversion utilities to support carrier performance data formats
 
 - [ ] **Front-End Visualization**

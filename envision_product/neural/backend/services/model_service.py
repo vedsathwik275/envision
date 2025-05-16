@@ -5,9 +5,11 @@ import shutil
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 from pathlib import Path
+import traceback
 
 from models.order_volume_model import OrderVolumeModel
 from models.tender_performance_model import TenderPerformanceModel
+from models.carrier_performance_model import CarrierPerformanceModel
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +211,32 @@ class ModelService:
             logger.error(f"Error loading tender performance model {model_id}: {str(e)}")
             return None
     
+    def load_carrier_performance_model(self, model_id: str) -> Optional[CarrierPerformanceModel]:
+        """Load a carrier performance model by ID.
+        
+        Args:
+            model_id: ID of the model to load
+            
+        Returns:
+            Loaded CarrierPerformanceModel instance or None if loading fails
+        """
+        model_path = self.get_model_path(model_id)
+        if not model_path or not model_path.exists():
+            logger.error(f"Model path does not exist: {model_path}")
+            return None
+        
+        metadata = self.get_model_metadata(model_id)
+        if not metadata or metadata.get("model_type") != "carrier_performance":
+            logger.error(f"Model {model_id} is not a carrier performance model")
+            return None
+        
+        try:
+            model = CarrierPerformanceModel(model_path=str(model_path))
+            return model
+        except Exception as e:
+            logger.error(f"Error loading carrier performance model {model_id}: {str(e)}")
+            return None
+    
     def train_order_volume_model(self, data_path: str, params: Dict = None) -> Optional[str]:
         """Train a new order volume model.
         
@@ -377,6 +405,79 @@ class ModelService:
             
         except Exception as e:
             logger.error(f"Error training tender performance model: {str(e)}")
+            return None
+    
+    def train_carrier_performance_model(self, data_path: str, params: Dict = None) -> Optional[str]:
+        """Train a carrier performance model on the provided data.
+        
+        Args:
+            data_path: Path to the training data CSV file
+            params: Optional parameters for training
+                - epochs: Number of training epochs
+                - batch_size: Batch size for training
+                - test_size: Fraction of data to use for testing
+                
+        Returns:
+            ID of the trained model or None if training fails
+        """
+        logger.info(f"Training carrier performance model with data from {data_path}")
+        
+        if not params:
+            params = {}
+        
+        try:
+            # Create a temporary directory for the model
+            import tempfile
+            tmp_dir = tempfile.mkdtemp(prefix="carrier_performance_model_")
+            tmp_path = Path(tmp_dir)
+            
+            # Initialize and train the model
+            model = CarrierPerformanceModel(data_path=data_path)
+            model.preprocess_data()
+            model.prepare_train_test_split(test_size=params.get("test_size", 0.2))
+            model.build_model()
+            
+            # Train the model
+            history = model.train(
+                epochs=params.get("epochs", 100),
+                batch_size=params.get("batch_size", 32),
+                validation_split=params.get("validation_split", 0.2)
+            )
+            
+            # Evaluate the model
+            evaluation = model.evaluate()
+            if not evaluation:
+                logger.error("Model evaluation failed")
+                return None
+            
+            # Save the model to the temporary directory
+            model.save_model(path=str(tmp_path))
+            
+            # Copy the training data to ensure it's available for prediction
+            training_data_dest = os.path.join(tmp_path, "training_data.csv")
+            if not os.path.exists(training_data_dest):
+                logger.info(f"Copying training data to model directory")
+                shutil.copy2(data_path, training_data_dest)
+            
+            # Register the model
+            metadata = {
+                "model_type": "carrier_performance",
+                "training_data": data_path,
+                "params": params,
+                "evaluation": evaluation,
+                "feature_info": model.feature_info if hasattr(model, "feature_info") else {}
+            }
+            
+            model_id = self.register_model(tmp_path, metadata)
+            
+            # Clean up the temporary directory
+            shutil.rmtree(tmp_path)
+            
+            logger.info(f"Successfully trained and registered carrier performance model: {model_id}")
+            return model_id
+            
+        except Exception as e:
+            logger.error(f"Error training carrier performance model: {str(e)}")
             return None
     
     def predict_future_order_volumes(self, model_id: str, months: int = 6) -> Optional[Dict]:
@@ -595,4 +696,124 @@ class ModelService:
             
         except Exception as e:
             logger.error(f"Error generating predictions on training data for model {model_id}: {str(e)}")
+            return None
+
+    def predict_carrier_performance_on_training_data(self, model_id: str) -> Optional[Dict]:
+        """Generate carrier performance predictions on the training data.
+        
+        Args:
+            model_id: ID of the model to use
+            
+        Returns:
+            Dictionary with predictions or None if prediction fails
+        """
+        logger.info(f"Generating carrier performance predictions using model {model_id}")
+        
+        # Check if predictions already exist
+        prediction_dir = Path(f"data/predictions/training/{model_id}")
+        prediction_file = prediction_dir / "prediction_data.json"
+        
+        if prediction_file.exists():
+            try:
+                logger.info(f"Found existing carrier performance predictions for model {model_id}")
+                with open(prediction_file, "r") as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.warning(f"Error loading existing predictions, regenerating: {str(e)}")
+        
+        # Get model directory to check for training data
+        model_path = self.get_model_path(model_id)
+        if not model_path:
+            logger.error(f"Model directory for {model_id} not found")
+            return None
+            
+        # Check model metadata for training data path
+        metadata = self.get_model_metadata(model_id)
+        if not metadata:
+            logger.error(f"Metadata for model {model_id} not found")
+            return None
+            
+        if metadata.get("model_type") != "carrier_performance":
+            logger.error(f"Model {model_id} is not a carrier performance model")
+            return None
+        
+        # Load the model
+        model = self.load_carrier_performance_model(model_id)
+        if not model:
+            logger.error(f"Failed to load carrier performance model {model_id}")
+            return None
+        
+        try:
+            # Try multiple ways to find and load training data
+            training_data_loaded = False
+            
+            # Method 1: Check if model already has data loaded
+            if hasattr(model, 'raw_data') and model.raw_data is not None:
+                logger.info("Model already has training data loaded")
+                training_data_loaded = True
+            
+            # Method 2: Try to load training data from model directory
+            if not training_data_loaded:
+                training_data_path = os.path.join(model_path, "training_data.csv")
+                if os.path.exists(training_data_path):
+                    logger.info(f"Loading training data from model directory: {training_data_path}")
+                    model.data_path = training_data_path
+                    model.load_data()
+                    training_data_loaded = True
+            
+            # Method 3: Try looking for the path in metadata
+            if not training_data_loaded and "training_data" in metadata:
+                original_data_path = metadata["training_data"]
+                if os.path.exists(original_data_path):
+                    logger.info(f"Loading training data from original path: {original_data_path}")
+                    model.data_path = original_data_path
+                    model.load_data()
+                    training_data_loaded = True
+                else:
+                    logger.warning(f"Original training data file not found: {original_data_path}")
+            
+            # If we still don't have data, try one more fallback
+            if not training_data_loaded:
+                # Try looking in the default data location
+                default_data_path = "data/carrier_performance/Carrier_Performance_New.csv"
+                if os.path.exists(default_data_path):
+                    logger.info(f"Loading training data from default location: {default_data_path}")
+                    model.data_path = default_data_path
+                    model.load_data()
+                    training_data_loaded = True
+                    
+                    # Since we found it in the default location, copy it to the model directory for future use
+                    try:
+                        import shutil
+                        target_path = os.path.join(model_path, "training_data.csv")
+                        shutil.copy2(default_data_path, target_path)
+                        logger.info(f"Copied training data to model directory: {target_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to copy training data to model directory: {str(e)}")
+            
+            if not training_data_loaded:
+                logger.error("No training data available for generating predictions after trying all options")
+                return None
+            
+            # Generate predictions on the training data
+            logger.info("Generating predictions on training data...")
+            prediction_results = model.predict_on_training_data()
+            
+            if not prediction_results:
+                logger.error("Failed to generate predictions on training data")
+                return None
+            
+            # Ensure the directory exists
+            prediction_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save the predictions
+            with open(prediction_file, "w") as f:
+                json.dump(prediction_results, f, indent=2)
+            
+            logger.info(f"Successfully generated carrier performance predictions for model {model_id}")
+            return prediction_results
+            
+        except Exception as e:
+            logger.error(f"Error generating carrier performance predictions: {str(e)}")
+            logger.error(traceback.format_exc())
             return None 

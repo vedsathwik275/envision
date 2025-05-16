@@ -68,7 +68,13 @@ class TenderPerformancePredictionRequest(BaseModel):
     carriers: List[str] = Field(..., description="List of carriers")
     source_cities: List[str] = Field(..., description="List of source cities")
     dest_cities: List[str] = Field(..., description="List of destination cities")
-    
+
+class CarrierPerformancePredictionRequest(BaseModel):
+    model_id: str
+    carriers: List[str] = Field(..., description="List of carriers")
+    source_cities: List[str] = Field(..., description="List of source cities")
+    dest_cities: List[str] = Field(..., description="List of destination cities")
+
 class OrderVolumePredictionResponse(BaseModel):
     model_id: str
     prediction_time: str
@@ -76,6 +82,11 @@ class OrderVolumePredictionResponse(BaseModel):
     predictions: List[Dict[str, Any]]
 
 class TenderPerformancePredictionResponse(BaseModel):
+    model_id: str
+    prediction_time: str
+    predictions: List[Dict[str, Any]]
+
+class CarrierPerformancePredictionResponse(BaseModel):
     model_id: str
     prediction_time: str
     predictions: List[Dict[str, Any]]
@@ -459,6 +470,52 @@ async def train_tender_performance_model(
         "message": "Tender performance model training started in the background. Check model list for completion status."
     }
 
+@router.post("/train/carrier-performance", response_model=TrainingResponse)
+async def train_carrier_performance_model(
+    background_tasks: BackgroundTasks,
+    data_file_id: str,
+    params: Optional[TrainingParams] = None,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """Train a new carrier performance prediction model.
+    
+    This is a long-running task that will be executed in the background.
+    The model predicts carrier on-time performance based on historical data.
+    
+    - **data_file_id**: ID of the uploaded carrier performance data file
+    - **params**: Optional training parameters (epochs, batch_size, etc.)
+    """
+    from services.file_service import FileService
+    
+    file_service = FileService()
+    data_path = file_service.get_file_path(data_file_id)
+    
+    if not data_path:
+        raise HTTPException(status_code=404, detail=f"Data file with ID {data_file_id} not found")
+    
+    # Function to run training in the background
+    def train_model_task(data_path: str, params: Dict = None):
+        try:
+            model_id = model_service.train_carrier_performance_model(
+                data_path=data_path,
+                params=params.dict() if params else None
+            )
+            logger.info(f"Carrier performance model training completed. Model ID: {model_id}")
+        except Exception as e:
+            logger.error(f"Error in background training task: {str(e)}")
+    
+    # Add the training task to background tasks
+    background_tasks.add_task(
+        train_model_task,
+        data_path=data_path,
+        params=params
+    )
+    
+    return {
+        "status": "pending",
+        "message": "Carrier performance model training started in the background. Check model list for completion status."
+    }
+
 @router.post("/predict/order-volume", response_model=OrderVolumePredictionResponse)
 async def predict_order_volume(
     request: OrderVolumePredictionRequest,
@@ -514,4 +571,76 @@ async def predict_tender_performance(
             detail=f"Failed to generate predictions with model {request.model_id}"
         )
     
-    return result 
+    return result
+
+@router.post("/predict/carrier-performance", response_model=CarrierPerformancePredictionResponse)
+async def predict_carrier_performance(
+    request: CarrierPerformancePredictionRequest,
+    model_service: ModelService = Depends(get_model_service)
+):
+    """Generate predictions for carrier on-time performance.
+    
+    This endpoint generates specific predictions for the provided carrier-lane combinations.
+    For comprehensive predictions across all training data, use the
+    POST /api/predictions/carrier-performance endpoint instead.
+    
+    - **model_id**: ID of the carrier performance model to use
+    - **carriers**: List of carriers to predict for
+    - **source_cities**: List of source cities, matching the order of carriers
+    - **dest_cities**: List of destination cities, matching the order of carriers
+    """
+    # Check if model exists
+    model_metadata = model_service.get_model_metadata(request.model_id)
+    if not model_metadata:
+        raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
+    
+    # Verify model type
+    if model_metadata.get("model_type") != "carrier_performance":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Model {request.model_id} is not a carrier performance model"
+        )
+        
+    # Check if input lists have the same length
+    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+        raise HTTPException(
+            status_code=400,
+            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+        )
+    
+    # Generate predictions
+    predictions = []
+    model = model_service.load_carrier_performance_model(request.model_id)
+    
+    if not model:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load carrier performance model {request.model_id}"
+        )
+    
+    try:
+        # Generate predictions for each carrier-lane combination
+        for i in range(len(request.carriers)):
+            prediction = model.predict(
+                carrier=request.carriers[i],
+                source_city=request.source_cities[i],
+                dest_city=request.dest_cities[i]
+            )
+            
+            if prediction:
+                predictions.append(prediction)
+        
+        # Prepare the response
+        result = {
+            "model_id": request.model_id,
+            "prediction_time": datetime.datetime.now().isoformat(),
+            "predictions": predictions
+        }
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error generating carrier performance predictions: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate predictions: {str(e)}"
+        ) 

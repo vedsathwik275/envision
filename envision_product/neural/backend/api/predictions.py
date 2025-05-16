@@ -29,6 +29,9 @@ class OrderVolumePredictionRequest(BaseModel):
 class TenderPerformancePredictionRequest(BaseModel):
     model_id: str
 
+class CarrierPerformancePredictionRequest(BaseModel):
+    model_id: str
+
 class PredictionMetadata(BaseModel):
     prediction_id: str
     model_id: str
@@ -215,7 +218,8 @@ async def create_tender_performance_prediction(
 @router.get("/tender-performance/{model_id}")
 async def get_tender_performance_predictions(
     model_id: str,
-    simplified: bool = True
+    simplified: bool = True,
+    prediction_service: PredictionService = Depends(get_prediction_service)
 ):
     """
     Get predictions for tender performance.
@@ -290,7 +294,8 @@ async def get_tender_performance_by_lane(
     source_city: str,
     dest_city: str,
     carrier: Optional[str] = None,
-    simplified: bool = True
+    simplified: bool = True,
+    prediction_service: PredictionService = Depends(get_prediction_service)
 ):
     """
     Get tender performance predictions for a specific lane.
@@ -397,7 +402,8 @@ async def download_tender_performance_predictions(
     simplified: bool = True,
     source_city: Optional[str] = None,
     dest_city: Optional[str] = None,
-    carrier: Optional[str] = None
+    carrier: Optional[str] = None,
+    prediction_service: PredictionService = Depends(get_prediction_service)
 ):
     """
     Download tender performance predictions.
@@ -983,4 +989,554 @@ async def download_order_volume_predictions(
         raise HTTPException(
             status_code=500,
             detail=f"Error downloading order volume predictions: {str(e)}"
-        ) 
+        )
+
+@router.post("/carrier-performance")
+async def create_carrier_performance_prediction(
+    request: CarrierPerformancePredictionRequest,
+    prediction_service: PredictionService = Depends(get_prediction_service)
+):
+    """
+    Generate predictions for carrier on-time performance.
+    
+    This endpoint creates a new prediction using the specified model by
+    predicting on-time performance across all carriers and lanes in the training data.
+    
+    In the transportation industry, the prediction set is typically the same
+    as the training data, with model-generated predictions compared against 
+    actual historical performance.
+    
+    - **model_id**: The ID of the model to use for prediction
+    """
+    try:
+        # Use the model service to generate predictions on the training data
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        logger.info(f"Generating carrier performance predictions using model {request.model_id}")
+        result = model_service.predict_carrier_performance_on_training_data(model_id=request.model_id)
+        
+        if not result:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate predictions with model {request.model_id}"
+            )
+        
+        # Create a new prediction record using the prediction service
+        prediction_id = prediction_service._generate_prediction_id()
+        
+        # Create directory for prediction data
+        prediction_dir = prediction_service.base_path / prediction_id
+        prediction_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save prediction data as JSON
+        prediction_file = prediction_dir / "prediction_data.json"
+        with open(prediction_file, "w") as f:
+            json.dump(result, f, indent=2)
+        
+        # Generate complete CSV with all metrics
+        try:
+            from utils.file_converters import convert_carrier_performance_training_predictions
+            csv_file = convert_carrier_performance_training_predictions(prediction_dir)
+            logger.info(f"Generated complete CSV prediction file: {csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating complete CSV file: {str(e)}")
+            
+        # Also generate simplified CSV with only essential fields
+        try:
+            from utils.file_converters import convert_carrier_performance_simplified
+            simplified_csv_file = convert_carrier_performance_simplified(prediction_dir)
+            logger.info(f"Generated simplified CSV prediction file: {simplified_csv_file}")
+        except Exception as e:
+            logger.error(f"Error generating simplified CSV file: {str(e)}")
+        
+        # Create metadata for the prediction
+        metadata = {
+            "prediction_id": prediction_id,
+            "model_id": request.model_id,
+            "model_type": "carrier_performance",
+            "created_at": datetime.now().isoformat(),
+            "prediction_count": len(result.get("predictions", [])),
+            "prediction_file": str(prediction_file)
+        }
+        
+        # Save metadata
+        prediction_service.metadata["predictions"][prediction_id] = metadata
+        prediction_service._save_metadata()
+        
+        # Get full prediction details including ID
+        prediction = {
+            "prediction_id": prediction_id,
+            "model_id": request.model_id,
+            "model_type": "carrier_performance",
+            "created_at": metadata["created_at"],
+            "prediction_count": metadata["prediction_count"],
+            "metrics": result.get("metrics", {})
+        }
+        
+        return prediction
+        
+    except Exception as e:
+        logger.error(f"Error creating carrier performance prediction: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/carrier-performance/{model_id}")
+async def get_carrier_performance_predictions(
+    model_id: str,
+    simplified: bool = True,
+    prediction_service: PredictionService = Depends(get_prediction_service)
+):
+    """
+    Get carrier performance predictions for a specific model.
+    
+    This endpoint returns predictions generated on the training data used
+    to train the carrier performance model. These predictions include the predicted
+    on-time performance for each carrier and lane combination.
+    
+    - **model_id**: The ID of the model to retrieve predictions for
+    - **simplified**: Whether to return simplified prediction data (default: True)
+    """
+    try:
+        # Get model metadata to confirm it exists
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        model_metadata = model_service.get_model_metadata(model_id)
+        if not model_metadata:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Model {model_id} not found"}
+            )
+        
+        if model_metadata.get("model_type") != "carrier_performance":
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Model {model_id} is not a carrier performance model"}
+            )
+        
+        # Find the most recent prediction for this model
+        predictions = prediction_service.list_predictions(model_id=model_id)
+        
+        if not predictions:
+            # If no prediction exists, try to generate one
+            logger.info(f"No existing prediction for model {model_id}. Generating new predictions.")
+            
+            result = model_service.predict_carrier_performance_on_training_data(model_id=model_id)
+            if not result:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Failed to generate predictions for model {model_id}"}
+                )
+            
+            # Get the predictions we just created
+            predictions = prediction_service.list_predictions(model_id=model_id)
+            if not predictions:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "Failed to retrieve newly generated predictions"}
+                )
+        
+        # Get the most recent prediction
+        latest_prediction = predictions[0]
+        prediction_id = latest_prediction["prediction_id"]
+        
+        # Get the full prediction data
+        prediction = prediction_service.get_prediction(prediction_id)
+        if not prediction:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Prediction {prediction_id} not found"}
+            )
+        
+        # Filter the data based on simplified flag
+        if simplified and "data" in prediction and "predictions" in prediction["data"]:
+            simplified_predictions = []
+            for pred in prediction["data"]["predictions"]:
+                simplified_pred = {
+                    "carrier": pred.get("carrier", ""),
+                    "source_city": pred.get("source_city", ""),
+                    "dest_city": pred.get("dest_city", ""),
+                    "predicted_ontime_performance": pred.get("predicted_performance", 0)
+                }
+                simplified_predictions.append(simplified_pred)
+            
+            prediction["data"]["predictions"] = simplified_predictions
+        
+        return prediction
+        
+    except Exception as e:
+        logger.error(f"Error retrieving carrier performance predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/carrier-performance/{model_id}/by-lane")
+async def get_carrier_performance_by_lane(
+    model_id: str,
+    source_city: str = Query(..., description="Source city name"),
+    dest_city: str = Query(..., description="Destination city name"),
+    carrier: Optional[str] = Query(None, description="Carrier name (optional)"),
+    simplified: bool = True,
+    prediction_service: PredictionService = Depends(get_prediction_service)
+):
+    """
+    Get carrier performance predictions for a specific lane.
+    
+    This endpoint filters the prediction data by source city, destination city,
+    and optionally by carrier. It returns on-time performance predictions specific
+    to the requested lane.
+    
+    - **model_id**: The ID of the model to retrieve predictions for
+    - **source_city**: The source city to filter by
+    - **dest_city**: The destination city to filter by
+    - **carrier**: Optional carrier to filter by
+    - **simplified**: Whether to return simplified prediction data (default: True)
+    """
+    try:
+        # Get model metadata to confirm it exists
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        model_metadata = model_service.get_model_metadata(model_id)
+        if not model_metadata:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Model {model_id} not found"}
+            )
+        
+        if model_metadata.get("model_type") != "carrier_performance":
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Model {model_id} is not a carrier performance model"}
+            )
+        
+        # Find the most recent prediction for this model
+        predictions = prediction_service.list_predictions(model_id=model_id)
+        
+        if not predictions:
+            # If no prediction exists, try to generate one
+            logger.info(f"No existing prediction for model {model_id}. Generating new predictions.")
+            
+            result = model_service.predict_carrier_performance_on_training_data(model_id=model_id)
+            if not result:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Failed to generate predictions for model {model_id}"}
+                )
+            
+            # Get the predictions we just created
+            predictions = prediction_service.list_predictions(model_id=model_id)
+            if not predictions:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "Failed to retrieve newly generated predictions"}
+                )
+        
+        # Get the most recent prediction
+        latest_prediction = predictions[0]
+        prediction_id = latest_prediction["prediction_id"]
+        
+        # Get the full prediction data
+        prediction = prediction_service.get_prediction(prediction_id)
+        if not prediction or "data" not in prediction or "predictions" not in prediction["data"]:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Prediction {prediction_id} not found or has invalid format"}
+            )
+        
+        # Filter predictions by lane and carrier
+        filtered_predictions = []
+        
+        # Try using lane utils if available, otherwise do basic filtering
+        try:
+            from utils.lane_utils import filter_by_lane
+            
+            # Create lane criteria
+            lane_criteria = {
+                "source_city": source_city,
+                "dest_city": dest_city
+            }
+            
+            if carrier:
+                lane_criteria["carrier"] = carrier
+                
+            # Apply lane filtering
+            filtered_predictions = filter_by_lane(
+                prediction["data"]["predictions"], 
+                lane_criteria
+            )
+            
+            logger.info(f"Filtered predictions using lane utils: {len(filtered_predictions)} results")
+            
+        except ImportError:
+            # Fallback to basic filtering if lane utils not available
+            logger.warning("Lane utils not available, using basic filtering")
+            
+            source_city_upper = source_city.upper()
+            dest_city_upper = dest_city.upper()
+            
+            for pred in prediction["data"]["predictions"]:
+                pred_source = pred.get("source_city", "").upper()
+                pred_dest = pred.get("dest_city", "").upper()
+                
+                # Check source and destination match
+                if pred_source == source_city_upper and pred_dest == dest_city_upper:
+                    # Check carrier if specified
+                    if carrier:
+                        pred_carrier = pred.get("carrier", "").upper()
+                        if pred_carrier == carrier.upper():
+                            filtered_predictions.append(pred)
+                    else:
+                        filtered_predictions.append(pred)
+        
+        # Calculate metrics for the filtered predictions
+        lane_metrics = {}
+        if filtered_predictions:
+            # Calculate average predicted performance
+            predicted_performances = [p.get("predicted_performance", 0) for p in filtered_predictions]
+            lane_metrics["avg_predicted_ontime_performance"] = sum(predicted_performances) / len(predicted_performances)
+            
+            # Calculate carrier count
+            carriers = set(p.get("carrier", "") for p in filtered_predictions)
+            lane_metrics["carrier_count"] = len(carriers)
+            
+            # Record carrier list
+            lane_metrics["carriers"] = list(carriers)
+        
+        # Simplify prediction data if requested
+        if simplified:
+            simplified_predictions = []
+            for pred in filtered_predictions:
+                simplified_pred = {
+                    "carrier": pred.get("carrier", ""),
+                    "source_city": pred.get("source_city", ""),
+                    "dest_city": pred.get("dest_city", ""),
+                    "predicted_ontime_performance": pred.get("predicted_performance", 0)
+                }
+                simplified_predictions.append(simplified_pred)
+            
+            filtered_predictions = simplified_predictions
+        
+        # Construct response
+        response = {
+            "prediction_id": prediction_id,
+            "model_id": model_id,
+            "source_city": source_city,
+            "dest_city": dest_city,
+            "carrier": carrier,
+            "metrics": lane_metrics,
+            "predictions": filtered_predictions,
+            "prediction_count": len(filtered_predictions)
+        }
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error retrieving carrier performance by lane: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/carrier-performance/{model_id}/download")
+async def download_carrier_performance_predictions(
+    model_id: str,
+    format: str = "csv",
+    simplified: bool = True,
+    source_city: Optional[str] = None,
+    dest_city: Optional[str] = None,
+    carrier: Optional[str] = None,
+    prediction_service: PredictionService = Depends(get_prediction_service)
+):
+    """
+    Download carrier performance predictions.
+    
+    This endpoint allows downloading the prediction data in either CSV or JSON format.
+    The data can be filtered by source city, destination city, and carrier, and
+    can be simplified to include only essential fields.
+    
+    - **model_id**: The ID of the model to download predictions for
+    - **format**: The format to download (csv or json, default: csv)
+    - **simplified**: Whether to download simplified data (default: True)
+    - **source_city**: Optional source city to filter by
+    - **dest_city**: Optional destination city to filter by
+    - **carrier**: Optional carrier to filter by
+    """
+    try:
+        # Validate the format
+        if format.lower() not in ["csv", "json"]:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid format. Use 'csv' or 'json'."}
+            )
+        
+        # Get model metadata to confirm it exists
+        from services.model_service import ModelService
+        model_service = ModelService()
+        
+        model_metadata = model_service.get_model_metadata(model_id)
+        if not model_metadata:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Model {model_id} not found"}
+            )
+        
+        if model_metadata.get("model_type") != "carrier_performance":
+            return JSONResponse(
+                status_code=400,
+                content={"detail": f"Model {model_id} is not a carrier performance model"}
+            )
+        
+        # Find the most recent prediction for this model
+        predictions = prediction_service.list_predictions(model_id=model_id)
+        
+        if not predictions:
+            # If no prediction exists, try to generate one
+            logger.info(f"No existing prediction for model {model_id}. Generating new predictions.")
+            
+            result = model_service.predict_carrier_performance_on_training_data(model_id=model_id)
+            if not result:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": f"Failed to generate predictions for model {model_id}"}
+                )
+            
+            # Get the predictions we just created
+            predictions = prediction_service.list_predictions(model_id=model_id)
+            if not predictions:
+                return JSONResponse(
+                    status_code=500,
+                    content={"detail": "Failed to retrieve newly generated predictions"}
+                )
+        
+        # Get the most recent prediction
+        latest_prediction = predictions[0]
+        prediction_id = latest_prediction["prediction_id"]
+        
+        # Get the prediction directory
+        prediction_dir = prediction_service.base_path / prediction_id
+        
+        # Determine the file path based on format and simplified flag
+        file_path = None
+        content_type = "application/octet-stream"
+        
+        if format.lower() == "csv":
+            # If we need filtering, we'll need to generate a custom CSV
+            if source_city or dest_city or carrier:
+                # Get filtered data first
+                response = await get_carrier_performance_by_lane(
+                    model_id=model_id,
+                    source_city=source_city or "ALL",
+                    dest_city=dest_city or "ALL",
+                    carrier=carrier,
+                    simplified=simplified,
+                    prediction_service=prediction_service
+                )
+                
+                # Create a custom CSV file
+                filtered_predictions = response.get("predictions", [])
+                
+                if not filtered_predictions:
+                    return JSONResponse(
+                        status_code=404,
+                        content={"detail": "No predictions found matching the filter criteria"}
+                    )
+                
+                # Create a pandas DataFrame and save to CSV
+                df = pd.DataFrame(filtered_predictions)
+                
+                # Create a filename with filter info
+                filter_info = ""
+                if source_city:
+                    filter_info += f"_src_{source_city}"
+                if dest_city:
+                    filter_info += f"_dst_{dest_city}"
+                if carrier:
+                    filter_info += f"_carrier_{carrier}"
+                
+                # Save to a temporary file
+                import tempfile
+                temp_dir = Path(tempfile.gettempdir())
+                
+                filtered_file = temp_dir / f"carrier_performance_{model_id}{filter_info}_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+                df.to_csv(filtered_file, index=False)
+                
+                file_path = filtered_file
+                
+            else:
+                # Use existing CSV files
+                if simplified:
+                    file_path = prediction_dir / "prediction_data_simplified.csv"
+                    if not file_path.exists():
+                        # Try to generate it
+                        try:
+                            from utils.file_converters import convert_carrier_performance_simplified
+                            file_path = convert_carrier_performance_simplified(prediction_dir)
+                        except Exception as e:
+                            logger.error(f"Error generating simplified CSV: {str(e)}")
+                            
+                else:
+                    file_path = prediction_dir / "prediction_data.csv"
+                    if not file_path.exists():
+                        # Try to generate it
+                        try:
+                            from utils.file_converters import convert_carrier_performance_training_predictions
+                            file_path = convert_carrier_performance_training_predictions(prediction_dir)
+                        except Exception as e:
+                            logger.error(f"Error generating CSV: {str(e)}")
+            
+            content_type = "text/csv"
+            
+        else:  # JSON format
+            json_file = prediction_dir / "prediction_data.json"
+            
+            if source_city or dest_city or carrier:
+                # Get filtered data
+                response = await get_carrier_performance_by_lane(
+                    model_id=model_id,
+                    source_city=source_city or "ALL",
+                    dest_city=dest_city or "ALL",
+                    carrier=carrier,
+                    simplified=simplified,
+                    prediction_service=prediction_service
+                )
+                
+                # Create a temporary JSON file
+                import tempfile
+                temp_dir = Path(tempfile.gettempdir())
+                
+                filter_info = ""
+                if source_city:
+                    filter_info += f"_src_{source_city}"
+                if dest_city:
+                    filter_info += f"_dst_{dest_city}"
+                if carrier:
+                    filter_info += f"_carrier_{carrier}"
+                
+                filtered_file = temp_dir / f"carrier_performance_{model_id}{filter_info}_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+                
+                with open(filtered_file, "w") as f:
+                    json.dump(response, f, indent=2)
+                
+                file_path = filtered_file
+                
+            else:
+                file_path = json_file
+            
+            content_type = "application/json"
+        
+        # Check if file exists
+        if not file_path or not file_path.exists():
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"Prediction file not found in format {format}"}
+            )
+        
+        # Generate a filename for the download
+        filename = file_path.name
+        
+        # Return the file
+        return FileResponse(
+            path=file_path,
+            media_type=content_type,
+            filename=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading carrier performance predictions: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e)) 

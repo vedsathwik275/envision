@@ -492,13 +492,13 @@ class CarrierPerformanceModel:
         """
         logger.info("Generating predictions on training data...")
         
-        if self.raw_data is None:
-            logger.error("No training data available. Load data first.")
-            return None
-        
-        if self.model is None:
-            logger.error("No model available for prediction. Train or load a model first.")
-            return None
+        # Check if raw data is available
+        if not hasattr(self, 'raw_data') or self.raw_data is None:
+            if hasattr(self, 'data_path') and self.data_path and os.path.exists(self.data_path):
+                self.load_data()
+            else:
+                logger.error("No training data available for prediction")
+                return None
         
         try:
             # Get unique carrier-lane combinations

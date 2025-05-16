@@ -20,10 +20,46 @@
   - Random sampling for prediction validation
   - Detailed logging of performance metrics
 - **Enhanced Model Registry**: Updated model package `__init__.py` to include the new `CarrierPerformanceModel`
+- **Task Management**: Updated `todo.md` to reflect completed carrier performance analysis and model development tasks
+- **Carrier Performance API Endpoints**: Implemented API routes for carrier performance predictions:
+  - `POST /api/predictions/carrier-performance` - Create new carrier performance predictions
+  - `GET /api/predictions/carrier-performance/{model_id}` - Get all predictions for a model
+  - `GET /api/predictions/carrier-performance/{model_id}/by-lane` - Filter predictions by lane and carrier
+  - `GET /api/predictions/carrier-performance/{model_id}/download` - Download predictions in CSV or JSON format
+- **CSV Conversion Utilities**: Added carrier performance converters:
+  - `convert_carrier_performance_training_predictions` - Convert complete prediction data to CSV
+  - `convert_carrier_performance_simplified` - Convert simplified prediction data to CSV
+- **Model Service Extensions**: Added carrier performance model support in ModelService:
+  - `load_carrier_performance_model` - Load saved carrier performance models
+  - `train_carrier_performance_model` - Train new carrier performance models
+  - `predict_carrier_performance_on_training_data` - Generate predictions using carrier performance models
+- **Model API Routes**: Added carrier performance routes to the models API:
+  - `POST /api/models/train/carrier-performance` - Train a new carrier performance model
+  - `POST /api/models/predict/carrier-performance` - Generate specific predictions for carrier-lane combinations
+- **Lane Handling Utility for filtering predictions by lane criteria**: Implemented in `utils/lane_utils.py`
+- **Comprehensive API documentation in `docs/api_reference.md`**: Added to document API endpoints and their usage
+- **Prediction caching functionality to prevent unnecessary regeneration of predictions**: Implemented in `PredictionService`
+- **Multiple Data Loading Fallback Mechanisms** for Carrier Performance Model:
+  - Systematic approach to locate and load training data from multiple possible locations
+  - Automatic copy of training data to model directory when found in default location
+  - Detailed logging of data loading attempts for better debugging
 
 ### Changed
+- **Improved error handling for Order Volume predictions by lane**: Enhanced in `_filter_order_volume_predictions_advanced` function
+- **Enhanced performance of prediction generation with caching mechanism**: Implemented in `PredictionService`
+- **Optimized tender performance model prediction workflow**: Updated in `PredictionService`
+- **Enhanced Carrier Performance Model Error Handling**: 
+  - Added comprehensive error checking in `predict_on_training_data` method
+  - Improved data existence verification before prediction generation
+  - Added detailed logging throughout the prediction pipeline
 
 ### Fixed
+- **Fixed model existence check in order volume by lane endpoint**: Resolved in `order_volume_by_lane` function
+- **Corrected model checking and error handling in API routes**: Updated validation in carrier performance endpoints
+- **Enhanced error resilience in carrier performance model**: Improved in `predict_on_training_data` method
+- **Improved training data handling in carrier performance prediction generation**: Added robust data loading in `predict_carrier_performance_on_training_data`
+- **Added multiple fallback mechanisms for loading carrier performance training data**: Implemented in `predict_carrier_performance_on_training_data` function
+- **Fixed carrier performance model prediction issues**: Resolved by ensuring training data is available before generating predictions
 
 ## [Unreleased] - 2025-05-15
 ### Added
