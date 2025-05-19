@@ -13,6 +13,12 @@
   - Added file sorting by upload time with most recent files prioritized
   - Created visual indicators for newly trained models
   - Implemented error handling and loading states throughout the interface
+  - Added two-step prediction workflow with metadata and actual prediction data
+  - Implemented dynamic prediction table generation with proper data formatting
+  - Added download links for CSV and JSON format prediction results
+  - Created model type selection with filtered model loading
+  - Enhanced model dropdowns to show only the three most recent models per type
+  - Added robust error handling for DOM manipulation and API response processing
 
 ### Changed
 - **Streamlined API Surface**: Simplified the API by maintaining only essential routes:
@@ -27,6 +33,12 @@
   - Simplified routing structure for more intuitive API navigation
 
 ### Fixed
+- Fixed issue with prediction data display in frontend where DOM elements were being removed unintentionally
+- Fixed model selection dropdown to properly display model types and load models based on selection
+- Resolved API URL formatting inconsistencies with hyphens vs underscores in endpoint paths
+- Fixed frontend data handling for nested API response structures
+- Improved error reporting and recovery when API requests fail or return unexpected data
+- Corrected model filtering and sorting to ensure consistent display of model options
 
 ## [Unreleased] - 2025-05-16
 ### Added

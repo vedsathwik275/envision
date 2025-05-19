@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const predictionParams = document.getElementById('prediction-params');
     const predictionResult = document.getElementById('prediction-result');
     const predictionSummary = document.getElementById('prediction-summary');
+    const predictionTableContainer = document.getElementById('prediction-table-container');
     const predictionTable = document.getElementById('prediction-table');
     const predictionDownload = document.getElementById('prediction-download');
     
@@ -541,20 +542,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!modelType) return;
         
         try {
-            const url = `${API_BASE_URL}/models?model_type=${modelType}`;
+            // Convert frontend model type format to API format if needed (order-volume → order_volume)
+            const apiModelType = modelType.replace('-', '_');
+            
+            // Fetch models of the selected type
+            const url = `${API_BASE_URL}/models?model_type=${apiModelType}`;
             const response = await fetch(url);
             const data = await response.json();
             
-            if (response.ok && data.models) {
-                data.models.forEach(model => {
+            if (response.ok && data.models && data.models.length > 0) {
+                // Sort models by creation date (newest first)
+                const sortedModels = [...data.models].sort((a, b) => {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                });
+                
+                // Take only the 3 most recent models
+                const recentModels = sortedModels.slice(0, 3);
+                
+                // Add model options to the dropdown
+                recentModels.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model.model_id;
-                    option.textContent = `${model.model_id} (${new Date(model.created_at).toLocaleDateString()})`;
+                    
+                    // Format the creation date
+                    const creationDate = new Date(model.created_at);
+                    const formattedDate = creationDate.toLocaleDateString() + ' ' + 
+                                         creationDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    option.textContent = `${model.model_id} (${formattedDate})`;
                     predictionModelSelect.appendChild(option);
                 });
+                
+                // If there are options, select the first one (most recent)
+                if (predictionModelSelect.options.length > 1) {
+                    predictionModelSelect.selectedIndex = 1;
+                }
+            } else {
+                // Add a disabled option indicating no models available
+                const option = document.createElement('option');
+                option.disabled = true;
+                option.textContent = 'No models available for this type';
+                predictionModelSelect.appendChild(option);
             }
         } catch (error) {
             console.error('Error loading models for prediction:', error);
+            
+            // Add an error option
+            const option = document.createElement('option');
+            option.disabled = true;
+            option.textContent = 'Error loading models';
+            predictionModelSelect.appendChild(option);
         }
     }
     
@@ -614,9 +651,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function setupPrediction(modelId, modelType) {
         // Navigate to predictions tab
-        document.querySelector(`.nav-link[data-section="predictions"]`).click();
+        document.querySelector('.nav-link[data-section="predictions"]').click();
         
-        // Convert API model type to form format
+        // Convert API model type to form format (order_volume → order-volume)
         const formattedType = modelType.replace('_', '-');
         
         // Set the model type
@@ -626,9 +663,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const event = new Event('change');
         predictionModelType.dispatchEvent(event);
         
-        // Set the model ID after models are loaded
+        // Set the model ID after models are loaded (with a slight delay)
         setTimeout(() => {
-            predictionModelSelect.value = modelId;
+            // Try to find and select the specific model
+            for (let i = 0; i < predictionModelSelect.options.length; i++) {
+                if (predictionModelSelect.options[i].value === modelId) {
+                    predictionModelSelect.selectedIndex = i;
+                    break;
+                }
+            }
+            
+            // If the specific model isn't in the dropdown (it might be older than the top 3),
+            // we'll stick with the default behavior of selecting the most recent model
         }, 500);
     }
     
@@ -664,6 +710,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
             
+            console.log(`Step 1: Sending prediction request to ${endpoint}`, requestBody);
+            
+            // Step 1: Generate the predictions
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
@@ -674,84 +723,357 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            if (response.ok) {
-                displayPredictionResults(data, modelType);
-            } else {
-                showError(predictionResult, `Prediction failed: ${data.error || 'Unknown error'}`);
+            console.log('Step 1 Response:', data);
+            
+            if (!response.ok) {
+                const errorMsg = data.error || data.message || 'Unknown error occurred';
+                console.error('Prediction API error:', errorMsg);
+                showError(predictionResult, `Prediction failed: ${errorMsg}`);
+                return;
+            }
+            
+            // Store the prediction metadata for summary
+            const predictionMetadata = data;
+            
+            // Step 2: Fetch the actual prediction data using a separate API call
+            console.log(`Step 2: Fetching prediction results for model ${modelId}`);
+            
+            // Important: Keep the hyphens in the URL path! The API endpoints use hyphens.
+            // Only the model ID itself uses underscores, but the endpoint path should have hyphens.
+            const fetchEndpoint = `${API_BASE_URL}/predictions/${modelType}/${modelId}?simplified=true`;
+            
+            console.log(`Using fetch endpoint: ${fetchEndpoint}`);
+            
+            try {
+                const predictionResponse = await fetch(fetchEndpoint);
+                
+                // Check response content type
+                const contentType = predictionResponse.headers.get('content-type');
+                console.log(`Response content type: ${contentType}`);
+                
+                let predictionData;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    predictionData = await predictionResponse.json();
+                    console.log('Step 2 Response (JSON):', predictionData);
+                    
+                    // Debug the structure of the prediction data
+                    console.log('Prediction data type:', typeof predictionData);
+                    console.log('Is array?', Array.isArray(predictionData));
+                    if (Array.isArray(predictionData)) {
+                        console.log('Array length:', predictionData.length);
+                        if (predictionData.length > 0) {
+                            console.log('First item:', predictionData[0]);
+                        }
+                    } else {
+                        console.log('Object keys:', Object.keys(predictionData));
+                    }
+                } else {
+                    // If not JSON, try to get the text response
+                    const textResponse = await predictionResponse.text();
+                    console.log('Step 2 Response (Text):', textResponse);
+                    predictionData = [];
+                    showError(predictionResult, `Received non-JSON response: ${textResponse.substring(0, 100)}...`);
+                    return;
+                }
+                
+                if (!predictionResponse.ok) {
+                    showError(predictionResult, `Failed to fetch prediction results: ${predictionData.error || 'Unknown error'}`);
+                    return;
+                }
+                
+                // If predictionData is empty or not useful, show a message
+                if (!predictionData || 
+                    (Array.isArray(predictionData) && predictionData.length === 0) ||
+                    (typeof predictionData === 'object' && Object.keys(predictionData).length === 0)) {
+                    showError(predictionResult, 'Received empty prediction results from the API.');
+                    return;
+                }
+                
+                // Make sure predictionData is in a usable format for our display functions
+                let combinedData;
+                
+                if (Array.isArray(predictionData)) {
+                    // If it's an array of predictions, wrap it properly
+                    combinedData = {
+                        ...predictionMetadata,
+                        predictions: predictionData
+                    };
+                } else {
+                    // If it's already an object, merge with metadata
+                    combinedData = {
+                        ...predictionMetadata,
+                        ...predictionData
+                    };
+                }
+                
+                console.log('Combined prediction data:', combinedData);
+                
+                // Display the combined results
+                displayPredictionResults(combinedData, modelType);
+            } catch (fetchError) {
+                console.error('Error fetching prediction results:', fetchError);
+                showError(predictionResult, `Error fetching prediction results: ${fetchError.message}`);
             }
         } catch (error) {
+            console.error('Prediction generation error:', error);
             showError(predictionResult, `Prediction error: ${error.message}`);
         }
     }
     
     function displayPredictionResults(predictionData, modelType) {
+        console.log('Displaying prediction results for:', predictionData);
+        
+        // Check if predictionResult exists
+        if (!predictionResult) {
+            console.error('ERROR: predictionResult element not found in the DOM!');
+            return;
+        }
+        
+        console.log('DOM structure check:');
+        console.log('- predictionResult parent:', predictionResult.parentElement);
+        
+        // IMPORTANT: Instead of clearing the entire container which removes all child elements,
+        // find the loading indicator and only clear that
+        const loadingElement = predictionResult.querySelector('.loading');
+        if (loadingElement) {
+            console.log('Removing loading indicator');
+            loadingElement.remove();
+        } else {
+            console.log('No loading indicator found to remove');
+        }
+        
+        // First make sure the summary, table, and download elements exist
+        // If they don't exist, we need to recreate them
+        let summaryElement = document.getElementById('prediction-summary');
+        let tableContainerElement = document.getElementById('prediction-table-container');
+        let tableElement = document.getElementById('prediction-table');
+        let downloadElement = document.getElementById('prediction-download');
+        
+        // If any of these are missing, recreate the entire structure
+        if (!summaryElement || !tableContainerElement || !tableElement || !downloadElement) {
+            console.log('Recreating prediction result structure because elements are missing');
+            
+            // Create the full structure
+            predictionResult.innerHTML = `
+                <div id="prediction-summary"></div>
+                <div id="prediction-table-container">
+                    <table id="prediction-table"></table>
+                </div>
+                <div id="prediction-download" class="download-area"></div>
+            `;
+            
+            // Get the newly created elements
+            summaryElement = document.getElementById('prediction-summary');
+            tableContainerElement = document.getElementById('prediction-table-container');
+            tableElement = document.getElementById('prediction-table');
+            downloadElement = document.getElementById('prediction-download');
+        }
+        
+        // First extract all possible metadata we need
+        const modelId = predictionData.model_id;
+        const predictionId = predictionData.prediction_id;
+        
+        // Handle nested data structure for metrics
+        const metrics = predictionData.metrics || 
+                       (predictionData.data && predictionData.data.metrics) || {};
+        
+        // Handle nested data structure for timestamps
+        const predictionTime = predictionData.created_at || 
+                              predictionData.prediction_time || 
+                              (predictionData.data && predictionData.data.prediction_time) || 
+                              new Date().toISOString();
+        
+        // Determine prediction count from various possible sources
+        let predictionCount = 0;
+        if (Array.isArray(predictionData.predictions)) {
+            predictionCount = predictionData.predictions.length;
+        } else if (Array.isArray(predictionData)) {
+            predictionCount = predictionData.length;
+        } else if (predictionData.prediction_count) {
+            predictionCount = predictionData.prediction_count;
+        } else if (predictionData.data && predictionData.data.predictions) {
+            predictionCount = predictionData.data.predictions.length;
+        }
+        
         // Display prediction summary
         let summaryHTML = `
             <div class="prediction-summary">
-                <p><strong>Prediction ID:</strong> ${predictionData.prediction_id}</p>
-                <p><strong>Model ID:</strong> ${predictionData.model_id}</p>
-                <p><strong>Created:</strong> ${new Date(predictionData.created_at || predictionData.prediction_time).toLocaleString()}</p>
-                <p><strong>Total Predictions:</strong> ${predictionData.prediction_count}</p>
+                <p><strong>Prediction ID:</strong> ${predictionId || 'N/A'}</p>
+                <p><strong>Model ID:</strong> ${modelId || 'N/A'}</p>
+                <p><strong>Created:</strong> ${new Date(predictionTime).toLocaleString()}</p>
+                <p><strong>Total Predictions:</strong> ${predictionCount}</p>
         `;
         
         // Add model-specific metrics if available
-        if (predictionData.metrics) {
+        if (Object.keys(metrics).length > 0) {
             summaryHTML += '<div class="metrics"><h4>Metrics:</h4><ul>';
-            for (const [key, value] of Object.entries(predictionData.metrics)) {
-                summaryHTML += `<li>${key}: ${value}</li>`;
+            for (const [key, value] of Object.entries(metrics)) {
+                const formattedValue = typeof value === 'number' ? 
+                    (Math.abs(value) < 0.0001 ? value.toExponential(2) : value.toFixed(4)) : 
+                    value;
+                summaryHTML += `<li>${formatColumnHeader(key)}: ${formattedValue}</li>`;
             }
             summaryHTML += '</ul></div>';
         }
         
         summaryHTML += '</div>';
-        predictionSummary.innerHTML = summaryHTML;
+        console.log('Setting summary HTML');
+        summaryElement.innerHTML = summaryHTML;
         
-        // Create download links
-        const downloadHTML = `
-            <p>Download predictions:</p>
-            <a href="${API_BASE_URL}/predictions/${modelType}/${predictionData.model_id}/download?format=csv" class="btn secondary" target="_blank">CSV</a>
-            <a href="${API_BASE_URL}/predictions/${modelType}/${predictionData.model_id}/download?format=json" class="btn secondary" target="_blank">JSON</a>
-        `;
-        predictionDownload.innerHTML = downloadHTML;
+        // Create download links - only if we have a model ID
+        if (modelId) {
+            // Important: Keep hyphens in the URL path for API endpoints
+            const downloadHTML = `
+                <p>Download predictions:</p>
+                <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=csv" class="btn secondary" target="_blank">CSV</a>
+                <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=json" class="btn secondary" target="_blank">JSON</a>
+            `;
+            console.log('Setting download HTML');
+            downloadElement.innerHTML = downloadHTML;
+        } else {
+            downloadElement.innerHTML = '';
+        }
         
-        // Display prediction table
-        displayPredictionTable(predictionData, modelType);
+        // Now display the prediction table with the updated references
+        console.log('Displaying prediction table');
+        displayPredictionTable(predictionData, modelType, tableElement, tableContainerElement);
     }
     
-    function displayPredictionTable(predictionData, modelType) {
-        const predictions = predictionData.predictions || 
-                           (predictionData.data && predictionData.data.predictions) || [];
-                           
-        if (!predictions.length) {
-            predictionTable.innerHTML = '<p>No prediction data available.</p>';
+    function displayPredictionTable(predictionData, modelType, tableElement, tableContainerElement) {
+        console.log('Displaying prediction table for data:', predictionData);
+        
+        // First check if relevant DOM elements exist
+        if (!tableContainerElement) {
+            console.error('ERROR: predictionTableContainer element not found in the DOM!');
             return;
         }
         
-        // Get all column headers from the first prediction
-        const columnHeaders = Object.keys(predictions[0]);
+        if (!tableElement) {
+            console.error('ERROR: predictionTable element not found in the DOM!');
+            return;
+        }
         
-        let tableHTML = '<thead><tr>';
-        columnHeaders.forEach(header => {
-            tableHTML += `<th>${formatColumnHeader(header)}</th>`;
+        console.log('DOM elements found:', {
+            tableContainerElement, 
+            tableElement,
+            containerParent: tableContainerElement.parentElement,
+            tableParent: tableElement.parentElement
         });
-        tableHTML += '</tr></thead><tbody>';
         
-        // Add prediction rows (limit to first 20 for display)
-        const displayLimit = Math.min(20, predictions.length);
-        for (let i = 0; i < displayLimit; i++) {
-            tableHTML += '<tr>';
+        // Extract predictions from different possible response formats
+        let predictions = [];
+        
+        // Debug the structure of the prediction data
+        console.log('Prediction table data type:', typeof predictionData);
+        console.log('Is prediction data an array?', Array.isArray(predictionData));
+        
+        if (Array.isArray(predictionData)) {
+            // Case 1: The predictionData itself is an array of predictions (direct API response)
+            console.log('predictionData itself is an array of predictions, length:', predictionData.length);
+            predictions = predictionData;
+        } else if (predictionData.predictions && Array.isArray(predictionData.predictions)) {
+            // Case 2: The predictions are in the predictions property as an array
+            console.log('Found predictions as array in predictionData.predictions, length:', predictionData.predictions.length);
+            predictions = predictionData.predictions;
+        } else if (predictionData.data && predictionData.data.predictions && Array.isArray(predictionData.data.predictions)) {
+            // Case 3: The predictions are nested in data.predictions
+            console.log('Found predictions inside data.predictions, length:', predictionData.data.predictions.length);
+            predictions = predictionData.data.predictions;
+        } else {
+            // Try to find any array in the object
+            console.log('Searching for array data in prediction object...');
+            for (const key in predictionData) {
+                if (Array.isArray(predictionData[key]) && predictionData[key].length > 0) {
+                    console.log(`Found array in property "${key}" with length ${predictionData[key].length}`);
+                    // Only use this if it looks like prediction data (has objects with properties)
+                    if (typeof predictionData[key][0] === 'object') {
+                        predictions = predictionData[key];
+                        console.log('Using this array as predictions');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Make sure container is visible
+        tableContainerElement.style.display = 'block';
+        
+        // Clear any previous content
+        console.log('Clearing predictionTable');               
+        tableElement.innerHTML = '';
+                       
+        if (!predictions || !predictions.length) {
+            console.warn('No predictions found in the response data');
+            tableElement.innerHTML = '<tr><td><p>No prediction data available.</p></td></tr>';
+            return;
+        }
+        
+        console.log(`Found ${predictions.length} predictions to display`);
+        console.log('First prediction:', predictions[0]);
+        
+        try {
+            // Get all column headers from the first prediction
+            const columnHeaders = Object.keys(predictions[0]);
+            console.log('Column headers:', columnHeaders);
+            
+            let tableHTML = '<thead><tr>';
             columnHeaders.forEach(header => {
-                tableHTML += `<td>${predictions[i][header] || ''}</td>`;
+                tableHTML += `<th>${formatColumnHeader(header)}</th>`;
             });
-            tableHTML += '</tr>';
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Add prediction rows (limit to first 20 for display)
+            const displayLimit = Math.min(20, predictions.length);
+            for (let i = 0; i < displayLimit; i++) {
+                tableHTML += '<tr>';
+                columnHeaders.forEach(header => {
+                    const cellValue = predictions[i][header];
+                    // Format numbers to 4 decimal places if they're numeric
+                    const formattedValue = typeof cellValue === 'number' ? 
+                        (Math.abs(cellValue) < 0.0001 ? cellValue.toExponential(2) : cellValue.toFixed(4)) : 
+                        (cellValue || '');
+                    tableHTML += `<td>${formattedValue}</td>`;
+                });
+                tableHTML += '</tr>';
+            }
+            
+            if (predictions.length > displayLimit) {
+                tableHTML += `<tr><td colspan="${columnHeaders.length}">Showing ${displayLimit} of ${predictions.length} predictions. Download the full dataset to see all.</td></tr>`;
+            }
+            
+            tableHTML += '</tbody>';
+            
+            // Set the table HTML with better error handling
+            try {
+                console.log('Setting table HTML:', tableHTML.substring(0, 200) + '...');
+                tableElement.innerHTML = tableHTML;
+                
+                // Show the table with some animation to ensure it's visible
+                tableContainerElement.style.opacity = '0';
+                tableContainerElement.style.display = 'block';
+                
+                // Force reflow
+                void tableContainerElement.offsetHeight;
+                
+                // Fade in
+                tableContainerElement.style.transition = 'opacity 0.3s ease-in-out';
+                tableContainerElement.style.opacity = '1';
+                
+                console.log('Table displayed successfully');
+            } catch (innerError) {
+                console.error('Error setting table HTML:', innerError);
+                tableElement.innerHTML = `<tr><td><p class="error">Error displaying table: ${innerError.message}</p></td></tr>`;
+            }
+            
+            // Verify the table was populated
+            console.log('After update, predictionTable.innerHTML length:', tableElement.innerHTML.length);
+            console.log('After update, predictionTable children count:', tableElement.childNodes.length);
+            
+        } catch (error) {
+            console.error('Error displaying prediction table:', error);
+            tableElement.innerHTML = `<tr><td><p class="error">Error displaying predictions: ${error.message}</p></td></tr>`;
         }
-        
-        if (predictions.length > displayLimit) {
-            tableHTML += `<tr><td colspan="${columnHeaders.length}">Showing ${displayLimit} of ${predictions.length} predictions. Download the full dataset to see all.</td></tr>`;
-        }
-        
-        tableHTML += '</tbody>';
-        predictionTable.innerHTML = tableHTML;
     }
     
     // Utility Functions
