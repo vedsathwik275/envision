@@ -516,131 +516,131 @@ async def train_carrier_performance_model(
         "message": "Carrier performance model training started in the background. Check model list for completion status."
     }
 
-@router.post("/predict/order-volume", response_model=OrderVolumePredictionResponse)
-async def predict_order_volume(
-    request: OrderVolumePredictionRequest,
-    model_service: ModelService = Depends(get_model_service)
-):
-    """Generate predictions for future order volumes."""
-    # Check if model exists
-    if not model_service.get_model_metadata(request.model_id):
-        raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
+# @router.post("/predict/order-volume", response_model=OrderVolumePredictionResponse)
+# async def predict_order_volume(
+#     request: OrderVolumePredictionRequest,
+#     model_service: ModelService = Depends(get_model_service)
+# ):
+#     """Generate predictions for future order volumes."""
+#     # Check if model exists
+#     if not model_service.get_model_metadata(request.model_id):
+#         raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
     
-    # Generate predictions
-    result = model_service.predict_future_order_volumes(
-        model_id=request.model_id,
-        months=request.months
-    )
+#     # Generate predictions
+#     result = model_service.predict_future_order_volumes(
+#         model_id=request.model_id,
+#         months=request.months
+#     )
     
-    if not result:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to generate predictions with model {request.model_id}"
-        )
+#     if not result:
+#         raise HTTPException(
+#             status_code=500, 
+#             detail=f"Failed to generate predictions with model {request.model_id}"
+#         )
     
-    return result
+#     return result
 
-@router.post("/predict/tender-performance", response_model=TenderPerformancePredictionResponse)
-async def predict_tender_performance(
-    request: TenderPerformancePredictionRequest,
-    model_service: ModelService = Depends(get_model_service)
-):
-    """Generate predictions for tender performance."""
-    # Check if model exists
-    if not model_service.get_model_metadata(request.model_id):
-        raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
+# @router.post("/predict/tender-performance", response_model=TenderPerformancePredictionResponse)
+# async def predict_tender_performance(
+#     request: TenderPerformancePredictionRequest,
+#     model_service: ModelService = Depends(get_model_service)
+# ):
+#     """Generate predictions for tender performance."""
+#     # Check if model exists
+#     if not model_service.get_model_metadata(request.model_id):
+#         raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
     
-    # Check if input lists have the same length
-    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
-        raise HTTPException(
-            status_code=400,
-            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
-        )
+#     # Check if input lists have the same length
+#     if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+#         )
     
-    # Generate predictions
-    result = model_service.predict_tender_performance(
-        model_id=request.model_id,
-        carriers=request.carriers,
-        source_cities=request.source_cities,
-        dest_cities=request.dest_cities
-    )
+#     # Generate predictions
+#     result = model_service.predict_tender_performance(
+#         model_id=request.model_id,
+#         carriers=request.carriers,
+#         source_cities=request.source_cities,
+#         dest_cities=request.dest_cities
+#     )
     
-    if not result:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to generate predictions with model {request.model_id}"
-        )
+#     if not result:
+#         raise HTTPException(
+#             status_code=500, 
+#             detail=f"Failed to generate predictions with model {request.model_id}"
+#         )
     
-    return result
+#     return result
 
-@router.post("/predict/carrier-performance", response_model=CarrierPerformancePredictionResponse)
-async def predict_carrier_performance(
-    request: CarrierPerformancePredictionRequest,
-    model_service: ModelService = Depends(get_model_service)
-):
-    """Generate predictions for carrier on-time performance.
+# @router.post("/predict/carrier-performance", response_model=CarrierPerformancePredictionResponse)
+# async def predict_carrier_performance(
+#     request: CarrierPerformancePredictionRequest,
+#     model_service: ModelService = Depends(get_model_service)
+# ):
+#     """Generate predictions for carrier on-time performance.
     
-    This endpoint generates specific predictions for the provided carrier-lane combinations.
-    For comprehensive predictions across all training data, use the
-    POST /api/predictions/carrier-performance endpoint instead.
+#     This endpoint generates specific predictions for the provided carrier-lane combinations.
+#     For comprehensive predictions across all training data, use the
+#     POST /api/predictions/carrier-performance endpoint instead.
     
-    - **model_id**: ID of the carrier performance model to use
-    - **carriers**: List of carriers to predict for
-    - **source_cities**: List of source cities, matching the order of carriers
-    - **dest_cities**: List of destination cities, matching the order of carriers
-    """
-    # Check if model exists
-    model_metadata = model_service.get_model_metadata(request.model_id)
-    if not model_metadata:
-        raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
+#     - **model_id**: ID of the carrier performance model to use
+#     - **carriers**: List of carriers to predict for
+#     - **source_cities**: List of source cities, matching the order of carriers
+#     - **dest_cities**: List of destination cities, matching the order of carriers
+#     """
+#     # Check if model exists
+#     model_metadata = model_service.get_model_metadata(request.model_id)
+#     if not model_metadata:
+#         raise HTTPException(status_code=404, detail=f"Model {request.model_id} not found")
     
-    # Verify model type
-    if model_metadata.get("model_type") != "carrier_performance":
-        raise HTTPException(
-            status_code=400,
-            detail=f"Model {request.model_id} is not a carrier performance model"
-        )
+#     # Verify model type
+#     if model_metadata.get("model_type") != "carrier_performance":
+#         raise HTTPException(
+#             status_code=400,
+#             detail=f"Model {request.model_id} is not a carrier performance model"
+#         )
         
-    # Check if input lists have the same length
-    if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
-        raise HTTPException(
-            status_code=400,
-            detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
-        )
+#     # Check if input lists have the same length
+#     if len(request.carriers) != len(request.source_cities) or len(request.carriers) != len(request.dest_cities):
+#         raise HTTPException(
+#             status_code=400,
+#             detail="Input lists (carriers, source_cities, dest_cities) must have the same length"
+#         )
     
-    # Generate predictions
-    predictions = []
-    model = model_service.load_carrier_performance_model(request.model_id)
+#     # Generate predictions
+#     predictions = []
+#     model = model_service.load_carrier_performance_model(request.model_id)
     
-    if not model:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to load carrier performance model {request.model_id}"
-        )
+#     if not model:
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Failed to load carrier performance model {request.model_id}"
+#         )
     
-    try:
-        # Generate predictions for each carrier-lane combination
-        for i in range(len(request.carriers)):
-            prediction = model.predict(
-                carrier=request.carriers[i],
-                source_city=request.source_cities[i],
-                dest_city=request.dest_cities[i]
-            )
+#     try:
+#         # Generate predictions for each carrier-lane combination
+#         for i in range(len(request.carriers)):
+#             prediction = model.predict(
+#                 carrier=request.carriers[i],
+#                 source_city=request.source_cities[i],
+#                 dest_city=request.dest_cities[i]
+#             )
             
-            if prediction:
-                predictions.append(prediction)
+#             if prediction:
+#                 predictions.append(prediction)
         
-        # Prepare the response
-        result = {
-            "model_id": request.model_id,
-            "prediction_time": datetime.datetime.now().isoformat(),
-            "predictions": predictions
-        }
+#         # Prepare the response
+#         result = {
+#             "model_id": request.model_id,
+#             "prediction_time": datetime.datetime.now().isoformat(),
+#             "predictions": predictions
+#         }
         
-        return result
-    except Exception as e:
-        logger.error(f"Error generating carrier performance predictions: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to generate predictions: {str(e)}"
-        ) 
+#         return result
+#     except Exception as e:
+#         logger.error(f"Error generating carrier performance predictions: {str(e)}")
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Failed to generate predictions: {str(e)}"
+#         ) 

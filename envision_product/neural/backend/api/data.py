@@ -90,54 +90,54 @@ async def get_data_preview(
     
     return preview
 
-@router.post("/process")
-async def process_data(
-    request: ProcessRequest,
-    data_processor: DataProcessor = Depends(get_data_processor),
-    file_service: FileService = Depends(get_file_service)
-):
-    """Process a data file for further analysis."""
-    # Check if file exists
-    file_path = file_service.get_file_path(request.file_id)
-    if not file_path:
-        raise HTTPException(status_code=404, detail=f"File with ID {request.file_id} not found")
-    
-    try:
-        # Process the data file
-        # This could include operations like cleaning, transformation, feature engineering, etc.
-        # For now, we'll just return a preview as proof of concept
-        preview = data_processor.get_preview(request.file_id, file_path)
-        
-        return {
-            "status": "success",
-            "file_id": request.file_id,
-            "preview": preview
-        }
-    except Exception as e:
-        logger.error(f"Error processing data file {request.file_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
+# @router.post("/process")
+# async def process_data(
+#     request: ProcessRequest,
+#     data_processor: DataProcessor = Depends(get_data_processor),
+#     file_service: FileService = Depends(get_file_service)
+# ):
+#     """Process a data file for further analysis."""
+#     # Check if file exists
+#     file_path = file_service.get_file_path(request.file_id)
+#     if not file_path:
+#         raise HTTPException(status_code=404, detail=f"File with ID {request.file_id} not found")
+#     
+#     try:
+#         # Process the data file
+#         # This could include operations like cleaning, transformation, feature engineering, etc.
+#         # For now, we'll just return a preview as proof of concept
+#         preview = data_processor.get_preview(request.file_id, file_path)
+#         
+#         return {
+#             "status": "success",
+#             "file_id": request.file_id,
+#             "preview": preview
+#         }
+#     except Exception as e:
+#         logger.error(f"Error processing data file {request.file_id}: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
 
-@router.get("/")
-async def list_files():
-    """
-    List all uploaded files.
-    """
-    try:
-        files = file_service.list_files()
-        return {"files": files}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
+# @router.get("/")
+# async def list_files():
+#     """
+#     List all uploaded files.
+#     """
+#     try:
+#         files = file_service.list_files()
+#         return {"files": files}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
 
-@router.delete("/{file_id}")
-async def delete_file(file_id: str):
-    """
-    Delete an uploaded file.
-    """
-    try:
-        result = file_service.delete_file(file_id)
-        if result:
-            return {"status": "success", "message": "File deleted successfully"}
-        else:
-            raise HTTPException(status_code=404, detail="File not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}") 
+# @router.delete("/{file_id}")
+# async def delete_file(file_id: str):
+#     """
+#     Delete an uploaded file.
+#     """
+#     try:
+#         result = file_service.delete_file(file_id)
+#         if result:
+#             return {"status": "success", "message": "File deleted successfully"}
+#         else:
+#             raise HTTPException(status_code=404, detail="File not found")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error deleting file: {str(e)}") 

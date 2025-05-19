@@ -4,6 +4,8 @@
 
 The Envision Neural API provides access to machine learning models for transportation logistics predictions, specifically focused on Order Volume forecasting, Tender Performance prediction, and Carrier Performance prediction. This API enables clients to train models, generate predictions, and access historical prediction data.
 
+This reference documents the streamlined API that focuses on essential functionality for model training and prediction workflows. The API has been optimized to support core use cases while removing redundant and rarely used endpoints.
+
 ## Base URL
 
 All API endpoints are relative to the base URL:
@@ -36,13 +38,96 @@ For error responses:
 
 ## API Endpoints
 
-### 1. Model Management
+### 1. File Management
 
-#### 1.1 List All Models
+#### 1.1 Upload File
+
+Uploads a new file to the system.
+
+**Endpoint:** `POST /files/upload`
+
+**Request:**
+- Form data with a file field
+
+**Response:**
+```json
+{
+  "status": "success",
+  "file_id": "f1e8c34a-5c2b-4b5a-b8c9-7d8e9f0a1b2c",
+  "filename": "order_data_2025.csv",
+  "content_type": "text/csv"
+}
+```
+
+### 2. Data Processing
+
+#### 2.1 Upload CSV File
+
+Uploads a CSV file specifically for neural network training.
+
+**Endpoint:** `POST /data/upload`
+
+**Request:**
+- Form data with a file field (must be a CSV file)
+
+**Response:**
+```json
+{
+  "status": "success",
+  "file_id": "d7c6b5a4-3f2e-1d0c-9b8a-7c6d5e4f3a2b",
+  "filename": "training_data.csv",
+  "timestamp": "2025-05-12T18:00:20.355548"
+}
+```
+
+#### 2.2 Get Data Preview
+
+Retrieves a preview of the uploaded data file.
+
+**Endpoint:** `GET /data/preview/{file_id}`
+
+**Path Parameters:**
+- `file_id` (required): ID of the uploaded file
+
+**Response:**
+```json
+{
+  "file_id": "d7c6b5a4-3f2e-1d0c-9b8a-7c6d5e4f3a2b",
+  "total_rows": 1500,
+  "total_columns": 8,
+  "sample_rows": [
+    {
+      "source_city": "ELWOOD",
+      "destination_city": "ABINGDON",
+      "carrier": "RBTW",
+      "order_type": "FTL",
+      "month": "2025-01",
+      "volume": 35
+    },
+    // More sample rows...
+  ],
+  "column_info": {
+    "source_city": {
+      "type": "string",
+      "unique_values": 45,
+      "missing_values": 0
+    },
+    // More column info...
+  },
+  "missing_data_summary": {
+    "total_missing": 12,
+    "percent_missing": 0.1
+  }
+}
+```
+
+### 3. Model Management
+
+#### 3.1 List All Models
 
 Lists all available models with optional filtering.
 
-**Endpoint:** `GET /models/list`
+**Endpoint:** `GET /models`
 
 **Query Parameters:**
 - `model_type` (optional): Filter by model type (e.g., "order_volume", "tender_performance", "carrier_performance")
@@ -80,10 +165,10 @@ Lists all available models with optional filtering.
 
 **Example:**
 ```
-GET /api/models/list?model_type=order_volume&min_accuracy=0.85
+GET /api/models?model_type=order_volume&min_accuracy=0.85
 ```
 
-#### 1.2 Get Latest Model
+#### 3.2 Get Latest Model
 
 Retrieves the latest model of a specified type with optional filtering.
 
@@ -121,7 +206,7 @@ Retrieves the latest model of a specified type with optional filtering.
 GET /api/models/latest?model_type=order_volume&min_accuracy=0.85
 ```
 
-#### 1.3 Get Model Details
+#### 3.3 Get Model Details
 
 Gets detailed information about a specific model.
 
@@ -156,23 +241,22 @@ Gets detailed information about a specific model.
 GET /api/models/order_volume_20250512180020
 ```
 
-#### 1.4 Train New Model
+#### 3.4 Train Order Volume Model
 
-Trains a new model using provided data and parameters.
+Trains a new Order Volume model using provided data.
 
-**Endpoint:** `POST /models/train`
+**Endpoint:** `POST /models/train/order-volume`
 
-**Request Body:**
+**Query Parameters:**
+- `data_file_id` (required): ID of the uploaded CSV file to use for training
+
+**Request Body (optional):**
 ```json
 {
-  "model_type": "order_volume",
-  "data_path": "datasets/order_data_2025.csv",
-  "params": {
-    "epochs": 100,
-    "batch_size": 32,
-    "validation_split": 0.2,
-    "test_size": 0.2
-  },
+  "epochs": 100,
+  "batch_size": 32,
+  "validation_split": 0.2,
+  "test_size": 0.2,
   "description": "Order volume model trained on 2025 data"
 }
 ```
@@ -180,42 +264,73 @@ Trains a new model using provided data and parameters.
 **Response:**
 ```json
 {
-  "model_id": "order_volume_20250518123045",
   "status": "success",
-  "training_time": 145.32,
-  "evaluation": {
-    "mae": 0.152,
-    "mse": 0.043,
-    "r2": 0.876
-  }
+  "message": "Order volume model training started",
+  "model_id": "order_volume_20250518123045"
 }
 ```
 
-#### 1.5 Delete Model
+#### 3.5 Train Tender Performance Model
 
-Deletes a model and all its associated files.
+Trains a new Tender Performance model using provided data.
 
-**Endpoint:** `DELETE /models/{model_id}`
+**Endpoint:** `POST /models/train/tender-performance`
 
-**Path Parameters:**
-- `model_id` (required): ID of the model to delete
+**Query Parameters:**
+- `data_file_id` (required): ID of the uploaded CSV file to use for training
+
+**Request Body (optional):**
+```json
+{
+  "epochs": 100,
+  "batch_size": 32,
+  "validation_split": 0.2,
+  "test_size": 0.2,
+  "description": "Tender performance model trained on 2025 data"
+}
+```
 
 **Response:**
 ```json
 {
   "status": "success",
-  "message": "Model order_volume_20250512180020 deleted successfully"
+  "message": "Tender performance model training started",
+  "model_id": "tender_performance_20250518123045"
 }
 ```
 
-**Example:**
-```
-DELETE /api/models/order_volume_20250512180020
+#### 3.6 Train Carrier Performance Model
+
+Trains a new Carrier Performance model using provided data.
+
+**Endpoint:** `POST /models/train/carrier-performance`
+
+**Query Parameters:**
+- `data_file_id` (required): ID of the uploaded CSV file to use for training
+
+**Request Body (optional):**
+```json
+{
+  "epochs": 100,
+  "batch_size": 32,
+  "validation_split": 0.2,
+  "test_size": 0.2,
+  "description": "Carrier performance model trained on 2025 data"
+}
 ```
 
-### 2. Order Volume Predictions
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Carrier performance model training started",
+  "model_id": "carrier_performance_20250518123045"
+}
+```
 
-#### 2.1 Get Order Volume Predictions
+### 4. Order Volume Predictions
+
+#### 4.1 Get Order Volume Predictions
 
 Retrieves order volume predictions for a specified model with optional filtering.
 
@@ -263,7 +378,7 @@ Retrieves order volume predictions for a specified model with optional filtering
 GET /api/predictions/order-volume/order_volume_20250512180020?source_city=ELWOOD&destination_city=ABINGDON
 ```
 
-#### 2.2 Get Order Volume Predictions by Lane
+#### 4.2 Get Order Volume Predictions by Lane
 
 Retrieves order volume predictions for a specific lane.
 
@@ -306,7 +421,7 @@ Retrieves order volume predictions for a specific lane.
 GET /api/predictions/order-volume/order_volume_20250512180020/by-lane?source_city=ELWOOD&destination_city=ABINGDON
 ```
 
-#### 2.3 Download Order Volume Predictions
+#### 4.3 Download Order Volume Predictions
 
 Downloads order volume predictions in the specified format.
 
@@ -326,7 +441,7 @@ File download (CSV or JSON)
 GET /api/predictions/order-volume/order_volume_20250512180020/download?format=csv
 ```
 
-#### 2.4 Create New Order Volume Predictions
+#### 4.4 Create New Order Volume Predictions
 
 Generates new order volume predictions using a specified model.
 
@@ -354,9 +469,9 @@ Generates new order volume predictions using a specified model.
 }
 ```
 
-### 3. Tender Performance Predictions
+### 5. Tender Performance Predictions
 
-#### 3.1 Get Tender Performance Predictions
+#### 5.1 Get Tender Performance Predictions
 
 Retrieves tender performance predictions for a specified model.
 
@@ -395,7 +510,7 @@ Retrieves tender performance predictions for a specified model.
 GET /api/predictions/tender-performance/tender_performance_20250515080638?simplified=true
 ```
 
-#### 3.2 Get Tender Performance Predictions by Lane
+#### 5.2 Get Tender Performance Predictions by Lane
 
 Retrieves tender performance predictions for a specific lane.
 
@@ -442,7 +557,7 @@ Retrieves tender performance predictions for a specific lane.
 GET /api/predictions/tender-performance/tender_performance_20250515080638/by-lane?source_city=ELWOOD&dest_city=REDLANDS
 ```
 
-#### 3.3 Download Tender Performance Predictions
+#### 5.3 Download Tender Performance Predictions
 
 Downloads tender performance predictions in the specified format.
 
@@ -466,7 +581,7 @@ File download (CSV or JSON)
 GET /api/predictions/tender-performance/tender_performance_20250515080638/download?format=csv&simplified=true
 ```
 
-#### 3.4 Create New Tender Performance Predictions
+#### 5.4 Create New Tender Performance Predictions
 
 Generates new tender performance predictions on training data.
 
@@ -494,9 +609,9 @@ Generates new tender performance predictions on training data.
 }
 ```
 
-### 4. Carrier Performance Predictions
+### 6. Carrier Performance Predictions
 
-#### 4.1 Get Carrier Performance Predictions
+#### 6.1 Get Carrier Performance Predictions
 
 Retrieves carrier performance predictions for a specified model.
 
@@ -542,7 +657,7 @@ Retrieves carrier performance predictions for a specified model.
 GET /api/predictions/carrier-performance/carrier_performance_20250516091734?simplified=true
 ```
 
-#### 4.2 Get Carrier Performance Predictions by Lane
+#### 6.2 Get Carrier Performance Predictions by Lane
 
 Retrieves carrier performance predictions for a specific lane.
 
@@ -588,7 +703,7 @@ Retrieves carrier performance predictions for a specific lane.
 GET /api/predictions/carrier-performance/carrier_performance_20250516091734/by-lane?source_city=ELWOOD&dest_city=PLANO
 ```
 
-#### 4.3 Download Carrier Performance Predictions
+#### 6.3 Download Carrier Performance Predictions
 
 Downloads carrier performance predictions in the specified format.
 
@@ -612,7 +727,7 @@ File download (CSV or JSON)
 GET /api/predictions/carrier-performance/carrier_performance_20250516091734/download?format=csv&simplified=true
 ```
 
-#### 4.4 Create New Carrier Performance Predictions
+#### 6.4 Create New Carrier Performance Predictions
 
 Generates new carrier performance predictions on training data.
 
@@ -640,135 +755,6 @@ Generates new carrier performance predictions on training data.
     "records_analyzed": 450
   }
 }
-```
-
-### 5. Prediction Management
-
-#### 5.1 List All Predictions
-
-Lists all available predictions with optional filtering by model ID.
-
-**Endpoint:** `GET /predictions/`
-
-**Query Parameters:**
-- `model_id` (optional): Filter by model ID
-
-**Response:**
-```json
-{
-  "predictions": [
-    {
-      "prediction_id": "pred_a70084a3_20250512",
-      "model_id": "order_volume_20250512180020",
-      "model_type": "order_volume",
-      "created_at": "2025-05-12T18:07:12.088224",
-      "months_predicted": 6,
-      "prediction_count": 3250
-    },
-    // More predictions...
-  ]
-}
-```
-
-**Example:**
-```
-GET /api/predictions?model_id=order_volume_20250512180020
-```
-
-#### 5.2 Get Prediction Details
-
-Gets detailed information about a specific prediction.
-
-**Endpoint:** `GET /predictions/{prediction_id}`
-
-**Path Parameters:**
-- `prediction_id` (required): ID of the prediction to retrieve
-
-**Response:**
-```json
-{
-  "prediction_id": "pred_a70084a3_20250512",
-  "model_id": "order_volume_20250512180020",
-  "model_type": "order_volume",
-  "created_at": "2025-05-12T18:07:12.088224",
-  "months_predicted": 6,
-  "prediction_count": 3250,
-  "data": {
-    // Full prediction data
-  }
-}
-```
-
-**Example:**
-```
-GET /api/predictions/pred_a70084a3_20250512
-```
-
-#### 5.3 Delete Prediction
-
-Deletes a prediction and all its associated files.
-
-**Endpoint:** `DELETE /predictions/{prediction_id}`
-
-**Path Parameters:**
-- `prediction_id` (required): ID of the prediction to delete
-
-**Response:**
-```json
-{
-  "status": "success",
-  "message": "Prediction pred_a70084a3_20250512 deleted successfully"
-}
-```
-
-**Example:**
-```
-DELETE /api/predictions/pred_a70084a3_20250512
-```
-
-### 6. Advanced Features
-
-#### 6.1 Filter Predictions by Multiple Criteria
-
-Filters predictions using complex criteria.
-
-**Endpoint:** `POST /predictions/{model_id}/filter`
-
-**Path Parameters:**
-- `model_id` (required): ID of the model
-
-**Request Body:**
-```json
-{
-  "source_cities": ["ELWOOD", "RICHMOND"],
-  "destination_cities": ["ABINGDON", "REDLANDS"],
-  "order_types": ["FTL"],
-  "carriers": ["RBTW"],
-  "date_range": {
-    "start": "2025-06-01",
-    "end": "2025-08-31"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "model_id": "order_volume_20250512180020",
-  "prediction_id": "pred_a70084a3_20250512",
-  "created_at": "2025-05-12T18:07:12.088224",
-  "model_type": "order_volume",
-  "total_predictions": 3250,
-  "filtered_count": 24,
-  "predictions": [
-    // Filtered predictions...
-  ]
-}
-```
-
-**Example:**
-```
-POST /api/predictions/order_volume_20250512180020/filter
 ```
 
 ## Lane Handling Utility

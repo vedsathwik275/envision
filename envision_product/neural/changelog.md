@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased] - 2025-05-19
+### Added
+
+### Changed
+- **Streamlined API Surface**: Simplified the API by maintaining only essential routes:
+  - Preserved core file upload functionality while removing non-essential file management endpoints
+  - Retained data preview capabilities for uploaded CSV files
+  - Maintained critical model management routes including listing, retrieval, and training endpoints
+  - Kept all prediction generation and retrieval endpoints for order volume, tender performance, and carrier performance
+  - Removed redundant and legacy endpoints to improve API maintainability and reduce attack surface
+- **Enhanced Focus on Core Prediction Workflows**: Optimized API for primary use cases:
+  - Specialized model-specific prediction routes are now the recommended way to interact with the API
+  - Improved documentation to highlight the preferred endpoints for each model type
+  - Simplified routing structure for more intuitive API navigation
+
+### Fixed
+
 ## [Unreleased] - 2025-05-16
 ### Added
 - **Carrier Performance Model**: Implemented a neural network model for predicting carrier on-time performance:
@@ -259,4 +276,4 @@
 
 ---
 
-Timestamp: 2025-05-16 09:30:00
+Timestamp: 2025-05-19 08:30:00
