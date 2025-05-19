@@ -1,5 +1,4 @@
 
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -64,15 +63,16 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Neural Network Platform custom colors
+				// Envision Neural custom colors
 				neural: {
-					primary: '#1976d2',
-					secondary: '#00acc1',
-					dark: '#0d47a1',
-					light: '#e3f2fd',
-					accent: '#00c853',
-					warning: '#ffab00',
-					error: '#d32f2f',
+					primary: '#0F52BA',    // Deep blue
+					secondary: '#20B2AA',  // Teal
+					accent: '#FFC107',     // Amber
+					light: '#F8F9FA',      // Light gray
+					dark: '#333333',       // Dark gray for text
+					success: '#4CAF50',    // Green for success
+					warning: '#FF9800',    // Orange for warnings
+					error: '#F44336',      // Red for errors
 				}
 			},
 			borderRadius: {
@@ -89,18 +89,22 @@ export default {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: '0' }
 				},
-				'pulse-opacity': {
+				'pulse-soft': {
 					'0%, 100%': { opacity: '1' },
-					'50%': { opacity: '0.5' }
+					'50%': { opacity: '0.7' }
+				},
+				'fade-in': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'pulse-opacity': 'pulse-opacity 2s ease-in-out infinite'
+				'pulse-soft': 'pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'fade-in': 'fade-in 0.5s ease-out'
 			}
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
-

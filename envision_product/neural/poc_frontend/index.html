@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envision Neural - Proof of Concept</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Envision Neural</h1>
+        <h2>Transportation Logistics AI - Proof of Concept</h2>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#file-upload" class="nav-link active" data-section="file-upload">File Upload</a></li>
+            <li><a href="#model-training" class="nav-link" data-section="model-training">Model Training</a></li>
+            <li><a href="#model-list" class="nav-link" data-section="model-list">Model List</a></li>
+            <li><a href="#predictions" class="nav-link" data-section="predictions">Predictions</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <!-- File Upload Section (with integrated preview) -->
+        <section id="file-upload" class="section active">
+            <h2>File Upload</h2>
+            <div class="card">
+                <h3>Upload Training Data</h3>
+                <form id="upload-form">
+                    <div class="form-group">
+                        <label for="file-input">Select CSV File:</label>
+                        <input type="file" id="file-input" accept=".csv" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn primary">Upload File</button>
+                    </div>
+                </form>
+                <div id="upload-result" class="result-area"></div>
+                
+                <!-- Integrated File Preview (initially hidden) -->
+                <div id="file-preview-container" style="display: none;">
+                    <h3>File Preview</h3>
+                    <div id="file-info" class="file-info"></div>
+                    <div id="preview-table-container">
+                        <table id="preview-table"></table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Training Section -->
+        <section id="model-training" class="section">
+            <h2>Model Training</h2>
+            <div class="card">
+                <h3>Train a New Model</h3>
+                <form id="training-form">
+                    <div class="form-group">
+                        <label for="training-file-select">Select File:</label>
+                        <select id="training-file-select">
+                            <option value="">-- Select a file --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="model-type">Model Type:</label>
+                        <select id="model-type" required>
+                            <option value="">-- Select model type --</option>
+                            <option value="order-volume">Order Volume</option>
+                            <option value="tender-performance">Tender Performance</option>
+                            <option value="carrier-performance">Carrier Performance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="epochs">Epochs:</label>
+                        <input type="number" id="epochs" value="100" min="1" max="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-size">Batch Size:</label>
+                        <input type="number" id="batch-size" value="32" min="1" max="256">
+                    </div>
+                    <div class="form-group">
+                        <label for="validation-split">Validation Split:</label>
+                        <input type="number" id="validation-split" value="0.2" min="0.1" max="0.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="model-description">Description:</label>
+                        <textarea id="model-description" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn primary">Start Training</button>
+                    </div>
+                </form>
+                <div id="training-result" class="result-area"></div>
+            </div>
+        </section>
+
+        <!-- Model List Section -->
+        <section id="model-list" class="section">
+            <h2>Model List</h2>
+            <div class="card">
+                <h3>Available Models</h3>
+                <div class="form-group">
+                    <label for="model-filter-type">Filter by Type:</label>
+                    <select id="model-filter-type">
+                        <option value="">All Types</option>
+                        <option value="order_volume">Order Volume</option>
+                        <option value="tender_performance">Tender Performance</option>
+                        <option value="carrier_performance">Carrier Performance</option>
+                    </select>
+                    <button id="refresh-models-btn" class="btn secondary">Refresh List</button>
+                </div>
+                <div id="models-container" class="result-area">
+                    <table id="models-table">
+                        <thead>
+                            <tr>
+                                <th>Model ID</th>
+                                <th>Type</th>
+                                <th>Created</th>
+                                <th>Metrics</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="models-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Predictions Section -->
+        <section id="predictions" class="section">
+            <h2>Predictions</h2>
+            <div class="card">
+                <h3>Generate New Predictions</h3>
+                <form id="prediction-form">
+                    <div class="form-group">
+                        <label for="prediction-model-type">Model Type:</label>
+                        <select id="prediction-model-type" required>
+                            <option value="">-- Select model type --</option>
+                            <option value="order-volume">Order Volume</option>
+                            <option value="tender-performance">Tender Performance</option>
+                            <option value="carrier-performance">Carrier Performance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prediction-model-select">Select Model:</label>
+                        <select id="prediction-model-select">
+                            <option value="">-- Select a model --</option>
+                        </select>
+                    </div>
+                    <div id="prediction-params" class="form-group">
+                        <!-- Dynamic parameters based on model type will be inserted here -->
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn primary">Generate Predictions</button>
+                    </div>
+                </form>
+                <div id="prediction-result" class="result-area">
+                    <div id="prediction-summary"></div>
+                    <div id="prediction-table-container">
+                        <table id="prediction-table"></table>
+                    </div>
+                    <div id="prediction-download" class="download-area"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Details Modal -->
+        <div id="model-details-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <h2>Model Details</h2>
+                <div id="model-details-content"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Envision Neural - Transportation Logistics AI</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 

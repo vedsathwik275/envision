@@ -1,30 +1,38 @@
 
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Home, ArrowLeft } from "lucide-react";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center max-w-md px-4">
-        <h1 className="text-6xl font-bold text-neural-primary mb-6">404</h1>
-        <p className="text-xl text-foreground mb-6">Oops! This page doesn't exist</p>
-        <p className="text-muted-foreground mb-8">
-          The page you are looking for might have been removed or is temporarily unavailable.
-        </p>
-        <Button asChild size="lg">
-          <Link to="/">Return to Dashboard</Link>
-        </Button>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md space-y-6 text-center">
+        <div className="flex justify-center">
+          <div className="rounded-full bg-muted p-6">
+            <span className="text-6xl font-bold">404</span>
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Page not found</h1>
+          <p className="text-muted-foreground">
+            Sorry, we couldn't find the page you're looking for.
+          </p>
+        </div>
+        
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <Button asChild>
+            <Link to="/">
+              <Home className="mr-2 h-4 w-4" />
+              Return to Dashboard
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
+        </div>
       </div>
     </div>
   );

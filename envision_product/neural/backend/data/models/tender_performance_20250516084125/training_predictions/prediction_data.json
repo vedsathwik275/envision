@@ -1,0 +1,910 @@
+{
+  "prediction_time": "2025-05-19T09:54:43.044899",
+  "predictions": [
+    {
+      "carrier": "HOSD",
+      "source_city": "GRAND RAPIDS",
+      "dest_city": "ELWOOD",
+      "predicted_performance": 37.16799545288086,
+      "actual_performance": 61.0,
+      "absolute_error": 23.83200454711914,
+      "percent_error": 39.068859913310064
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "OMAHA",
+      "predicted_performance": 36.11872863769531,
+      "actual_performance": 86.0,
+      "absolute_error": 49.88127136230469,
+      "percent_error": 58.00147832826127
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "HOPKINS",
+      "predicted_performance": 54.95783233642578,
+      "actual_performance": 95.0,
+      "absolute_error": 40.04216766357422,
+      "percent_error": 42.14965017218339
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "MERIDIAN",
+      "predicted_performance": 39.917362213134766,
+      "actual_performance": 67.0,
+      "absolute_error": 27.082637786865234,
+      "percent_error": 40.421847443082434
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MIAMI",
+      "predicted_performance": 41.5477180480957,
+      "actual_performance": 23.0,
+      "absolute_error": 18.547718048095703,
+      "percent_error": 80.6422523830248
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "AMSTERDAM",
+      "predicted_performance": 33.03749084472656,
+      "actual_performance": 40.0,
+      "absolute_error": 6.9625091552734375,
+      "percent_error": 17.406272888183594
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "SEARCY",
+      "predicted_performance": 62.89480972290039,
+      "actual_performance": 79.0,
+      "absolute_error": 16.10519027709961,
+      "percent_error": 20.386316806455202
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "PLAINVIEW",
+      "predicted_performance": 56.8960075378418,
+      "actual_performance": 100.0,
+      "absolute_error": 43.1039924621582,
+      "percent_error": 43.1039924621582
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "SHAKOPEE",
+      "predicted_performance": 48.9244270324707,
+      "actual_performance": 38.0,
+      "absolute_error": 10.924427032470703,
+      "percent_error": 28.748492190712376
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "POTTSVILLE",
+      "predicted_performance": 36.6898193359375,
+      "actual_performance": 100.0,
+      "absolute_error": 63.3101806640625,
+      "percent_error": 63.3101806640625
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "BREINIGSVILLE",
+      "predicted_performance": 35.64714050292969,
+      "actual_performance": 100.0,
+      "absolute_error": 64.35285949707031,
+      "percent_error": 64.35285949707031
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "SUMNER",
+      "dest_city": "PUYALLUP",
+      "predicted_performance": 37.46792984008789,
+      "actual_performance": 78.0,
+      "absolute_error": 40.53207015991211,
+      "percent_error": 51.96419251270783
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MIAMI",
+      "predicted_performance": 41.5477180480957,
+      "actual_performance": 17.0,
+      "absolute_error": 24.547718048095703,
+      "percent_error": 144.39834145938647
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "PLAINVIEW",
+      "predicted_performance": 64.31900787353516,
+      "actual_performance": 100.0,
+      "absolute_error": 35.680992126464844,
+      "percent_error": 35.680992126464844
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "SUMNER",
+      "dest_city": "TRACY",
+      "predicted_performance": 37.14326477050781,
+      "actual_performance": 43.0,
+      "absolute_error": 5.8567352294921875,
+      "percent_error": 13.620314487191134
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "REDLANDS",
+      "dest_city": "DINUBA",
+      "predicted_performance": 48.137901306152344,
+      "actual_performance": 38.0,
+      "absolute_error": 10.137901306152344,
+      "percent_error": 26.67868764776933
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "ROANOKE",
+      "predicted_performance": 53.61561584472656,
+      "actual_performance": 100.0,
+      "absolute_error": 46.38438415527344,
+      "percent_error": 46.38438415527344
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "OPELOUSAS",
+      "predicted_performance": 35.56051254272461,
+      "actual_performance": 17.0,
+      "absolute_error": 18.56051254272461,
+      "percent_error": 109.17948554543888
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "CHEROKEE",
+      "predicted_performance": 45.183448791503906,
+      "actual_performance": 20.0,
+      "absolute_error": 25.183448791503906,
+      "percent_error": 125.91724395751953
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "SUMNER",
+      "dest_city": "RICHMOND",
+      "predicted_performance": 50.209808349609375,
+      "actual_performance": 100.0,
+      "absolute_error": 49.790191650390625,
+      "percent_error": 49.790191650390625
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "AMARILLO",
+      "predicted_performance": 60.33525466918945,
+      "actual_performance": 25.0,
+      "absolute_error": 35.33525466918945,
+      "percent_error": 141.3410186767578
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "FT PIERCE",
+      "predicted_performance": 37.7114372253418,
+      "actual_performance": 38.0,
+      "absolute_error": 0.2885627746582031,
+      "percent_error": 0.7593757227847451
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "HOPE MILLS",
+      "predicted_performance": 55.979164123535156,
+      "actual_performance": 100.0,
+      "absolute_error": 44.020835876464844,
+      "percent_error": 44.020835876464844
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "LANCASTER",
+      "dest_city": "ARDMORE",
+      "predicted_performance": 61.518157958984375,
+      "actual_performance": 58.0,
+      "absolute_error": 3.518157958984375,
+      "percent_error": 6.065789584455819
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "LOXLEY",
+      "predicted_performance": 47.62221908569336,
+      "actual_performance": 34.0,
+      "absolute_error": 13.62221908569336,
+      "percent_error": 40.065350252039295
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "ELWOOD",
+      "dest_city": "WURTSBORO",
+      "predicted_performance": 51.414310455322266,
+      "actual_performance": 50.0,
+      "absolute_error": 1.4143104553222656,
+      "percent_error": 2.8286209106445312
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "GRAND RAPIDS",
+      "dest_city": "RICHMOND",
+      "predicted_performance": 50.46562957763672,
+      "actual_performance": 11.0,
+      "absolute_error": 39.46562957763672,
+      "percent_error": 358.7784507057883
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "SANGER",
+      "predicted_performance": 54.03122329711914,
+      "actual_performance": 100.0,
+      "absolute_error": 45.96877670288086,
+      "percent_error": 45.96877670288086
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "HOPKINS",
+      "predicted_performance": 54.95783233642578,
+      "actual_performance": 60.0,
+      "absolute_error": 5.042167663574219,
+      "percent_error": 8.403612772623697
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "SUFFOLK",
+      "predicted_performance": 36.409786224365234,
+      "actual_performance": 45.0,
+      "absolute_error": 8.590213775634766,
+      "percent_error": 19.089363945855034
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "WOODLAND",
+      "predicted_performance": 43.119285583496094,
+      "actual_performance": 100.0,
+      "absolute_error": 56.880714416503906,
+      "percent_error": 56.880714416503906
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "ROME",
+      "predicted_performance": 43.442298889160156,
+      "actual_performance": 17.0,
+      "absolute_error": 26.442298889160156,
+      "percent_error": 155.54293464211858
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "COMMERCE",
+      "predicted_performance": 58.455379486083984,
+      "actual_performance": 42.0,
+      "absolute_error": 16.455379486083984,
+      "percent_error": 39.17947496686663
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "ALACHUA",
+      "predicted_performance": 45.29300308227539,
+      "actual_performance": 34.0,
+      "absolute_error": 11.29300308227539,
+      "percent_error": 33.21471494786879
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "GRAND RAPIDS",
+      "dest_city": "FENTON",
+      "predicted_performance": 38.07766342163086,
+      "actual_performance": 20.0,
+      "absolute_error": 18.07766342163086,
+      "percent_error": 90.3883171081543
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "HATTIESBURG",
+      "predicted_performance": 39.574398040771484,
+      "actual_performance": 17.0,
+      "absolute_error": 22.574398040771484,
+      "percent_error": 132.79057671042048
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "PHARR",
+      "dest_city": "BALTIMORE",
+      "predicted_performance": 57.40848922729492,
+      "actual_performance": 25.0,
+      "absolute_error": 32.40848922729492,
+      "percent_error": 129.6339569091797
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "AMSTERDAM",
+      "predicted_performance": 42.321651458740234,
+      "actual_performance": 34.0,
+      "absolute_error": 8.321651458740234,
+      "percent_error": 24.47544546688304
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "PHOENIX",
+      "predicted_performance": 48.8404541015625,
+      "actual_performance": 100.0,
+      "absolute_error": 51.1595458984375,
+      "percent_error": 51.1595458984375
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "FINDLAY",
+      "predicted_performance": 45.43775939941406,
+      "actual_performance": 34.0,
+      "absolute_error": 11.437759399414062,
+      "percent_error": 33.64046882180607
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MIAMI",
+      "predicted_performance": 41.5477180480957,
+      "actual_performance": 9.0,
+      "absolute_error": 32.5477180480957,
+      "percent_error": 361.6413116455078
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "BROWNSTOWN",
+      "predicted_performance": 34.396217346191406,
+      "actual_performance": 18.0,
+      "absolute_error": 16.396217346191406,
+      "percent_error": 91.09009636773003
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "LEBANON",
+      "predicted_performance": 35.038265228271484,
+      "actual_performance": 20.0,
+      "absolute_error": 15.038265228271484,
+      "percent_error": 75.19132614135742
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "BOYNTON BEACH",
+      "predicted_performance": 38.54654312133789,
+      "actual_performance": 100.0,
+      "absolute_error": 61.45345687866211,
+      "percent_error": 61.4534568786621
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "WILLIAMSTON",
+      "predicted_performance": 38.7795295715332,
+      "actual_performance": 64.0,
+      "absolute_error": 25.220470428466797,
+      "percent_error": 39.40698504447937
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "RICHMOND",
+      "dest_city": "ELWOOD",
+      "predicted_performance": 44.82223892211914,
+      "actual_performance": 6.0,
+      "absolute_error": 38.82223892211914,
+      "percent_error": 647.0373153686523
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MT. CRAWFORD",
+      "predicted_performance": 58.29906463623047,
+      "actual_performance": 75.0,
+      "absolute_error": 16.70093536376953,
+      "percent_error": 22.267913818359375
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "CHINO",
+      "predicted_performance": 36.476905822753906,
+      "actual_performance": 24.0,
+      "absolute_error": 12.476905822753906,
+      "percent_error": 51.987107594807945
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "WINDSOR",
+      "predicted_performance": 43.26774215698242,
+      "actual_performance": 10.0,
+      "absolute_error": 33.26774215698242,
+      "percent_error": 332.6774215698242
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "LUGOFF",
+      "predicted_performance": 60.361183166503906,
+      "actual_performance": 40.0,
+      "absolute_error": 20.361183166503906,
+      "percent_error": 50.90295791625976
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "RICHMOND",
+      "dest_city": "NICHOLS",
+      "predicted_performance": 52.772701263427734,
+      "actual_performance": 17.0,
+      "absolute_error": 35.772701263427734,
+      "percent_error": 210.4276544907514
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "SANGER",
+      "predicted_performance": 54.03122329711914,
+      "actual_performance": 77.0,
+      "absolute_error": 22.96877670288086,
+      "percent_error": 29.829580133611504
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "CHEHALIS",
+      "predicted_performance": 41.236812591552734,
+      "actual_performance": 25.0,
+      "absolute_error": 16.236812591552734,
+      "percent_error": 64.94725036621094
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "SMYRNA",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 100.0,
+      "absolute_error": 65.05096054077148,
+      "percent_error": 65.05096054077148
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "TEWKSBURY",
+      "predicted_performance": 38.0390625,
+      "actual_performance": 50.0,
+      "absolute_error": 11.9609375,
+      "percent_error": 23.921875
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "DAYTON",
+      "predicted_performance": 58.233028411865234,
+      "actual_performance": 19.0,
+      "absolute_error": 39.233028411865234,
+      "percent_error": 206.48962322034333
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "SUMNER",
+      "dest_city": "EUGENE",
+      "predicted_performance": 36.000003814697266,
+      "actual_performance": 34.0,
+      "absolute_error": 2.0000038146972656,
+      "percent_error": 5.882364160874311
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "ABINGDON",
+      "predicted_performance": 38.16775131225586,
+      "actual_performance": 100.0,
+      "absolute_error": 61.83224868774414,
+      "percent_error": 61.83224868774414
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "WACO",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 50.0,
+      "absolute_error": 15.050960540771484,
+      "percent_error": 30.10192108154297
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "LOVELAND",
+      "predicted_performance": 65.65569305419922,
+      "actual_performance": 100.0,
+      "absolute_error": 34.34430694580078,
+      "percent_error": 34.34430694580078
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "STOCKTON",
+      "predicted_performance": 41.236812591552734,
+      "actual_performance": 19.0,
+      "absolute_error": 22.236812591552734,
+      "percent_error": 117.03585574501439
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MAUMELLE",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 20.0,
+      "absolute_error": 18.546916961669922,
+      "percent_error": 92.73458480834961
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "LOVELAND",
+      "predicted_performance": 62.96475601196289,
+      "actual_performance": 58.0,
+      "absolute_error": 4.964756011962891,
+      "percent_error": 8.559924158556708
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "S. PORTLAND",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 15.0,
+      "absolute_error": 19.949039459228516,
+      "percent_error": 132.99359639485678
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "EDWARDSVILLE",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 15.0,
+      "absolute_error": 23.546916961669922,
+      "percent_error": 156.9794464111328
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "EAU CLAIRE",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 67.0,
+      "absolute_error": 28.453083038330078,
+      "percent_error": 42.46728811691056
+    },
+    {
+      "carrier": "HOSD",
+      "source_city": "GRAND RAPIDS",
+      "dest_city": "ELWOOD",
+      "predicted_performance": 37.16799545288086,
+      "actual_performance": 65.0,
+      "absolute_error": 27.83200454711914,
+      "percent_error": 42.81846853402945
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "ABINGDON",
+      "predicted_performance": 34.45525360107422,
+      "actual_performance": 17.0,
+      "absolute_error": 17.45525360107422,
+      "percent_error": 102.6779623592601
+    },
+    {
+      "carrier": "AFXN",
+      "source_city": "REDLANDS",
+      "dest_city": "RIVERSIDE",
+      "predicted_performance": 40.851924896240234,
+      "actual_performance": 6.0,
+      "absolute_error": 34.851924896240234,
+      "percent_error": 580.8654149373372
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "DENVER",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 34.0,
+      "absolute_error": 0.9490394592285156,
+      "percent_error": 2.791292527142693
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "TOPEKA",
+      "predicted_performance": 48.63587188720703,
+      "actual_performance": 50.0,
+      "absolute_error": 1.3641281127929688,
+      "percent_error": 2.7282562255859375
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MIDWAY",
+      "predicted_performance": 39.55762481689453,
+      "actual_performance": 43.0,
+      "absolute_error": 3.4423751831054688,
+      "percent_error": 8.005523681640625
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "URBANA",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 100.0,
+      "absolute_error": 61.45308303833008,
+      "percent_error": 61.45308303833008
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "MIDLOTHIAN",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 100.0,
+      "absolute_error": 65.05096054077148,
+      "percent_error": 65.05096054077148
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "BOYNTON BEACH",
+      "predicted_performance": 44.27305603027344,
+      "actual_performance": 100.0,
+      "absolute_error": 55.72694396972656,
+      "percent_error": 55.72694396972656
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "TOPEKA",
+      "predicted_performance": 38.113563537597656,
+      "actual_performance": 34.0,
+      "absolute_error": 4.113563537597656,
+      "percent_error": 12.09871628705193
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "LOVELAND",
+      "predicted_performance": 56.8773193359375,
+      "actual_performance": 100.0,
+      "absolute_error": 43.1226806640625,
+      "percent_error": 43.1226806640625
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "MIDLAND",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 34.0,
+      "absolute_error": 4.546916961669922,
+      "percent_error": 13.373285181382123
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "MENOMONIE",
+      "predicted_performance": 54.19960021972656,
+      "actual_performance": 100.0,
+      "absolute_error": 45.80039978027344,
+      "percent_error": 45.80039978027344
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "MIDWAY",
+      "predicted_performance": 39.361202239990234,
+      "actual_performance": 63.0,
+      "absolute_error": 23.638797760009766,
+      "percent_error": 37.5219012063647
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "AMARILLO",
+      "predicted_performance": 60.33525466918945,
+      "actual_performance": 24.0,
+      "absolute_error": 36.33525466918945,
+      "percent_error": 151.39689445495605
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "ELWOOD",
+      "dest_city": "RICHMOND",
+      "predicted_performance": 57.15200424194336,
+      "actual_performance": 8.0,
+      "absolute_error": 49.15200424194336,
+      "percent_error": 614.400053024292
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "VILLA RICA",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 50.0,
+      "absolute_error": 11.453083038330078,
+      "percent_error": 22.906166076660156
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "ONTARIO",
+      "predicted_performance": 41.236812591552734,
+      "actual_performance": 67.0,
+      "absolute_error": 25.763187408447266,
+      "percent_error": 38.45251852007054
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "DUBLIN",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 75.0,
+      "absolute_error": 40.050960540771484,
+      "percent_error": 53.40128072102864
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "LANCASTER",
+      "dest_city": "ARDMORE",
+      "predicted_performance": 61.518157958984375,
+      "actual_performance": 60.0,
+      "absolute_error": 1.518157958984375,
+      "percent_error": 2.5302632649739585
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "TIFTON",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 22.0,
+      "absolute_error": 16.546916961669922,
+      "percent_error": 75.21325891668145
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "PHARR",
+      "dest_city": "MOUNT PLEASANT",
+      "predicted_performance": 53.84787368774414,
+      "actual_performance": 4.0,
+      "absolute_error": 49.84787368774414,
+      "percent_error": 1246.1968421936035
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "LA CROSSE",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 28.0,
+      "absolute_error": 10.546916961669922,
+      "percent_error": 37.66756057739258
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "BROOKHAVEN",
+      "predicted_performance": 54.19960021972656,
+      "actual_performance": 100.0,
+      "absolute_error": 45.80039978027344,
+      "percent_error": 45.80039978027344
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "PUEBLO",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 50.0,
+      "absolute_error": 11.453083038330078,
+      "percent_error": 22.906166076660156
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "REDLANDS",
+      "dest_city": "GRANTSVILLE",
+      "predicted_performance": 41.236812591552734,
+      "actual_performance": 50.0,
+      "absolute_error": 8.763187408447266,
+      "percent_error": 17.52637481689453
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "SANGER",
+      "predicted_performance": 54.03122329711914,
+      "actual_performance": 60.0,
+      "absolute_error": 5.968776702880859,
+      "percent_error": 9.9479611714681
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "TOBYHANNA",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 34.0,
+      "absolute_error": 4.546916961669922,
+      "percent_error": 13.373285181382123
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "WINDSOR",
+      "predicted_performance": 43.26774215698242,
+      "actual_performance": 31.0,
+      "absolute_error": 12.267742156982422,
+      "percent_error": 39.573361796717485
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "OSWEGO",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 20.0,
+      "absolute_error": 18.546916961669922,
+      "percent_error": 92.73458480834961
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "RICHMOND",
+      "dest_city": "WEST JORDAN",
+      "predicted_performance": 34.949039459228516,
+      "actual_performance": 100.0,
+      "absolute_error": 65.05096054077148,
+      "percent_error": 65.05096054077148
+    },
+    {
+      "carrier": "RBTW",
+      "source_city": "RICHMOND",
+      "dest_city": "STAUNTON",
+      "predicted_performance": 53.05717086791992,
+      "actual_performance": 60.0,
+      "absolute_error": 6.942829132080078,
+      "percent_error": 11.57138188680013
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "ELWOOD",
+      "dest_city": "NEWTON",
+      "predicted_performance": 38.54691696166992,
+      "actual_performance": 50.0,
+      "absolute_error": 11.453083038330078,
+      "percent_error": 22.906166076660156
+    },
+    {
+      "carrier": "ODFL",
+      "source_city": "LANCASTER",
+      "dest_city": "BESSEMER",
+      "predicted_performance": 54.19960021972656,
+      "actual_performance": 58.0,
+      "absolute_error": 3.8003997802734375,
+      "percent_error": 6.552413414264548
+    }
+  ],
+  "metrics": {
+    "count": 100,
+    "mae": 25.92726062774658,
+    "mape": 91.96830536170154
+  }
+}

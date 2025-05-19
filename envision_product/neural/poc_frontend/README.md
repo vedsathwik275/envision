@@ -1,46 +1,97 @@
-# Getting Started with Create React App
+# Envision Neural - Proof of Concept Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a simple proof-of-concept frontend for the Envision Neural API, which demonstrates the capabilities of the backend API for transportation logistics predictions.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **File Upload**: Upload CSV files containing transportation logistics data.
+- **File Preview**: View uploaded data files with basic statistics.
+- **Model Training**: Train three types of prediction models:
+  - Order Volume forecasting
+  - Tender Performance prediction
+  - Carrier Performance prediction
+- **Model Management**: View all trained models and their statistics.
+- **Predictions**: Generate predictions using trained models.
 
-### `npm start`
+## Setup Instructions
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. **Start the Backend Server**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+   Make sure the Envision Neural backend server is running. By default, it runs on `http://localhost:8000`.
 
-### `npm test`
+   ```bash
+   cd ../backend
+   python main.py
+   ```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. **Serve the Frontend**
 
-### `npm run build`
+   You can use any static file server to serve the frontend files. For example, with Python:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+   ```bash
+   # Python 3
+   python -m http.server 5000
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+   Or with Node.js and http-server:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+   ```bash
+   # Install http-server if you don't have it
+   npm install -g http-server
 
-### `npm run eject`
+   # Serve the frontend
+   http-server -p 5000
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+3. **Access the Frontend**
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+   Open your browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## API Configuration
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The frontend is configured to connect to the backend API at `http://localhost:8000/api`. If your backend is running on a different host or port, update the `API_BASE_URL` constant in `script.js`.
 
-## Learn More
+## Usage Workflow
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. **Upload Data**
+   - Navigate to the "File Upload" tab
+   - Select a CSV file with transportation logistics data
+   - Upload the file
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+2. **Preview Data**
+   - Navigate to the "File Preview" tab
+   - Select the uploaded file from the dropdown
+   - Click "Preview" to see the data
+
+3. **Train a Model**
+   - Navigate to the "Model Training" tab
+   - Select the data file to use for training
+   - Choose the model type (Order Volume, Tender Performance, or Carrier Performance)
+   - Configure training parameters if needed
+   - Click "Start Training"
+
+4. **View Models**
+   - Navigate to the "Model List" tab
+   - Use the filter to see specific model types
+   - Click "Details" on any model to see more information
+   - Click "Predict" to generate predictions with a model
+
+5. **Generate Predictions**
+   - Navigate to the "Predictions" tab
+   - Select the model type and specific model
+   - Configure prediction parameters
+   - Click "Generate Predictions"
+   - View or download the prediction results
+
+## Known Limitations
+
+- This is a proof-of-concept implementation with simplified error handling
+- Some features are simulated for demonstration purposes
+- The UI is minimal and designed for functionality rather than aesthetics
+
+## Notes
+
+This frontend is designed to showcase the capabilities of the Envision Neural API and is not intended for production use. 
