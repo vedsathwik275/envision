@@ -19,6 +19,10 @@
   - Created model type selection with filtered model loading
   - Enhanced model dropdowns to show only the three most recent models per type
   - Added robust error handling for DOM manipulation and API response processing
+  - Designed comprehensive color scheme with transportation/logistics-themed variables
+  - Created color scheme demo panel accessible via footer toggle for developers
+  - Added visual hierarchy with color-coded UI elements for better user experience
+  - Implemented animated icons and visual feedback elements in the interface
 
 ### Changed
 - **Streamlined API Surface**: Simplified the API by maintaining only essential routes:
@@ -31,6 +35,11 @@
   - Specialized model-specific prediction routes are now the recommended way to interact with the API
   - Improved documentation to highlight the preferred endpoints for each model type
   - Simplified routing structure for more intuitive API navigation
+- **Improved Frontend UI**: Enhanced visual design for better user experience:
+  - Implemented transportation/logistics-themed color scheme using CSS variables
+  - Enhanced navigation with improved visual feedback (light grey for inactive, white for active/hover)
+  - Improved header styling with white text for better contrast and readability
+  - Added subtle animations for interactive elements to enhance user engagement
 
 ### Fixed
 - Fixed issue with prediction data display in frontend where DOM elements were being removed unintentionally
@@ -39,6 +48,9 @@
 - Fixed frontend data handling for nested API response structures
 - Improved error reporting and recovery when API requests fail or return unexpected data
 - Corrected model filtering and sorting to ensure consistent display of model options
+- Fixed navigation styling to ensure proper color contrast between active and inactive states
+- Resolved header text contrast issues for better readability against gradient backgrounds
+- Fixed inconsistent styling of navigation elements by explicitly setting colors for all states
 
 ## [Unreleased] - 2025-05-16
 ### Added

@@ -4,43 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Envision Neural - Proof of Concept</title>
+    <link rel="stylesheet" href="color_scheme.css">
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
     <header>
-        <h1>Envision Neural</h1>
-        <h2>Transportation Logistics AI - Proof of Concept</h2>
+        <div class="logo-container">
+            <i class="fas fa-brain logo-icon"></i>
+            <div class="logo-text">
+                <h1>Envision Neural</h1>
+                <h2>Transportation Logistics AI - Proof of Concept</h2>
+            </div>
+        </div>
     </header>
 
     <nav>
         <ul>
-            <li><a href="#file-upload" class="nav-link active" data-section="file-upload">File Upload</a></li>
-            <li><a href="#model-training" class="nav-link" data-section="model-training">Model Training</a></li>
-            <li><a href="#model-list" class="nav-link" data-section="model-list">Model List</a></li>
-            <li><a href="#predictions" class="nav-link" data-section="predictions">Predictions</a></li>
+            <li><a href="#file-upload" class="nav-link active" data-section="file-upload"><i class="fas fa-file-upload"></i> File Upload</a></li>
+            <li><a href="#model-training" class="nav-link" data-section="model-training"><i class="fas fa-cogs"></i> Model Training</a></li>
+            <li><a href="#model-list" class="nav-link" data-section="model-list"><i class="fas fa-list"></i> Model List</a></li>
+            <li><a href="#predictions" class="nav-link" data-section="predictions"><i class="fas fa-chart-line"></i> Predictions</a></li>
         </ul>
     </nav>
 
     <main>
         <!-- File Upload Section (with integrated preview) -->
         <section id="file-upload" class="section active">
-            <h2>File Upload</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-file-upload"></i> File Upload</h2>
+            </div>
             <div class="card">
                 <h3>Upload Training Data</h3>
                 <form id="upload-form">
                     <div class="form-group">
                         <label for="file-input">Select CSV File:</label>
-                        <input type="file" id="file-input" accept=".csv" required>
+                        <div class="file-input-container">
+                            <input type="file" id="file-input" accept=".csv" required>
+                            <div class="file-input-helper">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Drag and drop a CSV file or click to browse</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="btn primary">Upload File</button>
+                        <button type="submit" class="btn primary"><i class="fas fa-upload"></i> Upload File</button>
                     </div>
                 </form>
                 <div id="upload-result" class="result-area"></div>
                 
                 <!-- Integrated File Preview (initially hidden) -->
                 <div id="file-preview-container" style="display: none;">
-                    <h3>File Preview</h3>
+                    <h3><i class="fas fa-table"></i> File Preview</h3>
                     <div id="file-info" class="file-info"></div>
                     <div id="preview-table-container">
                         <table id="preview-table"></table>
@@ -51,7 +67,9 @@
 
         <!-- Model Training Section -->
         <section id="model-training" class="section">
-            <h2>Model Training</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-cogs"></i> Model Training</h2>
+            </div>
             <div class="card">
                 <h3>Train a New Model</h3>
                 <form id="training-form">
@@ -70,24 +88,28 @@
                             <option value="carrier-performance">Carrier Performance</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="epochs">Epochs:</label>
-                        <input type="number" id="epochs" value="100" min="1" max="1000">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="epochs">Epochs:</label>
+                            <input type="number" id="epochs" value="100" min="1" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="batch-size">Batch Size:</label>
+                            <input type="number" id="batch-size" value="32" min="1" max="256">
+                        </div>
+                        <div class="form-group">
+                            <label for="validation-split">Validation Split:</label>
+                            <input type="number" id="validation-split" value="0.2" min="0.1" max="0.5" step="0.1">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="batch-size">Batch Size:</label>
-                        <input type="number" id="batch-size" value="32" min="1" max="256">
-                    </div>
-                    <div class="form-group">
-                        <label for="validation-split">Validation Split:</label>
-                        <input type="number" id="validation-split" value="0.2" min="0.1" max="0.5" step="0.1">
-                    </div>
+                    
                     <div class="form-group">
                         <label for="model-description">Description:</label>
-                        <textarea id="model-description" rows="2"></textarea>
+                        <textarea id="model-description" rows="2" placeholder="Add a brief description of this model..."></textarea>
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="btn primary">Start Training</button>
+                        <button type="submit" class="btn primary"><i class="fas fa-play"></i> Start Training</button>
                     </div>
                 </form>
                 <div id="training-result" class="result-area"></div>
@@ -96,18 +118,22 @@
 
         <!-- Model List Section -->
         <section id="model-list" class="section">
-            <h2>Model List</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-list"></i> Model List</h2>
+            </div>
             <div class="card">
                 <h3>Available Models</h3>
-                <div class="form-group">
-                    <label for="model-filter-type">Filter by Type:</label>
-                    <select id="model-filter-type">
-                        <option value="">All Types</option>
-                        <option value="order_volume">Order Volume</option>
-                        <option value="tender_performance">Tender Performance</option>
-                        <option value="carrier_performance">Carrier Performance</option>
-                    </select>
-                    <button id="refresh-models-btn" class="btn secondary">Refresh List</button>
+                <div class="filter-controls">
+                    <div class="form-group">
+                        <label for="model-filter-type">Filter by Type:</label>
+                        <select id="model-filter-type">
+                            <option value="">All Types</option>
+                            <option value="order_volume">Order Volume</option>
+                            <option value="tender_performance">Tender Performance</option>
+                            <option value="carrier_performance">Carrier Performance</option>
+                        </select>
+                    </div>
+                    <button id="refresh-models-btn" class="btn secondary"><i class="fas fa-sync-alt"></i> Refresh List</button>
                 </div>
                 <div id="models-container" class="result-area">
                     <table id="models-table">
@@ -128,7 +154,9 @@
 
         <!-- Predictions Section -->
         <section id="predictions" class="section">
-            <h2>Predictions</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-chart-line"></i> Predictions</h2>
+            </div>
             <div class="card">
                 <h3>Generate New Predictions</h3>
                 <form id="prediction-form">
@@ -151,11 +179,11 @@
                         <!-- Dynamic parameters based on model type will be inserted here -->
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="btn primary">Generate Predictions</button>
+                        <button type="submit" class="btn primary"><i class="fas fa-magic"></i> Generate Predictions</button>
                     </div>
                 </form>
                 <div id="prediction-result" class="result-area">
-                    <div id="prediction-summary"></div>
+                    <div id="prediction-summary" class="prediction-summary"></div>
                     <div id="prediction-table-container">
                         <table id="prediction-table"></table>
                     </div>
@@ -175,8 +203,134 @@
     </main>
 
     <footer>
-        <p>&copy; 2025 Envision Neural - Transportation Logistics AI</p>
+        <div class="footer-content">
+            <p>&copy; 2025 Envision Neural - Transportation Logistics AI</p>
+            <div class="footer-icons">
+                <i class="fas fa-truck"></i>
+                <i class="fas fa-shipping-fast"></i>
+                <i class="fas fa-brain"></i>
+            </div>
+            <button id="toggle-color-demo" class="btn secondary toggle-demo-btn"><i class="fas fa-palette"></i> Toggle Color Scheme Demo</button>
+        </div>
     </footer>
+
+    <!-- Color Scheme Demo (initially hidden) -->
+    <div id="color-scheme-demo" class="color-scheme-demo">
+        <div class="demo-header">
+            <h2>Color Scheme Demo</h2>
+            <span class="close-btn" id="close-color-demo">&times;</span>
+        </div>
+
+        <div class="demo-section">
+            <h3>Primary Colors</h3>
+            <div class="color-grid">
+                <div class="color-sample" style="background-color: var(--primary-lightest)">
+                    <span class="color-name">Primary Lightest</span>
+                    <span class="color-value">--primary-lightest</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--primary-light)">
+                    <span class="color-name">Primary Light</span>
+                    <span class="color-value">--primary-light</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--primary-main); color: var(--text-light)">
+                    <span class="color-name">Primary Main</span>
+                    <span class="color-value">--primary-main</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--primary-dark); color: var(--text-light)">
+                    <span class="color-name">Primary Dark</span>
+                    <span class="color-value">--primary-dark</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Secondary Colors</h3>
+            <div class="color-grid">
+                <div class="color-sample" style="background-color: var(--secondary-light)">
+                    <span class="color-name">Secondary Light</span>
+                    <span class="color-value">--secondary-light</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--secondary-main); color: var(--text-light)">
+                    <span class="color-name">Secondary Main</span>
+                    <span class="color-value">--secondary-main</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--secondary-dark); color: var(--text-light)">
+                    <span class="color-name">Secondary Dark</span>
+                    <span class="color-value">--secondary-dark</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Neutral Colors</h3>
+            <div class="color-grid">
+                <div class="color-sample" style="background-color: var(--neutral-bg)">
+                    <span class="color-name">Neutral BG</span>
+                    <span class="color-value">--neutral-bg</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--neutral-light)">
+                    <span class="color-name">Neutral Light</span>
+                    <span class="color-value">--neutral-light</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--neutral-medium); color: var(--text-light)">
+                    <span class="color-name">Neutral Medium</span>
+                    <span class="color-value">--neutral-medium</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--neutral-dark); color: var(--text-light)">
+                    <span class="color-name">Neutral Dark</span>
+                    <span class="color-value">--neutral-dark</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Utility Colors</h3>
+            <div class="color-grid">
+                <div class="color-sample" style="background-color: var(--success); color: var(--text-light)">
+                    <span class="color-name">Success</span>
+                    <span class="color-value">--success</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--warning); color: var(--text-light)">
+                    <span class="color-name">Warning</span>
+                    <span class="color-value">--warning</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--error); color: var(--text-light)">
+                    <span class="color-name">Error</span>
+                    <span class="color-value">--error</span>
+                </div>
+                <div class="color-sample" style="background-color: var(--info); color: var(--text-light)">
+                    <span class="color-name">Info</span>
+                    <span class="color-value">--info</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h3>Gradients</h3>
+            <div class="color-grid">
+                <div class="color-sample" style="background: var(--gradient-primary); color: var(--text-light)">
+                    <span class="color-name">Primary Gradient</span>
+                    <span class="color-value">--gradient-primary</span>
+                </div>
+                <div class="color-sample" style="background: var(--gradient-secondary); color: var(--text-light)">
+                    <span class="color-name">Secondary Gradient</span>
+                    <span class="color-value">--gradient-secondary</span>
+                </div>
+                <div class="color-sample" style="background: var(--gradient-success); color: var(--text-light)">
+                    <span class="color-name">Success Gradient</span>
+                    <span class="color-value">--gradient-success</span>
+                </div>
+                <div class="color-sample" style="background: var(--gradient-warning); color: var(--text-light)">
+                    <span class="color-name">Warning Gradient</span>
+                    <span class="color-value">--gradient-warning</span>
+                </div>
+                <div class="color-sample" style="background: var(--gradient-error); color: var(--text-light)">
+                    <span class="color-name">Error Gradient</span>
+                    <span class="color-value">--gradient-error</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

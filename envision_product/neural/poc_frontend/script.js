@@ -1100,4 +1100,41 @@ document.addEventListener('DOMContentLoaded', () => {
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     }
+});
+
+// Color Scheme Demo Toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleColorDemoBtn = document.getElementById('toggle-color-demo');
+    const colorSchemeDemo = document.getElementById('color-scheme-demo');
+    const closeColorDemo = document.getElementById('close-color-demo');
+    
+    if (toggleColorDemoBtn && colorSchemeDemo && closeColorDemo) {
+        toggleColorDemoBtn.addEventListener('click', function() {
+            colorSchemeDemo.style.display = 'block';
+            // Prevent scrolling on the body when demo is visible
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeColorDemo.addEventListener('click', function() {
+            colorSchemeDemo.style.display = 'none';
+            // Re-enable scrolling
+            document.body.style.overflow = '';
+        });
+        
+        // Close on click outside the demo content
+        window.addEventListener('click', function(event) {
+            if (event.target === colorSchemeDemo) {
+                colorSchemeDemo.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Allow escape key to close
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && colorSchemeDemo.style.display === 'block') {
+                colorSchemeDemo.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        });
+    }
 }); 
