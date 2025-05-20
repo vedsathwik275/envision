@@ -21,3 +21,9 @@ python-jose
 passlib
 bcrypt
 seaborn
+google-auth
+google-api-python-client
+boto3
+python-dotenv
+pytest
+httpx

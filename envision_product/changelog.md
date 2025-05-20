@@ -2,6 +2,15 @@
 
 ## [Unreleased] - 2025-05-20
 ### Added
+- **Email Attachment Processing Tool**: Initiated development of a new tool for processing email attachments:
+  - Created project directory structure with modular organization
+  - Set up FastAPI application with CORS middleware and basic configuration
+  - Implemented Pydantic models for API requests and responses
+  - Created utility functions for attachment identification and content type detection
+  - Added configuration management with environment variables support
+  - Created comprehensive documentation including README and setup instructions
+  - Added template .env file for credential management
+  - Implemented initial project structure with proper Python packaging
 
 ### Changed
 
@@ -318,4 +327,4 @@
 
 ---
 
-Timestamp: 2025-05-19 11:00:00
+Timestamp: 2025-05-20 08:46:00

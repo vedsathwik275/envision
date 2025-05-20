@@ -1,10 +1,9 @@
 # Email Attachment Processing Tool - Todo List
 
 ## Project Setup
-- [ ] Create project directory structure
-- [ ] Set up virtual environment
-- [ ] Initialize FastAPI application
-- [ ] Create requirements.txt with dependencies:
+- [x] Create project directory structure
+- [x] Initialize FastAPI application
+- [x] Create requirements.txt with dependencies:
   - fastapi
   - uvicorn
   - google-auth
@@ -13,7 +12,7 @@
   - python-dotenv
   - pytest
   - httpx (for testing)
-- [ ] Configure environment variables for credentials
+- [x] Configure environment variables for credentials
 
 ## Phase 1: API Development & Gmail Integration
 - [ ] Set up Gmail API authentication
@@ -92,6 +91,6 @@
 
 ## Documentation
 - [ ] Create API documentation
-- [ ] Write deployment instructions
-- [ ] Document configuration options
+- [x] Write deployment instructions
+- [x] Document configuration options
 - [ ] Create user guide for frontend integration
