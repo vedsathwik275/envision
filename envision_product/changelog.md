@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] - 2025-05-20
+### Added
+
+### Changed
+
+### Fixed
+
 ## [Unreleased] - 2025-05-19
 ### Added
 - **Proof of Concept Frontend**: Developed a simple web interface to demonstrate backend API capabilities:
