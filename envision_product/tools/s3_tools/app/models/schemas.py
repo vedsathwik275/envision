@@ -10,9 +10,18 @@ class EmailInfo(BaseModel):
     
     id: str = Field(..., description="Email ID")
     subject: str = Field(..., description="Email subject")
+    from_email: Optional[str] = Field(None, alias="from", description="Email sender")
+    date: Optional[str] = Field(None, description="Email date")
     has_target_attachments: bool = Field(
         ..., description="Whether the email has target attachments"
     )
+    is_target_subject: Optional[bool] = Field(
+        None, description="Whether the email subject matches target patterns"
+    )
+    
+    model_config = {
+        "populate_by_name": True,
+    }
 
 
 class AttachmentInfo(BaseModel):

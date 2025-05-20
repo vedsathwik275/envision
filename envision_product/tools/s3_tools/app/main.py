@@ -6,6 +6,8 @@ This module initializes the FastAPI application and includes all routes.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .routers import auth, emails
+
 # Create FastAPI app
 app = FastAPI(
     title="Email Attachment Processing Tool",
@@ -22,8 +24,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import routers
-# These will be added as we implement them
+# Include routers
+app.include_router(auth.router)
+app.include_router(emails.router)
 
 @app.get("/")
 async def root():

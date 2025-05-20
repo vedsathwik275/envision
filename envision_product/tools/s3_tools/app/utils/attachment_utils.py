@@ -16,7 +16,9 @@ def is_target_attachment(filename: str) -> bool:
     Returns:
         bool: True if the filename is in the target list, False otherwise
     """
-    return filename in settings.target_filenames
+    # Check if any target filename is contained within the attachment filename
+    # This is more flexible than exact matching
+    return any(target.lower() in filename.lower() for target in settings.target_filenames)
 
 
 def is_supported_file_type(filename: str) -> bool:

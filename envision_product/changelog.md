@@ -1,5 +1,6 @@
 # Changelog
 
+
 ## [Unreleased] - 2025-05-20
 ### Added
 - **Email Attachment Processing Tool**: Initiated development of a new tool for processing email attachments:
@@ -11,10 +12,37 @@
   - Created comprehensive documentation including README and setup instructions
   - Added template .env file for credential management
   - Implemented initial project structure with proper Python packaging
+- **Enhanced Email Attachment Processing Tool**:
+  - Implemented Gmail API integration for retrieving emails with attachments
+  - Added authentication service with OAuth2 token management
+  - Created API endpoints for listing emails with attachments
+  - Added support for filtering emails by subject patterns
+  - Implemented configuration for target email subjects via environment variables
+  - Added recursive attachment search to find attachments regardless of nesting level
+  - Created endpoint for downloading email attachments
+  - Added utility functions for identifying target attachments
+  - Improved attachment identification to support filenames with or without extensions
 
 ### Changed
+- **Updated Pydantic Models**:
+  - Migrated from Pydantic v1 to v2 configuration format
+  - Replaced `Config` class with `model_config` dictionary
+  - Updated `allow_population_by_field_name` to `populate_by_name` for v2 compatibility
+- **Enhanced Attachment Detection**:
+  - Improved attachment identification logic to handle partial matches
+  - Made attachment detection case-insensitive for better matching
 
 ### Fixed
+- **Attachment Handling**:
+  - Fixed issue with deeply nested attachments not being found in Gmail messages
+  - Implemented recursive search for attachments in complex message structures
+  - Added fallback mechanism for attachment retrieval when metadata is not available
+  - Fixed case sensitivity issues in target filename matching
+  - Enhanced target attachment detection to work with filenames without extensions
+  - Resolved issue with `from` field showing as null in email listings
+
+### Issues to Address
+- **Attachment Download Format**: When downloading attachments, files are retrieved without proper file extensions. Need to implement post-processing to ensure downloaded files have appropriate extensions based on their MIME types.
 
 ## [Unreleased] - 2025-05-19
 ### Added
@@ -327,4 +355,4 @@
 
 ---
 
-Timestamp: 2025-05-20 08:46:00
+Timestamp: 2025-05-20 11:33:00
