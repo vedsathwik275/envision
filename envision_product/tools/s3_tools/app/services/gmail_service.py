@@ -9,9 +9,10 @@ import base64
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import os
 
 from ..config import settings
-from ..utils.attachment_utils import is_target_attachment, is_supported_file_type
+from ..utils.attachment_utils import is_target_attachment, is_supported_file_type, get_extension_from_mime_type
 
 
 class GmailService:
@@ -176,13 +177,15 @@ class GmailService:
         
         return attachments
     
-    def get_attachment_data(self, message_id: str, attachment_id: str) -> Dict:
+    def get_attachment_data(self, message_id: str, attachment_id: str, expected_filename: Optional[str] = None, expected_mime_type: Optional[str] = None) -> Dict:
         """
         Get data for a specific attachment.
         
         Args:
             message_id: ID of the email
             attachment_id: ID of the attachment
+            expected_filename: Optional client-provided filename
+            expected_mime_type: Optional client-provided MIME type
             
         Returns:
             Dictionary with attachment data and metadata
@@ -200,42 +203,89 @@ class GmailService:
             # Find attachment info by recursively searching through all parts
             attachment_info = self._find_attachment_part(message.get('payload', {}), attachment_id)
             
-            if not attachment_info:
-                # If not found, try to get attachment directly without metadata
-                try:
-                    attachment = self.service.users().messages().attachments().get(
-                        userId='me',
-                        messageId=message_id,
-                        id=attachment_id
-                    ).execute()
-                    
-                    # Decode attachment data
-                    file_data = base64.urlsafe_b64decode(attachment.get('data', ''))
-                    
-                    # Return with minimal info since we couldn't find the part
-                    return {
-                        'filename': 'attachment',
-                        'mime_type': 'application/octet-stream',
-                        'size': len(file_data),
-                        'data': file_data
-                    }
-                except Exception as e:
-                    print(f"Failed to get attachment directly: {e}")
-                    raise ValueError("Attachment not found")
+            # Get attachment data first, as we need it regardless
+            try:
+                attachment_data_response = self.service.users().messages().attachments().get(
+                    userId='me',
+                    messageId=message_id,
+                    id=attachment_id
+                ).execute()
+                file_data = base64.urlsafe_b64decode(attachment_data_response.get('data', ''))
+            except HttpError as e:
+                # This means the attachmentId itself is invalid or data is inaccessible
+                print(f"Failed to get attachment data directly for id {attachment_id}: {e}")
+                raise ValueError("Attachment data not found or inaccessible")
+
+            # filename and mime_type are temps within this block
+            filename_to_use = "attachment"
+            mimetype_to_use = "application/octet-stream"
+
+            if expected_filename and expected_mime_type: # Both client hints are present
+                print(f"DEBUG GmailService: Client provided expected_filename: '{expected_filename}', raw expected_mime_type: '{expected_mime_type}'")
+                
+                filename_to_use = expected_filename
+                
+                # Normalize client-provided expected_mime_type for common shorthands
+                normalized_client_mime_shorthand = expected_mime_type.lower().strip()
+                if normalized_client_mime_shorthand == 'csv':
+                    mimetype_to_use = 'text/csv'
+                elif normalized_client_mime_shorthand == 'json':
+                    mimetype_to_use = 'application/json'
+                # Add other common shorthands if desired, e.g.:
+                # elif normalized_client_mime_shorthand == 'pdf':
+                #     mimetype_to_use = 'application/pdf'
+                # elif normalized_client_mime_shorthand == 'txt':
+                #     mimetype_to_use = 'text/plain'
+                else:
+                    # If not a known shorthand, assume it might be a full MIME type or one that
+                    # get_extension_from_mime_type can handle directly. Use original value.
+                    mimetype_to_use = expected_mime_type
+                
+                print(f"DEBUG GmailService: Using filename_to_use: '{filename_to_use}', mimetype_to_use (post-client-normalization): '{mimetype_to_use}'")
+
+            elif attachment_info: # No client hints, but found metadata in email part
+                filename_to_use = attachment_info.get('filename', filename_to_use)
+                mimetype_to_use = attachment_info.get('mimeType', mimetype_to_use)
+                print(f"DEBUG GmailService: Found attachment_info. Raw filename from part: '{filename_to_use}', Raw mime_type from part: '{mimetype_to_use}'")
+            else:
+                # If _find_attachment_part didn't find detailed metadata, and no client override
+                # Log this situation. We already have file_data.
+                print(f"DEBUG GmailService: attachment_info is None for attachmentId: {attachment_id}. Using default filename/mime_type before refinement.")
+
+            # Store these for clarity in subsequent logic and final return
+            effective_filename_from_part = filename_to_use
+            effective_mimetype_from_part = mimetype_to_use
+
+            # Refine filename based on MIME type
+            # Initialize current_ext, it will be updated if filename is specific
+            current_ext = ""
+            if not effective_filename_from_part or effective_filename_from_part.lower() == "attachment":
+                base_name = "downloaded_attachment"
+            else:
+                base_name, current_ext = os.path.splitext(effective_filename_from_part)
             
-            # Get attachment data
-            attachment = self.service.users().messages().attachments().get(
-                userId='me',
-                messageId=message_id,
-                id=attachment_id
-            ).execute()
+            print(f"DEBUG GmailService: Before derivation: base_name='{base_name}', current_ext='{current_ext}', effective_mimetype_from_part='{effective_mimetype_from_part}'")
+            derived_extension = get_extension_from_mime_type(effective_mimetype_from_part)
+            print(f"DEBUG GmailService: Derived extension: '{derived_extension}' for mime_type: '{effective_mimetype_from_part}'")
             
-            # Decode attachment data
-            file_data = base64.urlsafe_b64decode(attachment.get('data', ''))
-            
+            final_filename = effective_filename_from_part
+
+            if derived_extension:
+                if effective_filename_from_part.lower() == "attachment" or not current_ext:
+                    final_filename = base_name + derived_extension
+                elif current_ext.lower() != derived_extension.lower():
+                    final_filename = base_name + derived_extension
+                    print(f"DEBUG GmailService: Corrected extension for {base_name} from {current_ext} to {derived_extension} based on MIME type {effective_mimetype_from_part}")
+            elif not current_ext and effective_filename_from_part.lower() != "attachment":
+                pass # final_filename is already effective_filename_from_part (specific name, no extension, no derived extension)
+            elif effective_filename_from_part.lower() == "attachment": # Generic name, no derived extension
+                final_filename = "downloaded_file"
+
+            print(f"DEBUG GmailService: Final filename determined: '{final_filename}'")
+
             return {
-                'filename': attachment_info.get('filename', 'attachment'),
-                'mime_type': attachment_info.get('mimeType', 'application/octet-stream'),
+                'filename': final_filename,
+                'mime_type': effective_mimetype_from_part, # Return the mime_type used for decisions
                 'size': len(file_data),
                 'data': file_data
             }
@@ -253,10 +303,14 @@ class GmailService:
             attachment_id: ID of the attachment to find
             
         Returns:
-            Dict or None: The attachment part if found, None otherwise
+            Optional[Dict]: The part containing the attachment, or None if not found.
         """
-        # Check if current part has the attachment ID
         if payload.get('body', {}).get('attachmentId') == attachment_id:
+            # Ensure the found part has filename and mimeType, even if empty strings
+            # so .get() in the caller doesn't unexpectedly fail if keys are missing
+            # Defaulting them here if absent is not ideal as it masks true absence,
+            # but the caller uses .get() with defaults anyway.
+            # The main goal is to return the part if ID matches.
             return payload
         
         # Check parts recursively

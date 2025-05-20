@@ -40,9 +40,17 @@
   - Fixed case sensitivity issues in target filename matching
   - Enhanced target attachment detection to work with filenames without extensions
   - Resolved issue with `from` field showing as null in email listings
+- **Attachment Download Format**:
+    - Resolved issue where attachments were downloaded with incorrect or missing file extensions (e.g., receiving ".bin" or ".txt" for CSV files).
+    - Enhanced the attachment download API endpoint (`GET /api/emails/{message_id}/attachments/{attachment_id}`) to accept optional `expected_filename` and `expected_mime_type` query parameters. This allows clients (which can obtain correct metadata from the `list_attachments` endpoint) to guide the download process.
+    - Updated the backend Gmail service method `get_attachment_data` to:
+        - Prioritize client-provided `expected_filename` and `expected_mime_type` if available.
+        - Normalize common shorthand MIME type inputs from the client (e.g., "csv" to "text/csv", "json" to "application/json") to ensure accurate processing and correct `Content-Type` headers in the HTTP response.
+        - Intelligently derive file extensions from MIME types using an improved `get_extension_from_mime_type` utility, particularly when original filenames from email parts are generic, lack extensions, or have incorrect ones.
+    - Improved the `get_extension_from_mime_type` utility in `attachment_utils.py` for more robust MIME type to extension mapping, especially ensuring "text/csv" and its variations correctly yield a ".csv" extension.
+    - These changes ensure that downloaded files now consistently have appropriate names and extensions based on the most reliable metadata available (client hints, email part details, or MIME type derivation).
 
 ### Issues to Address
-- **Attachment Download Format**: When downloading attachments, files are retrieved without proper file extensions. Need to implement post-processing to ensure downloaded files have appropriate extensions based on their MIME types.
 
 ## [Unreleased] - 2025-05-19
 ### Added

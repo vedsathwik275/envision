@@ -137,6 +137,8 @@ async def list_attachments(
 async def download_attachment(
     message_id: str,
     attachment_id: str,
+    expected_filename: Optional[str] = Query(None, description="Client-provided expected filename, typically from list_attachments"),
+    expected_mime_type: Optional[str] = Query(None, description="Client-provided expected MIME type, typically from list_attachments"),
     gmail_service: GmailService = Depends(get_gmail_service)
 ):
     """
@@ -145,13 +147,20 @@ async def download_attachment(
     Args:
         message_id: ID of the email
         attachment_id: ID of the attachment
+        expected_filename: Client-provided expected filename, typically from list_attachments
+        expected_mime_type: Client-provided expected MIME type, typically from list_attachments
         gmail_service: Gmail service instance
         
     Returns:
         Streaming response with attachment data
     """
     try:
-        attachment = gmail_service.get_attachment_data(message_id, attachment_id)
+        attachment = gmail_service.get_attachment_data(
+            message_id, 
+            attachment_id,
+            expected_filename=expected_filename, 
+            expected_mime_type=expected_mime_type
+        )
         
         # Set up streaming response
         return StreamingResponse(

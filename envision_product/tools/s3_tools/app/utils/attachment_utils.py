@@ -1,7 +1,8 @@
 """
 Utility functions for working with email attachments.
 """
-from typing import List
+from typing import List, Optional
+import mimetypes
 
 from ..config import settings
 
@@ -59,4 +60,46 @@ def get_target_filenames() -> List[str]:
     Returns:
         List[str]: The list of target filenames
     """
-    return settings.target_filenames 
+    return settings.target_filenames
+
+
+def get_extension_from_mime_type(mime_type: str) -> Optional[str]:
+    """
+    Guess file extension from MIME type.
+
+    Args:
+        mime_type: The MIME type string.
+
+    Returns:
+        Optional[str]: The guessed file extension (e.g., '.csv') or None.
+    """
+    if not mime_type:
+        return None
+    
+    # Explicitly handle variations of text/csv first for robustness
+    # to ensure it always yields .csv if the MIME type is for CSV.
+    cleaned_mime_type = mime_type.lower().strip()
+    if cleaned_mime_type == 'text/csv':
+        return '.csv'
+    
+    # Common direct mappings for frequently used types for more reliability
+    common_extensions = {
+        'text/csv': '.csv',
+        'application/json': '.json',
+        'application/pdf': '.pdf',
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+        'application/vnd.ms-excel': '.xls',
+        'application/msword': '.doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+        'text/plain': '.txt',
+    }
+    
+    extension = common_extensions.get(cleaned_mime_type)
+    if extension:
+        return extension
+        
+    # Fallback to mimetypes module
+    extension = mimetypes.guess_extension(cleaned_mime_type, strict=False)
+    return extension 
