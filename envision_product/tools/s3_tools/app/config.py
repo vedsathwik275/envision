@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Gmail API settings
     gmail_client_id: Optional[str] = Field(None, description="Gmail API OAuth client ID")
     gmail_client_secret: Optional[str] = Field(None, description="Gmail API OAuth client secret")
-    gmail_redirect_uri: str = Field("http://localhost:8000/auth/callback", description="OAuth redirect URI")
+    gmail_redirect_uri: str = Field("http://localhost:8002/auth/callback", description="OAuth redirect URI")
     
     # S3 settings
     aws_access_key_id: Optional[str] = Field(None, description="AWS Access Key ID")

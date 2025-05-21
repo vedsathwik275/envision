@@ -46,14 +46,14 @@
 - [x] Configure S3 bucket
   - [x] Create bucket with appropriate permissions
   - [x] Set up IAM roles and policies
-- [ ] Implement S3 upload functionality
-  - [ ] Create upload_to_s3 function
-  - [ ] Add metadata generation
-  - [ ] Implement error handling for upload failures
-- [ ] Create S3 upload endpoint
-  - [ ] Implement `/api/emails/{message_id}/attachments/{attachment_id}/upload` POST endpoint
-  - [ ] Add proper response model with UploadResponse
-  - [ ] Include metadata in response
+- [x] Implement S3 upload functionality
+  - [x] Create upload_to_s3 function
+  - [x] Add metadata generation
+  - [x] Implement error handling for upload failures
+- [x] Create S3 upload endpoint
+  - [x] Implement `/api/emails/{message_id}/attachments/{attachment_id}/upload` POST endpoint
+  - [x] Add proper response model with UploadResponse
+  - [x] Include metadata in response
 
 ## Phase 2: Testing
 - [ ] Test S3 bucket configuration and credentials
