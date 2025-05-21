@@ -19,8 +19,23 @@
     - Includes comprehensive error handling for the entire process.
   - Enhanced the `POST /api/emails/{message_id}/attachments/{attachment_id}/upload` endpoint to accept optional `expected_filename` and `expected_mime_type` query parameters.
     - These parameters are passed to `GmailService.get_attachment_data` to ensure that the filename and MIME type used for the S3 object key and `ContentType` metadata are as accurate as possible, consistent with the direct attachment download endpoint.
+- **Proof of Concept (PoC) Frontend for Gmail S3 Tool**:
+  - Created a simple HTML, CSS, and JavaScript frontend in `envision_product/tools/gmail_s3/poc_frontend/`.
+  - **Features**:
+    - User authentication via Gmail OAuth2 (initiates login flow, handles status).
+    - Lists emails with attachments from the backend API.
+    - Allows selection of an email to view its attachments.
+    - Allows selection of a specific attachment.
+    - Provides options to either directly download the selected attachment or upload it to S3.
+    - Utilizes `expected_filename` and `expected_mime_type` query parameters when calling backend download/upload endpoints, using metadata obtained from the list attachments call to ensure accuracy.
+    - Displays status messages and API responses.
+  - **Authentication Flow Update**: Modified the login process to open the Google authorization URL in a new tab (`window.open(..., '_blank')`) for a smoother user experience with fewer popup blocker issues, while keeping the original tab for the PoC UI.
 
 ### Changed
+- **API Port Configuration**: 
+  - Default Uvicorn serving port in `app/main.py` (within `if __name__ == "__main__":`) changed from 8000 to 8002.
+  - Gmail OAuth `redirect_uri` in `app/config.py` updated from `http://localhost:8000/auth/callback` to `http://localhost:8002/auth/callback` to match the new default serving port.
+  - Clarified in documentation (README) that Uvicorn CLI needs `--port 8002` for command-line execution on the new port.
 
 ### Fixed
 

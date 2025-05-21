@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail to S3 PoC</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Gmail Attachment Processor</h1>
+    </header>
+
+    <main>
+        <section id="auth-section">
+            <h2>Authentication</h2>
+            <button id="login-btn">Login with Gmail</button>
+            <button id="logout-btn" style="display:none;">Logout</button>
+            <p id="auth-status">Status: Not Authenticated</p>
+        </section>
+
+        <section id="emails-section" style="display:none;">
+            <h2>Emails</h2>
+            <button id="list-emails-btn">List Emails with Attachments</button>
+            <div id="emails-list" class="list-container"></div>
+        </section>
+
+        <section id="attachments-section" style="display:none;">
+            <h2>Attachments for Selected Email</h2>
+            <p>Selected Email ID: <span id="selected-email-id">None</span></p>
+            <div id="attachments-list" class="list-container"></div>
+        </section>
+
+        <section id="actions-section" style="display:none;">
+            <h2>Actions for Selected Attachment</h2>
+            <p>Selected Attachment: <span id="selected-attachment-info">None</span></p>
+            <button id="download-btn">Download Attachment</button>
+            <button id="upload-s3-btn">Upload to S3</button>
+        </section>
+
+        <section id="status-messages">
+            <h2>Status / Results</h2>
+            <pre id="messages"></pre>
+        </section>
+    </main>
+
+    <footer>
+        <p>Proof of Concept UI</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
