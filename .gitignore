@@ -31,6 +31,5 @@ yarn-error.log*
 
 .cursor
 
-/envision_product/tools/s3_tools/tokens
-/envision_product/tools/s3_tools/tokens/*
-
+tokens
+tokens/*
