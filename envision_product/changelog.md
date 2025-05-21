@@ -1,5 +1,28 @@
 # Changelog
 
+## [Unreleased] - 2025-05-21
+### Added
+- **S3 Integration for Email Attachments**:
+  - Implemented functionality to upload email attachments directly to an AWS S3 bucket.
+  - Added S3 configuration options to `app.config.settings` (utilizing existing `aws_access_key_id`, `aws_secret_access_key`, `s3_bucket_name`, `s3_region`).
+  - Created `S3Service` (`app/services/s3_service.py`) with an `upload_to_s3` method:
+    - Uses `boto3` to interact with AWS S3.
+    - Takes file data, filename (S3 object key), and content type as input.
+    - Uploads files to the configured S3 bucket.
+    - Returns the S3 object URL and object key.
+    - Includes robust error handling for AWS credentials and S3 client operations.
+  - Implemented a new API endpoint `POST /api/emails/{message_id}/attachments/{attachment_id}/upload` in `app/routers/emails.py`:
+    - Fetches attachment data (filename, MIME type, content) from Gmail using `GmailService`.
+    - Uploads the attachment to S3 using the new `S3Service`.
+    - Constructs the S3 object key using a pattern like `attachments/{message_id}/{original_filename}`.
+    - Returns an `UploadResponse` (from `app/models/schemas.py`) detailing the upload status, S3 location, and metadata (object key, content type, size, original attachment ID, email message ID).
+    - Includes comprehensive error handling for the entire process.
+  - Enhanced the `POST /api/emails/{message_id}/attachments/{attachment_id}/upload` endpoint to accept optional `expected_filename` and `expected_mime_type` query parameters.
+    - These parameters are passed to `GmailService.get_attachment_data` to ensure that the filename and MIME type used for the S3 object key and `ContentType` metadata are as accurate as possible, consistent with the direct attachment download endpoint.
+
+### Changed
+
+### Fixed
 
 ## [Unreleased] - 2025-05-20
 ### Added
@@ -363,4 +386,4 @@
 
 ---
 
-Timestamp: 2025-05-20 11:33:00
+Timestamp: 2025-05-21 08:37:00
