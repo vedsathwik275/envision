@@ -39,6 +39,14 @@
     - Implemented UI feedback throughout the download and upload process
     - Added automatic refresh of file list after successful upload
 
+### Planned
+- **S3 Upload Feature (Phase 6)**:
+  - Add option to upload selected attachments to S3 in addition to the Neural backend
+  - Implement UI elements for toggling S3 upload and displaying results
+  - Add direct integration with the Gmail to S3 API's upload endpoint
+  - Provide visual feedback for S3 upload status and results
+  - Include error handling specific to S3 upload operations
+
 ### Changes
 - **Frontend API Configuration**:
   - Updated API base URL constants to support both main API and Gmail to S3 API
@@ -465,4 +473,4 @@
 
 ---
 
-Timestamp: 2025-05-22 11:45:00
+Timestamp: 2025-05-22 11:51:00

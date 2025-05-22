@@ -64,6 +64,68 @@ This document outlines the tasks required to integrate the Gmail to S3 API with 
 - [ ] Refine UI/UX elements for clarity and consistency with the "Envision Neural" frontend
 - [ ] Check CORS configurations on both backend APIs if testing across different local ports
 
+### Phase 6: S3 Upload Feature Implementation
+
+- [ ] **`index.html`**:
+  - [ ] Add checkbox in email attachment modal for "Also upload to S3"
+  - [ ] Add area to display S3 upload results (URL, object key)
+- [ ] **`script.js`**:
+  - [ ] Modify `handleFetchAttachment()` to check if S3 upload is requested
+  - [ ] If S3 upload is requested, call the Gmail to S3 API's upload endpoint
+  - [ ] Display S3 upload results to the user (URL, object key)
+  - [ ] Handle errors and provide appropriate feedback
+- [ ] **`styles.css`**:
+  - [ ] Add styles for the S3 upload option and results display
+
+## S3 Upload Implementation Plan
+
+1. **UI Modifications**:
+   - Add a checkbox labeled "Also upload to S3" to the email attachment modal
+   - Add a collapsible section to display S3 upload results (initially hidden)
+   - Style these new UI elements to match the existing design
+
+2. **JavaScript Implementation**:
+   - Add a variable to track whether S3 upload is requested
+   - Update the `handleFetchAttachment()` function:
+     ```javascript
+     // After downloading the attachment as a blob
+     if (s3UploadRequested) {
+       try {
+         // Call the S3 upload endpoint
+         const s3Response = await fetch(
+           `${GMAIL_S3_API_BASE_URL}/api/emails/${currentMessageId}/attachments/${attachmentId}/upload?expected_filename=${encodeURIComponent(filename)}&expected_mime_type=${encodeURIComponent(mimeType)}`,
+           { method: 'POST' }
+         );
+         
+         if (!s3Response.ok) {
+           throw new Error('Failed to upload to S3');
+         }
+         
+         const s3Data = await s3Response.json();
+         
+         // Display S3 upload results
+         displayS3UploadResults(s3Data);
+       } catch (error) {
+         // Handle S3 upload errors
+         showModalError(`S3 upload error: ${error.message}`);
+       }
+     }
+     ```
+
+3. **Helper Functions**:
+   - Implement `displayS3UploadResults(data)` to show S3 location and metadata
+   - Add toggle functionality for the S3 results section
+
+4. **Error Handling**:
+   - Ensure errors in S3 upload don't prevent Neural backend upload
+   - Provide clear error messages specific to S3 upload issues
+   - Log detailed error information to console for debugging
+
+5. **Testing**:
+   - Test with S3 upload enabled and disabled
+   - Verify correct metadata is passed to the S3 upload endpoint
+   - Check error handling when S3 upload fails but Neural upload succeeds
+
 ## Technical Notes
 
 1. **API Endpoints**:
@@ -77,11 +139,13 @@ This document outlines the tasks required to integrate the Gmail to S3 API with 
    - List Emails: `GET /api/emails`
    - List Attachments: `GET /api/emails/{messageId}/attachments`
    - Download Attachment: `GET /api/emails/{messageId}/attachments/{attachmentId}`
+   - Upload to S3: `POST /api/emails/{messageId}/attachments/{attachmentId}/upload`
 
 3. **File Handling**:
    - Only CSV files will be supported for this integration
    - The Gmail attachment will be downloaded as a Blob and converted to a File object
    - The File object will be uploaded to the Envision Neural backend as if it were selected via the file input
+   - When S3 upload is requested, the attachment will also be uploaded to S3 via the Gmail to S3 API
 
 ## Implementation Details
 
