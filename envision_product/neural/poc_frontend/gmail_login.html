@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Authentication - Envision Neural</title>
+    <link rel="stylesheet" href="color_scheme.css">
+    <style>
+        body {
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--neutral-bg);
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .auth-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            padding: 30px;
+            margin-top: 50px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            color: var(--primary-main);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+        }
+        
+        p {
+            margin-bottom: 20px;
+            color: var(--text-medium);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+        
+        .btn.primary {
+            background-color: var(--primary-main);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn.primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .status.error {
+            display: block;
+            background-color: var(--error-light);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+        
+        .status.success {
+            display: block;
+            background-color: var(--success-light);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .status.loading {
+            display: block;
+            background-color: var(--info-light);
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <h1>Gmail Authentication</h1>
+        <p>To fetch email attachments, you need to authenticate with your Gmail account. Click the button below to start the authentication process.</p>
+        
+        <button id="login-btn" class="btn primary">Login with Gmail</button>
+        
+        <div id="auth-status" class="status"></div>
+        
+        <div id="success-message" style="display:none;">
+            <p>Authentication successful! You can now close this tab and return to the Envision Neural application.</p>
+            <p>Click 'Fetch Attachment from Email' again to select an email attachment.</p>
+        </div>
+    </div>
+
+    <script>
+        const GMAIL_S3_API_BASE_URL = 'http://localhost:8002';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginBtn = document.getElementById('login-btn');
+            const authStatus = document.getElementById('auth-status');
+            const successMessage = document.getElementById('success-message');
+            
+            // Check URL parameters for success message
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('success')) {
+                loginBtn.style.display = 'none';
+                successMessage.style.display = 'block';
+                authStatus.className = 'status success';
+                authStatus.textContent = 'Authentication successful!';
+            }
+            
+            loginBtn.addEventListener('click', async () => {
+                try {
+                    authStatus.className = 'status loading';
+                    authStatus.textContent = 'Connecting to Gmail API...';
+                    
+                    const response = await fetch(`${GMAIL_S3_API_BASE_URL}/auth/login`);
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                        throw new Error(errorData.detail || 'Failed to get authorization URL');
+                    }
+                    
+                    const data = await response.json();
+                    if (data && data.authorization_url) {
+                        // Redirect to Google's OAuth page
+                        window.location.href = data.authorization_url;
+                    } else {
+                        throw new Error('Authorization URL not found in API response');
+                    }
+                } catch (error) {
+                    authStatus.className = 'status error';
+                    authStatus.textContent = `Error: ${error.message}`;
+                    console.error('Login error:', error);
+                }
+            });
+            
+            // Check if we're on the callback page
+            if (window.location.pathname.includes('auth/callback')) {
+                loginBtn.style.display = 'none';
+                successMessage.style.display = 'block';
+                authStatus.className = 'status success';
+                authStatus.textContent = 'Authentication successful!';
+            }
+        });
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</body>
+</html> 

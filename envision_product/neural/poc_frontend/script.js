@@ -1,5 +1,7 @@
 // API Base URL - Update this if your backend is running on a different host/port
 const API_BASE_URL = 'http://localhost:8000/api';
+// Gmail to S3 API Base URL
+const GMAIL_S3_API_BASE_URL = 'http://localhost:8002';
 
 // DOM Elements
 document.addEventListener('DOMContentLoaded', () => {
@@ -42,11 +44,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const predictionTable = document.getElementById('prediction-table');
     const predictionDownload = document.getElementById('prediction-download');
     
+    // Gmail Integration Elements
+    const fetchEmailBtn = document.getElementById('fetch-email-btn');
+    const emailAttachmentModal = document.getElementById('email-attachment-modal');
+    const closeEmailModalBtn = document.getElementById('close-email-modal');
+    const cancelEmailModalBtn = document.getElementById('cancel-email-modal-btn');
+    const emailAuthText = document.getElementById('email-auth-text');
+    const gmailLogoutBtn = document.getElementById('gmail-logout-btn');
+    const emailsList = document.getElementById('emails-list');
+    const attachmentsList = document.getElementById('attachments-list');
+    const attachmentsSection = document.getElementById('attachments-section');
+    const selectedEmailSubject = document.getElementById('selected-email-subject');
+    const fetchAttachmentBtn = document.getElementById('fetch-attachment-btn');
+    const emailModalStatus = document.getElementById('email-modal-status');
+    
+    // Gmail Integration Variables
+    let currentMessageId = null;
+    let currentAttachment = null;
+    
     // Initialize the app
     init();
     
     // Functions
     function init() {
+        console.log('Initializing application');
+        
+        // Debug: Check for button with ID 'fetch-email-btn'
+        console.log('Looking for fetch-email-btn element');
+        const fetchEmailBtnCheck = document.getElementById('fetch-email-btn');
+        if (fetchEmailBtnCheck) {
+            console.log('fetch-email-btn found:', fetchEmailBtnCheck);
+        } else {
+            console.error('fetch-email-btn NOT found!');
+            console.log('All buttons on the page:');
+            document.querySelectorAll('button').forEach(btn => {
+                console.log(`Button: id="${btn.id}", text="${btn.textContent.trim()}", type="${btn.type}"`);
+            });
+        }
+        
         setupNavigation();
         setupEventListeners();
         loadUploadedFiles();
@@ -93,6 +128,47 @@ document.addEventListener('DOMContentLoaded', () => {
         // Predictions
         predictionModelType.addEventListener('change', handlePredictionModelTypeChange);
         predictionForm.addEventListener('submit', handlePredictionGeneration);
+        
+        // Gmail Integration
+        console.log('Setting up Gmail integration event listeners');
+        
+        // Verify the fetch email button exists
+        if (fetchEmailBtn) {
+            console.log('Fetch Email button found, attaching click event listener');
+            fetchEmailBtn.addEventListener('click', handleFetchEmailClick);
+            console.log('Click event listener attached to Fetch Email button');
+        } else {
+            console.error('Fetch Email button not found in the DOM');
+        }
+        
+        // Email Modal Close
+        if (closeEmailModalBtn) {
+            closeEmailModalBtn.addEventListener('click', () => {
+                emailAttachmentModal.style.display = 'none';
+            });
+        }
+        
+        if (cancelEmailModalBtn) {
+            cancelEmailModalBtn.addEventListener('click', () => {
+                emailAttachmentModal.style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === emailAttachmentModal) {
+                emailAttachmentModal.style.display = 'none';
+            }
+        });
+        
+        // Gmail Logout
+        if (gmailLogoutBtn) {
+            gmailLogoutBtn.addEventListener('click', handleGmailLogout);
+        }
+        
+        // Fetch Attachment Button
+        if (fetchAttachmentBtn) {
+            fetchAttachmentBtn.addEventListener('click', handleFetchAttachment);
+        }
     }
     
     // File Management Functions
@@ -1089,6 +1165,10 @@ document.addEventListener('DOMContentLoaded', () => {
         element.innerHTML = `<div class="success-message">${message}</div>`;
     }
     
+    function showInfo(element, message) {
+        element.innerHTML = `<div class="info-message">${message}</div>`;
+    }
+    
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
@@ -1099,6 +1179,197 @@ document.addEventListener('DOMContentLoaded', () => {
             .split('_')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
+    }
+    
+    // Gmail Integration Functions
+    
+    /**
+     * Checks the authentication status with the Gmail API
+     * @returns {Promise<boolean>} True if authenticated, false otherwise
+     */
+    async function checkGmailAuthStatus() {
+        try {
+            console.log('Starting checkGmailAuthStatus function');
+            emailAuthText.textContent = 'Checking authentication status...';
+            
+            console.log('Making API request to:', `${GMAIL_S3_API_BASE_URL}/auth/status`);
+            const response = await fetch(`${GMAIL_S3_API_BASE_URL}/auth/status`, {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('API response status:', response.status);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                console.error('API error response:', errorData);
+                throw new Error(errorData.detail || 'Failed to check auth status');
+            }
+            
+            const data = await response.json();
+            console.log('API response data:', data);
+            
+            if (data.authenticated) {
+                console.log('User is authenticated');
+                emailAuthText.textContent = 'Status: Authenticated';
+                gmailLogoutBtn.style.display = 'inline-block';
+                return true;
+            } else {
+                console.log('User is not authenticated');
+                emailAuthText.textContent = 'Status: Not Authenticated';
+                gmailLogoutBtn.style.display = 'none';
+                return false;
+            }
+        } catch (error) {
+            console.error('Error in checkGmailAuthStatus:', error);
+            emailAuthText.textContent = `Status: Error checking authentication (${error.message})`;
+            gmailLogoutBtn.style.display = 'none';
+            return false;
+        }
+    }
+    
+    /**
+     * Handles click on the "Fetch Attachment from Email" button
+     */
+    async function handleFetchEmailClick() {
+        console.log('Fetch Email button clicked!');
+        
+        // Reset the modal state
+        resetEmailModal();
+        
+        try {
+            console.log('Checking Gmail authentication status...');
+            // Check if authenticated with Gmail
+            const isAuthenticated = await checkGmailAuthStatus();
+            console.log('Authentication status:', isAuthenticated);
+            
+            if (isAuthenticated) {
+                console.log('User is authenticated, opening email selection modal');
+                // Open the email selection modal and list emails
+                openEmailSelectionModal();
+            } else {
+                console.log('User is not authenticated, opening login page');
+                // Open the Gmail login page in a new tab
+                window.open('gmail_login.html', '_blank');
+                
+                // Show a message to the user
+                showInfo(uploadResult, 'Please authenticate with Gmail in the new tab. After authentication, close that tab and click "Fetch Attachment from Email" again.');
+            }
+        } catch (error) {
+            console.error('Error in handleFetchEmailClick:', error);
+            showError(uploadResult, `Error: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Handles Gmail logout
+     */
+    async function handleGmailLogout() {
+        try {
+            emailAuthText.textContent = 'Logging out...';
+            
+            const response = await fetch(`${GMAIL_S3_API_BASE_URL}/auth/logout`, {
+                method: 'POST'
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                throw new Error(errorData.detail || 'Failed to logout');
+            }
+            
+            const data = await response.json();
+            
+            // Update UI
+            emailAuthText.textContent = 'Status: Logged out';
+            gmailLogoutBtn.style.display = 'none';
+            
+            // Reset modal
+            resetEmailModal();
+            
+            // Show success message in the modal status
+            showModalSuccess(data.message || 'Logged out successfully');
+        } catch (error) {
+            emailAuthText.textContent = 'Status: Error during logout';
+            showModalError(`Logout error: ${error.message}`);
+            console.error('Logout error:', error);
+        }
+    }
+    
+    /**
+     * Resets the email modal to its initial state
+     */
+    function resetEmailModal() {
+        // Reset variables
+        currentMessageId = null;
+        currentAttachment = null;
+        
+        // Reset UI elements
+        emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
+        attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
+        attachmentsSection.style.display = 'none';
+        selectedEmailSubject.textContent = 'None';
+        fetchAttachmentBtn.disabled = true;
+        emailModalStatus.className = 'modal-status';
+        emailModalStatus.textContent = '';
+        emailModalStatus.style.display = 'none';
+    }
+    
+    /**
+     * Shows success message in the email modal status area
+     */
+    function showModalSuccess(message) {
+        emailModalStatus.className = 'modal-status success';
+        emailModalStatus.textContent = message;
+        emailModalStatus.style.display = 'block';
+    }
+    
+    /**
+     * Shows error message in the email modal status area
+     */
+    function showModalError(message) {
+        emailModalStatus.className = 'modal-status error';
+        emailModalStatus.textContent = message;
+        emailModalStatus.style.display = 'block';
+    }
+    
+    /**
+     * Shows loading message in the email modal status area
+     */
+    function showModalLoading(message) {
+        emailModalStatus.className = 'modal-status loading';
+        emailModalStatus.textContent = message;
+        emailModalStatus.style.display = 'block';
+    }
+    
+    /**
+     * Opens the email selection modal and lists emails
+     */
+    function openEmailSelectionModal() {
+        // Show the modal
+        emailAttachmentModal.style.display = 'block';
+        
+        // List emails
+        listGmailEmails();
+    }
+    
+    // Gmail Integration - Placeholder for Phase 3 implementation
+    async function listGmailEmails() {
+        // This function will be implemented in Phase 3
+        emailsList.innerHTML = '<div class="info-message">Email listing will be implemented in Phase 3.</div>';
+    }
+    
+    // Gmail Integration - Placeholder for Phase 4 implementation
+    async function handleFetchAttachment() {
+        // This function will be implemented in Phase 4
+        showModalInfo('Attachment fetching will be implemented in Phase 4.');
+    }
+    
+    function showModalInfo(message) {
+        emailModalStatus.className = 'modal-status info';
+        emailModalStatus.textContent = message;
+        emailModalStatus.style.display = 'block';
     }
 });
 

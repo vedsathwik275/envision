@@ -50,6 +50,7 @@
                     </div>
                     <div class="form-group">
                         <button type="submit" class="btn primary"><i class="fas fa-upload"></i> Upload File</button>
+                        <button type="button" id="fetch-email-btn" class="btn secondary"><i class="fas fa-envelope"></i> Fetch Attachment from Email</button>
                     </div>
                 </form>
                 <div id="upload-result" class="result-area"></div>
@@ -198,6 +199,40 @@
                 <span class="close-btn">&times;</span>
                 <h2>Model Details</h2>
                 <div id="model-details-content"></div>
+            </div>
+        </div>
+
+        <!-- Email Attachment Selection Modal -->
+        <div id="email-attachment-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-email-modal">&times;</span>
+                <h2><i class="fas fa-envelope"></i> Select Email Attachment</h2>
+                
+                <div class="modal-section">
+                    <h3>Emails</h3>
+                    <div id="email-auth-status" class="auth-status">
+                        <span id="email-auth-text">Checking authentication status...</span>
+                        <button id="gmail-logout-btn" class="btn secondary" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                    <div id="emails-list" class="list-container">
+                        <div class="loading">Loading emails...</div>
+                    </div>
+                </div>
+                
+                <div class="modal-section" id="attachments-section" style="display:none;">
+                    <h3>Attachments</h3>
+                    <p>Selected Email: <span id="selected-email-subject">None</span></p>
+                    <div id="attachments-list" class="list-container">
+                        <div class="loading">Loading attachments...</div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button id="fetch-attachment-btn" class="btn primary" disabled><i class="fas fa-download"></i> Fetch Selected Attachment</button>
+                    <button id="cancel-email-modal-btn" class="btn secondary"><i class="fas fa-times"></i> Cancel</button>
+                </div>
+                
+                <div id="email-modal-status" class="modal-status"></div>
             </div>
         </div>
     </main>

@@ -331,6 +331,16 @@ input[type="file"] {
     margin-bottom: 15px;
 }
 
+/* Info message styling */
+.info-message {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-left: 4px solid var(--info);
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+}
+
 /* Loading indicator */
 .loading {
     display: flex;
@@ -385,7 +395,7 @@ tr:hover {
     background-color: var(--primary-bg);
 }
 
-/* Modal */
+/* Modal styles */
 .modal {
     display: none;
     position: fixed;
@@ -425,6 +435,99 @@ tr:hover {
 
 .close-btn:hover {
     color: var(--neutral-dark);
+}
+
+/* Email Attachment Modal Styles */
+.modal-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-section h3 {
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.auth-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: var(--neutral-light);
+    border-radius: 4px;
+}
+
+.list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    background-color: var(--neutral-bg);
+}
+
+.list-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.list-item:hover {
+    background-color: var(--primary-lightest);
+}
+
+.list-item.selected {
+    background-color: var(--primary-light);
+    color: var(--text-dark);
+    border-left: 3px solid var(--primary-main);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-status {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    display: none;
+}
+
+.modal-status.error {
+    display: block;
+    background-color: var(--error-light);
+    color: var(--error);
+    border: 1px solid var(--error);
+}
+
+.modal-status.success {
+    display: block;
+    background-color: var(--success-light);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+
+.modal-status.loading {
+    display: block;
+    background-color: var(--info-light);
+    color: var(--info);
+    border: 1px solid var(--info);
+    text-align: center;
+}
+
+.modal-status.info {
+    display: block;
+    background-color: var(--info-light);
+    color: var(--info);
+    border: 1px solid var(--info);
 }
 
 /* Download Area */

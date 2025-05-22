@@ -1,5 +1,41 @@
 # Changelog
 
+## [Unreleased] - 2025-05-22
+### Added
+- **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1 & 2)**:
+  - Integrated Gmail to S3 API into the existing Neural Vision POC frontend:
+    - Added "Fetch Attachment from Email" button to the file upload section
+    - Created email attachment modal for email selection and attachment viewing
+    - Implemented Gmail authentication status checking functionality
+    - Added Gmail logout functionality
+  - Created comprehensive file structure for Gmail integration:
+    - Added `gmail_login.html` for handling Gmail OAuth authentication flow
+    - Created `gmails3_todo.md` tracking document for implementation progress
+  - **Authentication Flow Implementation (Phase 1)**:
+    - Added `checkGmailAuthStatus()` function to verify user's Gmail authentication
+    - Implemented OAuth flow that opens authentication in a new tab
+    - Added status indicators for authentication state
+    - Created proper error handling for authentication failures
+  - **Modal UI Implementation (Phase 2)**:
+    - Added email attachment modal with sections for emails list and attachments
+    - Implemented modal management functions (`resetEmailModal()`, `openEmailSelectionModal()`)
+    - Created UI utility functions for displaying status messages in the modal
+    - Added event listeners for modal interaction (open, close, cancel)
+
+### Changes
+- **Frontend API Configuration**:
+  - Updated API base URL constants to support both main API and Gmail to S3 API
+  - Set Gmail S3 API base URL to `http://localhost:8002` to match backend configuration
+- **Enhanced Error Handling**:
+  - Added comprehensive error handling for CORS issues in API requests
+  - Implemented detailed console logging for debugging authentication flow
+  - Added fallback UI states for API failures
+
+### Fixed
+- Fixed CORS issue in Gmail authentication status check by removing `credentials: 'include'` option from fetch requests
+- Fixed event listener attachment for the "Fetch Attachment from Email" button
+- Resolved modal styling conflicts by preserving original modal styles while adding new styles for email attachment modal
+
 ## [Unreleased] - 2025-05-21
 ### Added
 - **S3 Integration for Email Attachments**:
