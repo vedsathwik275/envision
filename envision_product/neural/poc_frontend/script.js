@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedEmailSubject = document.getElementById('selected-email-subject');
     const fetchAttachmentBtn = document.getElementById('fetch-attachment-btn');
     const emailModalStatus = document.getElementById('email-modal-status');
+    const s3UploadCheckbox = document.getElementById('s3-upload-checkbox');
+    const s3UploadStatus = document.getElementById('s3-upload-status');
     
     // Gmail Integration Variables
     let currentMessageId = null;
@@ -1301,19 +1303,32 @@ document.addEventListener('DOMContentLoaded', () => {
      * Resets the email modal to its initial state
      */
     function resetEmailModal() {
-        // Reset variables
+        // Reset email list
+        emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
+        
+        // Reset attachments section
+        attachmentsSection.style.display = 'none';
+        attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
+        selectedEmailSubject.textContent = 'None';
+        
+        // Reset status
+        emailModalStatus.style.display = 'none';
+        emailModalStatus.textContent = '';
+        emailModalStatus.className = 'modal-status';
+        
+        // Reset S3 upload status
+        if (s3UploadStatus) {
+            s3UploadStatus.style.display = 'none';
+            s3UploadStatus.textContent = '';
+            s3UploadStatus.className = 'modal-status';
+        }
+        
+        // Reset selected items
         currentMessageId = null;
         currentAttachment = null;
         
-        // Reset UI elements
-        emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
-        attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
-        attachmentsSection.style.display = 'none';
-        selectedEmailSubject.textContent = 'None';
+        // Disable fetch button
         fetchAttachmentBtn.disabled = true;
-        emailModalStatus.className = 'modal-status';
-        emailModalStatus.textContent = '';
-        emailModalStatus.style.display = 'none';
     }
     
     /**
@@ -1658,7 +1673,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const blob = await response.blob();
             console.log('Attachment downloaded as blob:', blob);
             
-            // Update status
+            // Check if S3 upload is requested
+            const shouldUploadToS3 = s3UploadCheckbox && s3UploadCheckbox.checked;
+            
+            // If S3 upload is requested, show the S3 upload status area
+            if (shouldUploadToS3) {
+                s3UploadStatus.style.display = 'block';
+                showS3Loading('Preparing to upload to S3...');
+            }
+            
+            // Update status for Neural backend upload
             showModalLoading('Uploading attachment to Neural backend...');
             
             // Create a File object from the blob
@@ -1683,19 +1707,64 @@ document.addEventListener('DOMContentLoaded', () => {
             const uploadData = await uploadResponse.json();
             console.log('Upload successful:', uploadData);
             
-            // Close the modal
-            emailAttachmentModal.style.display = 'none';
+            // Show success message for Neural backend upload
+            showModalSuccess(`Attachment "${filename}" uploaded successfully to Neural backend!`);
             
-            // Show success message on the main page
-            showSuccess(uploadResult, `Attachment "${filename}" uploaded successfully! File ID: ${uploadData.file_id}`);
-            
-            // Preview the file if it's a CSV
-            if (mimeType.includes('csv') || filename.toLowerCase().endsWith('.csv')) {
-                await previewFile(uploadData.file_id);
+            // Handle S3 upload if requested
+            if (shouldUploadToS3) {
+                try {
+                    showS3Loading('Uploading attachment to S3...');
+                    
+                    // Construct the S3 upload URL
+                    const s3UploadUrl = `${GMAIL_S3_API_BASE_URL}/api/emails/${currentMessageId}/attachments/${attachmentId}/upload?expected_filename=${encodeURIComponent(filename)}&expected_mime_type=${encodeURIComponent(mimeType)}`;
+                    
+                    // Make the S3 upload request
+                    const s3Response = await fetch(s3UploadUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (!s3Response.ok) {
+                        const errorData = await s3Response.json().catch(() => ({ detail: s3Response.statusText }));
+                        console.error('S3 upload API error response:', errorData);
+                        throw new Error(errorData.detail || 'Failed to upload attachment to S3');
+                    }
+                    
+                    const s3Data = await s3Response.json();
+                    console.log('S3 upload successful:', s3Data);
+                    
+                    // Show success message for S3 upload
+                    showS3Success(`Attachment "${filename}" uploaded successfully to S3!`);
+                    
+                    // Add S3 URL information if available
+                    if (s3Data.s3_url) {
+                        showS3Info(`S3 URL: ${s3Data.s3_url}`);
+                    }
+                    
+                } catch (s3Error) {
+                    console.error('Error uploading to S3:', s3Error);
+                    showS3Error(`S3 upload error: ${s3Error.message}`);
+                }
             }
             
-            // Reload the file list
-            loadUploadedFiles();
+            // Wait a moment to let the user see the success messages
+            setTimeout(() => {
+                // Close the modal
+                emailAttachmentModal.style.display = 'none';
+                
+                // Show success message on the main page
+                showSuccess(uploadResult, `Attachment "${filename}" uploaded successfully! File ID: ${uploadData.file_id}`);
+                
+                // Preview the file if it's a CSV
+                if (mimeType.includes('csv') || filename.toLowerCase().endsWith('.csv')) {
+                    previewFile(uploadData.file_id);
+                }
+                
+                // Reload the file list
+                loadUploadedFiles();
+            }, 2000);
             
         } catch (error) {
             console.error('Error fetching attachment:', error);
@@ -1707,6 +1776,30 @@ document.addEventListener('DOMContentLoaded', () => {
         emailModalStatus.className = 'modal-status info';
         emailModalStatus.textContent = message;
         emailModalStatus.style.display = 'block';
+    }
+    
+    function showS3Success(message) {
+        s3UploadStatus.className = 'modal-status success';
+        s3UploadStatus.textContent = message;
+        s3UploadStatus.style.display = 'block';
+    }
+    
+    function showS3Error(message) {
+        s3UploadStatus.className = 'modal-status error';
+        s3UploadStatus.textContent = message;
+        s3UploadStatus.style.display = 'block';
+    }
+    
+    function showS3Loading(message) {
+        s3UploadStatus.className = 'modal-status loading';
+        s3UploadStatus.textContent = message;
+        s3UploadStatus.style.display = 'block';
+    }
+    
+    function showS3Info(message) {
+        // Append info to existing content
+        const currentContent = s3UploadStatus.textContent;
+        s3UploadStatus.textContent = `${currentContent}\n${message}`;
     }
 });
 

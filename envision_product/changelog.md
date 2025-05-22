@@ -2,7 +2,7 @@
 
 ## [Unreleased] - 2025-05-22
 ### Added
-- **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1, 2, 3 & 4)**:
+- **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1, 2, 3, 4 & 6)**:
   - Integrated Gmail to S3 API into the existing Neural Vision POC frontend:
     - Added "Fetch Attachment from Email" button to the file upload section
     - Created email attachment modal for email selection and attachment viewing
@@ -38,14 +38,19 @@
     - Added automatic file preview for CSV attachments
     - Implemented UI feedback throughout the download and upload process
     - Added automatic refresh of file list after successful upload
+  - **S3 Upload Feature Implementation (Phase 6)**:
+    - Added option to upload selected attachments to S3 alongside the Neural backend
+    - Implemented "Also upload to S3" checkbox in the email attachment modal
+    - Added S3 upload status area to display upload progress and results
+    - Enhanced `handleFetchAttachment()` function to check for S3 upload requests
+    - Implemented direct integration with the Gmail to S3 API's upload endpoint
+    - Added display of S3 upload results including S3 URL when available
+    - Created dedicated UI status functions for S3 upload feedback
+    - Implemented error handling specific to S3 upload operations
+    - Added CSS styling for S3 upload option and status display
+    - Updated `resetEmailModal()` function to reset S3 upload status
 
 ### Planned
-- **S3 Upload Feature (Phase 6)**:
-  - Add option to upload selected attachments to S3 in addition to the Neural backend
-  - Implement UI elements for toggling S3 upload and displaying results
-  - Add direct integration with the Gmail to S3 API's upload endpoint
-  - Provide visual feedback for S3 upload status and results
-  - Include error handling specific to S3 upload operations
 
 ### Changes
 - **Frontend API Configuration**:
@@ -59,6 +64,7 @@
   - Added loading indicators during API requests
   - Implemented status messages for successful and failed operations
   - Added visual highlighting for selected emails and attachments
+  - Enhanced modal status display with separate areas for Neural and S3 upload feedback
 
 ### Fixed
 - Fixed CORS issue in Gmail authentication status check by removing `credentials: 'include'` option from fetch requests
@@ -71,6 +77,11 @@
   - Added compatibility code to support both `attachment_id` and `id` field names in attachment objects
   - Enhanced attachment count display to show "Yes" when `has_target_attachments` is true but no specific count is available
   - Improved error handling for different API response formats
+- **Fixed S3 Upload Filename and MIME Type Issue**:
+  - Modified the S3 upload request in `handleFetchAttachment()` function to pass expected filename and MIME type as query parameters instead of in the request body
+  - Updated request headers to use `Accept: application/json` instead of `Content-Type: application/json`
+  - Removed JSON body from the request to match the API's expected format
+  - Ensured consistent parameter passing between download and upload endpoints for proper filename and MIME type handling
 
 ## [Unreleased] - 2025-05-21
 ### Added
@@ -473,4 +484,4 @@
 
 ---
 
-Timestamp: 2025-05-22 11:51:00
+Timestamp: 2025-05-22 13:30:00

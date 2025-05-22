@@ -225,6 +225,12 @@
                     <div id="attachments-list" class="list-container">
                         <div class="loading">Loading attachments...</div>
                     </div>
+                    <div class="s3-upload-option">
+                        <label>
+                            <input type="checkbox" id="s3-upload-checkbox" checked>
+                            Also upload to S3
+                        </label>
+                    </div>
                 </div>
                 
                 <div class="modal-footer">
@@ -233,6 +239,7 @@
                 </div>
                 
                 <div id="email-modal-status" class="modal-status"></div>
+                <div id="s3-upload-status" class="modal-status" style="display:none;"></div>
             </div>
         </div>
     </main>

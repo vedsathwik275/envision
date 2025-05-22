@@ -223,6 +223,30 @@
       "size": 53732,
       "upload_time": "2025-05-22T11:42:46.284715",
       "path": "data\\uploads\\c8e005eb-6fee-4947-9153-787cabdfaf8d"
+    },
+    "93c3ef9b-5aa5-4dd7-a4fe-7a1a368e526f": {
+      "file_id": "93c3ef9b-5aa5-4dd7-a4fe-7a1a368e526f",
+      "filename": "carrier_performance.csv",
+      "content_type": "text/csv",
+      "size": 53732,
+      "upload_time": "2025-05-22T11:57:14.985864",
+      "path": "data\\uploads\\93c3ef9b-5aa5-4dd7-a4fe-7a1a368e526f"
+    },
+    "2d674101-f69f-4fa0-8765-11a5c6e1e83b": {
+      "file_id": "2d674101-f69f-4fa0-8765-11a5c6e1e83b",
+      "filename": "carrier_performance.csv",
+      "content_type": "text/csv",
+      "size": 53732,
+      "upload_time": "2025-05-22T12:02:12.281244",
+      "path": "data\\uploads\\2d674101-f69f-4fa0-8765-11a5c6e1e83b"
+    },
+    "41fc9e33-05e6-42d5-b75e-436cb4aa87e7": {
+      "file_id": "41fc9e33-05e6-42d5-b75e-436cb4aa87e7",
+      "filename": "order_volume.csv",
+      "content_type": "text/csv",
+      "size": 414779,
+      "upload_time": "2025-05-22T12:09:44.906883",
+      "path": "data\\uploads\\41fc9e33-05e6-42d5-b75e-436cb4aa87e7"
     }
   }
 }

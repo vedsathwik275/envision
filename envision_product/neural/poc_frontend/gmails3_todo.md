@@ -66,16 +66,16 @@ This document outlines the tasks required to integrate the Gmail to S3 API with 
 
 ### Phase 6: S3 Upload Feature Implementation
 
-- [ ] **`index.html`**:
-  - [ ] Add checkbox in email attachment modal for "Also upload to S3"
-  - [ ] Add area to display S3 upload results (URL, object key)
-- [ ] **`script.js`**:
-  - [ ] Modify `handleFetchAttachment()` to check if S3 upload is requested
-  - [ ] If S3 upload is requested, call the Gmail to S3 API's upload endpoint
-  - [ ] Display S3 upload results to the user (URL, object key)
-  - [ ] Handle errors and provide appropriate feedback
-- [ ] **`styles.css`**:
-  - [ ] Add styles for the S3 upload option and results display
+- [x] **`index.html`**:
+  - [x] Add checkbox in email attachment modal for "Also upload to S3"
+  - [x] Add area to display S3 upload results (URL, object key)
+- [x] **`script.js`**:
+  - [x] Modify `handleFetchAttachment()` to check if S3 upload is requested
+  - [x] If S3 upload is requested, call the Gmail to S3 API's upload endpoint
+  - [x] Display S3 upload results to the user (URL, object key)
+  - [x] Handle errors and provide appropriate feedback
+- [x] **`styles.css`**:
+  - [x] Add styles for the S3 upload option and results display
 
 ## S3 Upload Implementation Plan
 
