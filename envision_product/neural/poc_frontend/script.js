@@ -1354,16 +1354,353 @@ document.addEventListener('DOMContentLoaded', () => {
         listGmailEmails();
     }
     
-    // Gmail Integration - Placeholder for Phase 3 implementation
+    /**
+     * Fetches and displays emails from Gmail
+     */
     async function listGmailEmails() {
-        // This function will be implemented in Phase 3
-        emailsList.innerHTML = '<div class="info-message">Email listing will be implemented in Phase 3.</div>';
+        try {
+            console.log('Fetching emails from Gmail API');
+            showModalLoading('Fetching emails...');
+            
+            // Clear previous emails
+            emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
+            
+            // Fetch emails from the API
+            const response = await fetch(`${GMAIL_S3_API_BASE_URL}/api/emails`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            console.log('API response status:', response.status);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                console.error('API error response:', errorData);
+                throw new Error(errorData.detail || 'Failed to fetch emails');
+            }
+            
+            const data = await response.json();
+            console.log('Emails fetched:', data);
+            
+            // Check if we have emails
+            // The API returns an array directly, not an object with an 'emails' property
+            const emails = Array.isArray(data) ? data : (data.emails || []);
+            
+            if (emails.length === 0) {
+                emailsList.innerHTML = '<div class="info-message">No emails found with attachments.</div>';
+                showModalInfo('No emails found with attachments');
+                return;
+            }
+            
+            // Display emails
+            displayEmailsList(emails);
+            showModalSuccess(`Found ${emails.length} emails with attachments`);
+            
+        } catch (error) {
+            console.error('Error fetching emails:', error);
+            emailsList.innerHTML = `<div class="error">Error fetching emails: ${error.message}</div>`;
+            showModalError(`Error fetching emails: ${error.message}`);
+        }
     }
     
-    // Gmail Integration - Placeholder for Phase 4 implementation
+    /**
+     * Displays the list of emails in the modal
+     * @param {Array} emails - List of emails from the API
+     */
+    function displayEmailsList(emails) {
+        // Clear previous list
+        emailsList.innerHTML = '';
+        
+        // Create list of emails
+        const list = document.createElement('ul');
+        list.className = 'emails-list';
+        
+        emails.forEach(email => {
+            const item = document.createElement('li');
+            item.className = 'email-item';
+            
+            // Format the date
+            const date = new Date(email.date);
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Create email item content
+            item.innerHTML = `
+                <div class="email-header">
+                    <span class="email-subject">${email.subject || 'No Subject'}</span>
+                    <span class="email-date">${formattedDate}</span>
+                </div>
+                <div class="email-details">
+                    <span class="email-from">From: ${email.from || 'Unknown'}</span>
+                    <span class="email-attachments-count">Attachments: ${email.attachments_count || (email.has_target_attachments ? 'Yes' : 'Unknown')}</span>
+                </div>
+            `;
+            
+            // Add click event to select this email
+            item.addEventListener('click', () => selectEmail(email));
+            
+            // Add data attribute for message ID (handle both formats)
+            const messageId = email.message_id || email.id;
+            item.setAttribute('data-message-id', messageId);
+            
+            list.appendChild(item);
+        });
+        
+        emailsList.appendChild(list);
+    }
+    
+    /**
+     * Handles email selection and fetches its attachments
+     * @param {Object} email - The selected email object
+     */
+    async function selectEmail(email) {
+        try {
+            console.log('Email selected:', email);
+            
+            // Update current message ID
+            currentMessageId = email.message_id || email.id; // Handle both formats
+            
+            // Update UI to show selected email
+            selectedEmailSubject.textContent = email.subject || 'No Subject';
+            
+            // Highlight the selected email
+            const emailItems = document.querySelectorAll('.email-item');
+            emailItems.forEach(item => {
+                if (item.getAttribute('data-message-id') === currentMessageId) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+            
+            // Show attachments section
+            attachmentsSection.style.display = 'block';
+            
+            // Clear previous attachments
+            attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
+            
+            // Show loading status
+            showModalLoading('Fetching attachments...');
+            
+            // Fetch attachments for this email
+            const response = await fetch(`${GMAIL_S3_API_BASE_URL}/api/emails/${currentMessageId}/attachments`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                console.error('API error response:', errorData);
+                throw new Error(errorData.detail || 'Failed to fetch attachments');
+            }
+            
+            const data = await response.json();
+            console.log('Attachments fetched:', data);
+            
+            // Check if we have attachments
+            // The API returns an array directly, not an object with an 'attachments' property
+            const attachments = Array.isArray(data) ? data : (data.attachments || []);
+            
+            if (attachments.length === 0) {
+                attachmentsList.innerHTML = '<div class="info-message">No attachments found in this email.</div>';
+                showModalInfo('No attachments found in this email');
+                return;
+            }
+            
+            // Display attachments
+            displayAttachmentsList(attachments);
+            showModalSuccess(`Found ${attachments.length} attachments`);
+            
+        } catch (error) {
+            console.error('Error selecting email:', error);
+            attachmentsList.innerHTML = `<div class="error">Error fetching attachments: ${error.message}</div>`;
+            showModalError(`Error fetching attachments: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Displays the list of attachments for the selected email
+     * @param {Array} attachments - List of attachments from the API
+     */
+    function displayAttachmentsList(attachments) {
+        // Clear previous list
+        attachmentsList.innerHTML = '';
+        
+        // Create list of attachments
+        const list = document.createElement('ul');
+        list.className = 'attachments-list';
+        
+        attachments.forEach(attachment => {
+            const item = document.createElement('li');
+            item.className = 'attachment-item';
+            
+            // Format file size
+            const fileSize = formatFileSize(attachment.size);
+            
+            // Create attachment item content
+            item.innerHTML = `
+                <div class="attachment-header">
+                    <span class="attachment-filename">${attachment.filename || 'Unnamed attachment'}</span>
+                    <span class="attachment-size">${fileSize}</span>
+                </div>
+                <div class="attachment-details">
+                    <span class="attachment-mime-type">${attachment.mime_type || 'Unknown type'}</span>
+                </div>
+            `;
+            
+            // Add click event to select this attachment
+            item.addEventListener('click', () => selectAttachment(attachment));
+            
+            // Add data attribute for attachment ID (handle both formats)
+            const attachmentId = attachment.attachment_id || attachment.id;
+            item.setAttribute('data-attachment-id', attachmentId);
+            
+            list.appendChild(item);
+        });
+        
+        attachmentsList.appendChild(list);
+    }
+    
+    /**
+     * Handles attachment selection
+     * @param {Object} attachment - The selected attachment object
+     */
+    function selectAttachment(attachment) {
+        console.log('Attachment selected:', attachment);
+        
+        // Update current attachment
+        currentAttachment = attachment;
+        
+        // Get the attachment ID (handle both formats)
+        const attachmentId = attachment.attachment_id || attachment.id;
+        
+        // Highlight the selected attachment
+        const attachmentItems = document.querySelectorAll('.attachment-item');
+        attachmentItems.forEach(item => {
+            if (item.getAttribute('data-attachment-id') === attachmentId) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+        
+        // Enable the fetch attachment button
+        fetchAttachmentBtn.disabled = false;
+        
+        // Show info about the selected attachment
+        showModalInfo(`Selected: ${attachment.filename || 'Unnamed attachment'}`);
+    }
+    
+    /**
+     * Formats file size in bytes to a human-readable format
+     * @param {number} bytes - File size in bytes
+     * @returns {string} Formatted file size
+     */
+    function formatFileSize(bytes) {
+        if (!bytes || isNaN(bytes)) return 'Unknown size';
+        
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${size.toFixed(1)} ${units[unitIndex]}`;
+    }
+    
+    /**
+     * Handles fetching the selected attachment and uploading it to the Neural backend
+     */
     async function handleFetchAttachment() {
-        // This function will be implemented in Phase 4
-        showModalInfo('Attachment fetching will be implemented in Phase 4.');
+        try {
+            // Check if we have a selected attachment
+            if (!currentMessageId || !currentAttachment) {
+                showModalError('Please select an attachment first');
+                return;
+            }
+            
+            // Show loading status
+            showModalLoading('Downloading attachment...');
+            
+            // Get attachment ID (handle both formats)
+            const attachmentId = currentAttachment.attachment_id || currentAttachment.id;
+            
+            // Get attachment filename and mime type
+            const filename = currentAttachment.filename || 'unnamed_attachment';
+            const mimeType = currentAttachment.mime_type || 'application/octet-stream';
+            
+            console.log('Fetching attachment:', {
+                messageId: currentMessageId,
+                attachmentId: attachmentId,
+                filename: filename,
+                mimeType: mimeType
+            });
+            
+            // Construct the URL with expected_filename and expected_mime_type parameters
+            const downloadUrl = `${GMAIL_S3_API_BASE_URL}/api/emails/${currentMessageId}/attachments/${attachmentId}?expected_filename=${encodeURIComponent(filename)}&expected_mime_type=${encodeURIComponent(mimeType)}`;
+            
+            // Fetch the attachment data
+            const response = await fetch(downloadUrl);
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                console.error('API error response:', errorData);
+                throw new Error(errorData.detail || 'Failed to download attachment');
+            }
+            
+            // Get the attachment as a blob
+            const blob = await response.blob();
+            console.log('Attachment downloaded as blob:', blob);
+            
+            // Update status
+            showModalLoading('Uploading attachment to Neural backend...');
+            
+            // Create a File object from the blob
+            const file = new File([blob], filename, { type: mimeType });
+            
+            // Create FormData for the upload
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Upload to the Neural API
+            const uploadResponse = await fetch(`${API_BASE_URL}/files/upload`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json().catch(() => ({ detail: uploadResponse.statusText }));
+                console.error('Upload API error response:', errorData);
+                throw new Error(errorData.detail || 'Failed to upload attachment to Neural backend');
+            }
+            
+            const uploadData = await uploadResponse.json();
+            console.log('Upload successful:', uploadData);
+            
+            // Close the modal
+            emailAttachmentModal.style.display = 'none';
+            
+            // Show success message on the main page
+            showSuccess(uploadResult, `Attachment "${filename}" uploaded successfully! File ID: ${uploadData.file_id}`);
+            
+            // Preview the file if it's a CSV
+            if (mimeType.includes('csv') || filename.toLowerCase().endsWith('.csv')) {
+                await previewFile(uploadData.file_id);
+            }
+            
+            // Reload the file list
+            loadUploadedFiles();
+            
+        } catch (error) {
+            console.error('Error fetching attachment:', error);
+            showModalError(`Error: ${error.message}`);
+        }
     }
     
     function showModalInfo(message) {

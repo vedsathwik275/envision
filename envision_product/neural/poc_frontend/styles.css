@@ -801,4 +801,99 @@ footer {
     .color-sample {
         height: 80px;
     }
+}
+
+/* Email Modal Styles */
+.emails-list, .attachments-list {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+}
+
+.email-item, .attachment-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.email-item:last-child, .attachment-item:last-child {
+    border-bottom: none;
+}
+
+.email-item:hover, .attachment-item:hover {
+    background-color: var(--neutral-light);
+}
+
+.email-item.selected, .attachment-item.selected {
+    background-color: var(--primary-lightest);
+    border-left: 4px solid var(--primary-main);
+}
+
+.email-header, .attachment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.email-subject, .attachment-filename {
+    font-weight: 500;
+    color: var(--primary-dark);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.email-date, .attachment-size {
+    font-size: 0.85rem;
+    color: var(--text-medium);
+    margin-left: 10px;
+}
+
+.email-details, .attachment-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-medium);
+}
+
+.email-from {
+    flex: 1;
+}
+
+.email-attachments-count {
+    margin-left: 10px;
+}
+
+.attachment-mime-type {
+    font-style: italic;
+}
+
+#selected-email-subject {
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: var(--primary-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+#attachments-section {
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+
+#fetch-attachment-btn {
+    margin-top: 15px;
+}
+
+#fetch-attachment-btn:disabled {
+    background-color: var(--neutral-medium);
+    cursor: not-allowed;
 } 

@@ -2,7 +2,7 @@
 
 ## [Unreleased] - 2025-05-22
 ### Added
-- **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1 & 2)**:
+- **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1, 2, 3 & 4)**:
   - Integrated Gmail to S3 API into the existing Neural Vision POC frontend:
     - Added "Fetch Attachment from Email" button to the file upload section
     - Created email attachment modal for email selection and attachment viewing
@@ -21,6 +21,23 @@
     - Implemented modal management functions (`resetEmailModal()`, `openEmailSelectionModal()`)
     - Created UI utility functions for displaying status messages in the modal
     - Added event listeners for modal interaction (open, close, cancel)
+  - **Email & Attachment Listing Implementation (Phase 3)**:
+    - Implemented `listGmailEmails()` function to fetch and display emails from the API
+    - Added `displayEmailsList()` function to render emails with subject, date, sender, and attachment count
+    - Implemented `selectEmail()` function to handle email selection and fetch attachments
+    - Added `displayAttachmentsList()` function to render attachments with filename, size, and MIME type
+    - Implemented `selectAttachment()` function to handle attachment selection
+    - Added `formatFileSize()` utility function to display file sizes in human-readable format
+    - Implemented highlighting for selected email and attachment items
+    - Added comprehensive error handling for API requests and responses
+  - **Attachment Download & Upload Implementation (Phase 4)**:
+    - Implemented `handleFetchAttachment()` function to process the selected attachment
+    - Added functionality to download attachment data as a Blob from the Gmail API
+    - Implemented conversion from Blob to File object with proper metadata
+    - Integrated with existing file upload logic to send attachments to the Neural backend
+    - Added automatic file preview for CSV attachments
+    - Implemented UI feedback throughout the download and upload process
+    - Added automatic refresh of file list after successful upload
 
 ### Changes
 - **Frontend API Configuration**:
@@ -30,11 +47,22 @@
   - Added comprehensive error handling for CORS issues in API requests
   - Implemented detailed console logging for debugging authentication flow
   - Added fallback UI states for API failures
+- **Improved UI Feedback**:
+  - Added loading indicators during API requests
+  - Implemented status messages for successful and failed operations
+  - Added visual highlighting for selected emails and attachments
 
 ### Fixed
 - Fixed CORS issue in Gmail authentication status check by removing `credentials: 'include'` option from fetch requests
 - Fixed event listener attachment for the "Fetch Attachment from Email" button
 - Resolved modal styling conflicts by preserving original modal styles while adding new styles for email attachment modal
+- **Fixed Email and Attachment Display Issue**:
+  - Updated `listGmailEmails()` function to correctly handle direct array response format from the API
+  - Updated `selectEmail()` function to handle both array and object-wrapped response formats
+  - Added compatibility code to support both `message_id` and `id` field names in email objects
+  - Added compatibility code to support both `attachment_id` and `id` field names in attachment objects
+  - Enhanced attachment count display to show "Yes" when `has_target_attachments` is true but no specific count is available
+  - Improved error handling for different API response formats
 
 ## [Unreleased] - 2025-05-21
 ### Added
@@ -437,4 +465,4 @@
 
 ---
 
-Timestamp: 2025-05-21 08:37:00
+Timestamp: 2025-05-22 11:45:00

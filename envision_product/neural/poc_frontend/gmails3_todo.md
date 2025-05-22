@@ -27,27 +27,31 @@ This document outlines the tasks required to integrate the Gmail to S3 API with 
 
 ### Phase 3: Email/Attachment Selection Modal (Envision Neural Frontend)
 
-- [ ] **`script.js`**:
-  - [ ] Implement `openEmailSelectionModal()`: Shows modal, calls `listGmailEmails()`
-  - [ ] Implement `listGmailEmails()`:
-    - [ ] Fetches emails from `{GMAIL_S3_API_BASE_URL}/api/emails`
-    - [ ] Renders emails in the modal
-    - [ ] Adds click listeners to emails to call `listGmailAttachments()`
-  - [ ] Implement `listGmailAttachments(emailId)`:
-    - [ ] Fetches attachments from `{GMAIL_S3_API_BASE_URL}/api/emails/{emailId}/attachments`
-    - [ ] Renders attachments in the modal
-    - [ ] Adds click listeners to attachments to select them and enable the "Fetch Selected Attachment" button
-  - [ ] Implement logic for "Fetch Selected Attachment" button within the modal (event listener)
+- [x] **`script.js`**:
+  - [x] Implement `openEmailSelectionModal()`: Shows modal, calls `listGmailEmails()`
+  - [x] Implement `listGmailEmails()`:
+    - [x] Fetches emails from `{GMAIL_S3_API_BASE_URL}/api/emails`
+    - [x] Renders emails in the modal
+    - [x] Adds click listeners to emails to call `listGmailAttachments()`
+  - [x] Implement `listGmailAttachments(emailId)` (implemented as `selectEmail(email)`):
+    - [x] Fetches attachments from `{GMAIL_S3_API_BASE_URL}/api/emails/{emailId}/attachments`
+    - [x] Renders attachments in the modal
+    - [x] Adds click listeners to attachments to select them and enable the "Fetch Selected Attachment" button
+  - [x] Implement logic for "Fetch Selected Attachment" button within the modal (event listener)
+- [x] **`styles.css`**:
+  - [x] Add styles for email and attachment lists
+  - [x] Add styles for selected items
+  - [x] Ensure proper scrolling for long lists
 
 ### Phase 4: Fetching and Uploading to Neural Backend
 
-- [ ] **`script.js` (Handler for "Fetch Selected Attachment" button):**
-  - [ ] Get selected message ID and attachment details
-  - [ ] Download attachment data as a `Blob` from the Gmail API's download attachment endpoint
-  - [ ] Create a JavaScript `File` object from the `Blob` and attachment details
-  - [ ] Adapt or reuse existing file upload logic (`handleFileUpload`) to send this `File` object to `${NEURAL_API_BASE_URL}/files/upload`
-  - [ ] Implement UI feedback (close modal, show success/error on main page, optionally trigger preview)
-  - [ ] Ensure `loadUploadedFiles()` is called to refresh relevant lists
+- [x] **`script.js` (Handler for "Fetch Selected Attachment" button):**
+  - [x] Get selected message ID and attachment details
+  - [x] Download attachment data as a `Blob` from the Gmail API's download attachment endpoint
+  - [x] Create a JavaScript `File` object from the `Blob` and attachment details
+  - [x] Adapt or reuse existing file upload logic (`handleFileUpload`) to send this `File` object to `${NEURAL_API_BASE_URL}/files/upload`
+  - [x] Implement UI feedback (close modal, show success/error on main page, optionally trigger preview)
+  - [x] Ensure `loadUploadedFiles()` is called to refresh relevant lists
 
 ### Phase 5: Testing and Refinements
 
