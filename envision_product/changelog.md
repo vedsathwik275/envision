@@ -10,6 +10,8 @@
 - Icon-only navigation with tooltips when sidebar is collapsed
 - Responsive layout that adjusts main content and header margins based on sidebar state
 
+- Added proof of concept preliminary RAG Chatbot tool
+
 ### Changed
 - **BREAKING**: Completely redesigned navigation from top horizontal tabs to persistent sidebar
 - Moved header to top-left corner with compact design
