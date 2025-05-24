@@ -5,9 +5,15 @@ const GMAIL_S3_API_BASE_URL = 'http://localhost:8002';
 
 // DOM Elements
 document.addEventListener('DOMContentLoaded', () => {
-    // Navigation
+    // Navigation and Sidebar
     const navLinks = document.querySelectorAll('.nav-link');
-    const sections = document.querySelectorAll('.section');
+    const sections = document.querySelectorAll('#file-upload, #model-training, #model-list, #predictions');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarToggleCollapsed = document.getElementById('sidebar-toggle-collapsed');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggleIcon = document.getElementById('sidebar-toggle-icon');
+    const mainContent = document.getElementById('main-content');
+    const header = document.getElementById('header');
     
     // File Upload & Preview (integrated)
     const uploadForm = document.getElementById('upload-form');
@@ -85,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         setupNavigation();
+        setupSidebar();
         setupEventListeners();
         loadUploadedFiles();
         loadModels();
@@ -96,13 +103,104 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const targetSection = link.getAttribute('data-section');
                 
-                navLinks.forEach(link => link.classList.remove('active'));
-                sections.forEach(section => section.classList.remove('active'));
+                // Remove active state from all nav links
+                navLinks.forEach(navLink => {
+                    navLink.classList.remove('bg-white/20', 'text-white');
+                    navLink.classList.add('text-neutral-300');
+                });
                 
-                link.classList.add('active');
-                document.getElementById(targetSection).classList.add('active');
+                // Hide all sections
+                sections.forEach(section => {
+                    section.classList.add('hidden');
+                    section.classList.remove('block');
+                });
+                
+                // Add active state to clicked nav link
+                link.classList.remove('text-neutral-300');
+                link.classList.add('bg-white/20', 'text-white');
+                
+                // Show target section
+                const targetElement = document.getElementById(targetSection);
+                if (targetElement) {
+                    targetElement.classList.remove('hidden');
+                    targetElement.classList.add('block');
+                }
             });
         });
+    }
+    
+    function setupSidebar() {
+        if (!sidebarToggle || !sidebarToggleCollapsed || !sidebar || !sidebarToggleIcon || !mainContent || !header) {
+            console.error('Some sidebar elements are missing!');
+            return;
+        }
+        
+        // Toggle sidebar between expanded and collapsed (from expanded state button)
+        sidebarToggle.addEventListener('click', () => {
+            collapseSidebar();
+        });
+        
+        // Toggle sidebar between collapsed and expanded (from collapsed state button)
+        sidebarToggleCollapsed.addEventListener('click', () => {
+            expandSidebar();
+        });
+        
+        // Initialize sidebar as expanded
+        expandSidebar();
+    }
+    
+    function toggleSidebar() {
+        const isCollapsed = sidebar.classList.contains('w-16');
+        
+        if (isCollapsed) {
+            expandSidebar();
+        } else {
+            collapseSidebar();
+        }
+    }
+    
+    function expandSidebar() {
+        // Update sidebar width
+        sidebar.classList.remove('w-16');
+        sidebar.classList.add('w-64');
+        
+        // Show expanded header content and hide collapsed header
+        const expandedHeader = document.querySelector('.sidebar-expanded-header');
+        const collapsedHeader = document.querySelector('.sidebar-collapsed-header');
+        if (expandedHeader) expandedHeader.classList.remove('hidden');
+        if (collapsedHeader) collapsedHeader.classList.add('hidden');
+        
+        // Show text elements in navigation and footer
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        sidebarTexts.forEach(text => text.classList.remove('hidden'));
+        
+        // Update main content and header margins
+        mainContent.classList.remove('ml-16');
+        mainContent.classList.add('ml-64');
+        header.classList.remove('left-16');
+        header.classList.add('left-64');
+    }
+    
+    function collapseSidebar() {
+        // Update sidebar width
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-16');
+        
+        // Hide expanded header content and show collapsed header
+        const expandedHeader = document.querySelector('.sidebar-expanded-header');
+        const collapsedHeader = document.querySelector('.sidebar-collapsed-header');
+        if (expandedHeader) expandedHeader.classList.add('hidden');
+        if (collapsedHeader) collapsedHeader.classList.remove('hidden');
+        
+        // Hide text elements in navigation and footer
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        sidebarTexts.forEach(text => text.classList.add('hidden'));
+        
+        // Update main content and header margins
+        mainContent.classList.remove('ml-64');
+        mainContent.classList.add('ml-16');
+        header.classList.remove('left-64');
+        header.classList.add('left-16');
     }
     
     function setupEventListeners() {
@@ -118,12 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Modal Close
         closeModalBtn.addEventListener('click', () => {
-            modelDetailsModal.style.display = 'none';
+            modelDetailsModal.classList.add('hidden');
         });
         
         window.addEventListener('click', (e) => {
             if (e.target === modelDetailsModal) {
-                modelDetailsModal.style.display = 'none';
+                modelDetailsModal.classList.add('hidden');
             }
         });
         
@@ -146,19 +244,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Email Modal Close
         if (closeEmailModalBtn) {
             closeEmailModalBtn.addEventListener('click', () => {
-                emailAttachmentModal.style.display = 'none';
+                emailAttachmentModal.classList.add('hidden');
             });
         }
         
         if (cancelEmailModalBtn) {
             cancelEmailModalBtn.addEventListener('click', () => {
-                emailAttachmentModal.style.display = 'none';
+                emailAttachmentModal.classList.add('hidden');
             });
         }
         
         window.addEventListener('click', (e) => {
             if (e.target === emailAttachmentModal) {
-                emailAttachmentModal.style.display = 'none';
+                emailAttachmentModal.classList.add('hidden');
             }
         });
         
@@ -191,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadResult.innerHTML = '';
             fileInfo.innerHTML = '';
             previewTable.innerHTML = '';
-            filePreviewContainer.style.display = 'none';
+            filePreviewContainer.classList.add('hidden');
             
             // Show loading state
             showLoading(uploadResult);
@@ -230,8 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Show loading state below the upload result
             const loadingElement = document.createElement('div');
-            loadingElement.className = 'loading-preview';
-            loadingElement.innerHTML = '<div class="loading">Loading preview...</div>';
+            loadingElement.className = 'flex items-center justify-center py-4';
+            loadingElement.innerHTML = '<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mr-3"></div><span class="text-neutral-600">Loading preview...</span>';
             uploadResult.appendChild(loadingElement);
             
             // Fetch file preview data from API
@@ -239,23 +337,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             // Remove loading indicator
-            uploadResult.querySelector('.loading-preview').remove();
+            uploadResult.querySelector('.flex.items-center.justify-center.py-4').remove();
             
             if (response.ok) {
                 // Show the preview container
-                filePreviewContainer.style.display = 'block';
+                filePreviewContainer.classList.remove('hidden');
                 
                 // Display the file preview
                 displayFilePreview(data);
             } else {
                 const errorMessage = document.createElement('div');
-                errorMessage.className = 'error';
+                errorMessage.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4';
                 errorMessage.textContent = `Preview failed: ${data.error || data.message || 'Unknown error'}`;
                 uploadResult.appendChild(errorMessage);
             }
         } catch (error) {
             const errorMessage = document.createElement('div');
-            errorMessage.className = 'error';
+            errorMessage.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4';
             errorMessage.textContent = `Preview error: ${error.message}`;
             uploadResult.appendChild(errorMessage);
         }
@@ -300,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateFileSelects(files) {
         // Clear existing options
-        trainingFileSelect.innerHTML = '<option value="">-- Select a file --</option>';
+        trainingFileSelect.innerHTML = '<option value="">Select a file</option>';
         
         // Add new options
         files.forEach(file => {
@@ -320,25 +418,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayFilePreview(previewData) {
         // Display file info
         fileInfo.innerHTML = `
-            <p><strong>File ID:</strong> ${previewData.file_id}</p>
-            <p><strong>Total Rows:</strong> ${previewData.total_rows}</p>
-            <p><strong>Total Columns:</strong> ${previewData.total_columns}</p>
-            <p><strong>Missing Data:</strong> ${previewData.missing_data_summary.total_missing} cells (${previewData.missing_data_summary.percent_missing}%)</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div><span class="font-medium text-neutral-700">File ID:</span> <span class="text-neutral-600">${previewData.file_id}</span></div>
+                <div><span class="font-medium text-neutral-700">Total Rows:</span> <span class="text-neutral-600">${previewData.total_rows}</span></div>
+                <div><span class="font-medium text-neutral-700">Total Columns:</span> <span class="text-neutral-600">${previewData.total_columns}</span></div>
+                <div><span class="font-medium text-neutral-700">Missing Data:</span> <span class="text-neutral-600">${previewData.missing_data_summary.total_missing} cells (${previewData.missing_data_summary.percent_missing}%)</span></div>
+            </div>
         `;
         
         // Set up table headers
         const columnHeaders = Object.keys(previewData.sample_rows[0] || {});
-        let tableHTML = '<thead><tr>';
+        let tableHTML = '<thead class="bg-neutral-50"><tr>';
         columnHeaders.forEach(header => {
-            tableHTML += `<th>${header}</th>`;
+            tableHTML += `<th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">${header}</th>`;
         });
-        tableHTML += '</tr></thead><tbody>';
+        tableHTML += '</tr></thead><tbody class="bg-white divide-y divide-neutral-200">';
         
         // Add sample rows
         previewData.sample_rows.forEach(row => {
-            tableHTML += '<tr>';
+            tableHTML += '<tr class="hover:bg-neutral-50">';
             columnHeaders.forEach(header => {
-                tableHTML += `<td>${row[header] || ''}</td>`;
+                tableHTML += `<td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">${row[header] || ''}</td>`;
             });
             tableHTML += '</tr>';
         });
@@ -401,8 +501,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function pollForTrainedModel(fileId, modelType) {
         // Create status element
         const statusElement = document.createElement('div');
-        statusElement.className = 'training-status';
-        statusElement.innerHTML = '<div class="loading">Waiting for model training to complete...</div>';
+        statusElement.className = 'bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-4';
+        statusElement.innerHTML = '<div class="flex items-center"><div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div><span>Waiting for model training to complete...</span></div>';
         trainingResult.appendChild(statusElement);
         
         // Convert model type format if needed (order-volume → order_volume)
@@ -425,18 +525,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         clearInterval(pollInterval);
                         
                         // Update status with success
+                        statusElement.className = 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4';
                         statusElement.innerHTML = `
-                            <div class="success-message">
-                                <p><strong>Model training completed!</strong></p>
-                                <p>Model ID: ${matchedModel.model_id}</p>
-                                <p>Created: ${new Date(matchedModel.created_at).toLocaleString()}</p>
-                                <p>Performance metrics:</p>
-                                <ul>
-                                    ${Object.entries(matchedModel.evaluation || {}).map(([key, value]) => 
-                                        `<li>${key}: ${typeof value === 'number' ? value.toFixed(4) : value}</li>`
-                                    ).join('')}
-                                </ul>
-                                <button id="view-trained-model" class="btn primary">View Model Details</button>
+                            <div class="space-y-3">
+                                <p class="font-medium">Model training completed!</p>
+                                <div class="text-sm space-y-1">
+                                    <p><span class="font-medium">Model ID:</span> ${matchedModel.model_id}</p>
+                                    <p><span class="font-medium">Created:</span> ${new Date(matchedModel.created_at).toLocaleString()}</p>
+                                    <div>
+                                        <p class="font-medium">Performance metrics:</p>
+                                        <ul class="list-disc list-inside ml-4 space-y-1">
+                                            ${Object.entries(matchedModel.evaluation || {}).map(([key, value]) => 
+                                                `<li>${key}: ${typeof value === 'number' ? value.toFixed(4) : value}</li>`
+                                            ).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                                <button id="view-trained-model" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">View Model Details</button>
                             </div>
                         `;
                         
@@ -450,12 +555,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // Find and highlight the row with our model
                                 const modelRow = document.querySelector(`tr[data-model-id="${matchedModel.model_id}"]`);
                                 if (modelRow) {
-                                    modelRow.classList.add('highlight-row');
+                                    modelRow.classList.add('bg-blue-50', 'border-l-4', 'border-blue-400');
                                     modelRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                     
                                     // Remove highlight after a few seconds
                                     setTimeout(() => {
-                                        modelRow.classList.remove('highlight-row');
+                                        modelRow.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-400');
                                     }, 5000);
                                 }
                             });
@@ -469,13 +574,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Stop polling after 5 minutes (prevent infinite polling)
         setTimeout(() => {
-            if (statusElement.querySelector('.loading')) {
+            if (statusElement.querySelector('.animate-spin')) {
                 clearInterval(pollInterval);
+                statusElement.className = 'bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg mt-4';
                 statusElement.innerHTML = `
-                    <div class="warning">
-                        Model training is taking longer than expected. 
-                        Please check the Models tab later for your trained model.
-                    </div>
+                    <p>Model training is taking longer than expected. Please check the Models tab later for your trained model.</p>
                 `;
             }
         }, 5 * 60 * 1000); // 5 minutes
@@ -508,31 +611,32 @@ document.addEventListener('DOMContentLoaded', () => {
         modelsTableBody.innerHTML = '';
         
         if (!models || models.length === 0) {
-            modelsTableBody.innerHTML = `<tr><td colspan="5">No models available</td></tr>`;
+            modelsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-neutral-500">No models available</td></tr>`;
             return;
         }
         
         models.forEach(model => {
             const row = document.createElement('tr');
+            row.className = 'hover:bg-neutral-50';
             // Add data attribute for model ID to help with highlighting
             row.setAttribute('data-model-id', model.model_id);
             
             // Format metrics
-            let metricsHTML = '<ul>';
+            let metricsHTML = '<ul class="text-sm space-y-1">';
             for (const [key, value] of Object.entries(model.evaluation || {})) {
                 const formattedValue = typeof value === 'number' ? value.toFixed(4) : value;
-                metricsHTML += `<li>${key}: ${formattedValue}</li>`;
+                metricsHTML += `<li><span class="font-medium">${key}:</span> ${formattedValue}</li>`;
             }
             metricsHTML += '</ul>';
             
             row.innerHTML = `
-                <td>${model.model_id}</td>
-                <td>${model.model_type}</td>
-                <td>${new Date(model.created_at).toLocaleString()}</td>
-                <td>${metricsHTML}</td>
-                <td>
-                    <button class="btn secondary view-model-btn" data-model-id="${model.model_id}">Details</button>
-                    <button class="btn primary predict-model-btn" data-model-id="${model.model_id}" data-model-type="${model.model_type}">Predict</button>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">${model.model_id}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">${model.model_type}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">${new Date(model.created_at).toLocaleString()}</td>
+                <td class="px-6 py-4 text-sm text-neutral-500">${metricsHTML}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <button class="view-model-btn inline-flex items-center px-3 py-1 bg-neutral-600 text-white text-sm font-medium rounded hover:bg-neutral-700 transition-colors" data-model-id="${model.model_id}">Details</button>
+                    <button class="predict-model-btn inline-flex items-center px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 transition-colors" data-model-id="${model.model_id}" data-model-type="${model.model_type}">Predict</button>
                 </td>
             `;
             
@@ -559,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function viewModelDetails(modelId) {
         try {
             showLoading(modelDetailsContent);
-            modelDetailsModal.style.display = 'block';
+            modelDetailsModal.classList.remove('hidden');
             
             const response = await fetch(`${API_BASE_URL}/models/${modelId}`);
             const data = await response.json();
@@ -567,41 +671,56 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 displayModelDetails(data);
             } else {
-                modelDetailsContent.innerHTML = `<p class="error">Failed to load model details: ${data.error || 'Unknown error'}</p>`;
+                modelDetailsContent.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">Failed to load model details: ${data.error || 'Unknown error'}</div>`;
             }
         } catch (error) {
-            modelDetailsContent.innerHTML = `<p class="error">Error loading model details: ${error.message}</p>`;
+            modelDetailsContent.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">Error loading model details: ${error.message}</div>`;
         }
     }
     
     function displayModelDetails(model) {
         // Format training parameters
-        let trainingParamsHTML = '<ul>';
+        let trainingParamsHTML = '<ul class="space-y-1">';
         for (const [key, value] of Object.entries(model.training_params || {})) {
-            trainingParamsHTML += `<li>${key}: ${value}</li>`;
+            trainingParamsHTML += `<li><span class="font-medium">${key}:</span> ${value}</li>`;
         }
         trainingParamsHTML += '</ul>';
         
         // Format evaluation metrics
-        let evaluationHTML = '<ul>';
+        let evaluationHTML = '<ul class="space-y-1">';
         for (const [key, value] of Object.entries(model.evaluation || {})) {
-            evaluationHTML += `<li>${key}: ${value}</li>`;
+            evaluationHTML += `<li><span class="font-medium">${key}:</span> ${value}</li>`;
         }
         evaluationHTML += '</ul>';
         
         modelDetailsContent.innerHTML = `
-            <div class="model-details">
-                <p><strong>Model ID:</strong> ${model.model_id}</p>
-                <p><strong>Model Type:</strong> ${model.model_type}</p>
-                <p><strong>Created:</strong> ${new Date(model.created_at).toLocaleString()}</p>
-                <p><strong>Description:</strong> ${model.description || 'No description provided'}</p>
-                <p><strong>Training Data:</strong> ${model.training_data || 'Unknown'}</p>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-neutral-900 mb-3">Basic Information</h3>
+                        <div class="space-y-2 text-sm">
+                            <p><span class="font-medium text-neutral-700">Model ID:</span> <span class="text-neutral-600">${model.model_id}</span></p>
+                            <p><span class="font-medium text-neutral-700">Model Type:</span> <span class="text-neutral-600">${model.model_type}</span></p>
+                            <p><span class="font-medium text-neutral-700">Created:</span> <span class="text-neutral-600">${new Date(model.created_at).toLocaleString()}</span></p>
+                            <p><span class="font-medium text-neutral-700">Description:</span> <span class="text-neutral-600">${model.description || 'No description provided'}</span></p>
+                            <p><span class="font-medium text-neutral-700">Training Data:</span> <span class="text-neutral-600">${model.training_data || 'Unknown'}</span></p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-neutral-900 mb-3">Training Parameters</h3>
+                        <div class="text-sm text-neutral-600">
+                            ${trainingParamsHTML}
+                        </div>
+                    </div>
+                </div>
                 
-                <h3>Training Parameters</h3>
-                ${trainingParamsHTML}
-                
-                <h3>Evaluation Metrics</h3>
-                ${evaluationHTML}
+                <div>
+                    <h3 class="text-lg font-medium text-neutral-900 mb-3">Evaluation Metrics</h3>
+                    <div class="text-sm text-neutral-600">
+                        ${evaluationHTML}
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -615,7 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadModelsForPrediction(modelType) {
         // Clear existing options
-        predictionModelSelect.innerHTML = '<option value="">-- Select a model --</option>';
+        predictionModelSelect.innerHTML = '<option value="">Select a model</option>';
         
         if (!modelType) return;
         
@@ -679,46 +798,56 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (modelType) {
             case 'order-volume':
                 paramsHTML = `
-                    <h4>Order Volume Parameters</h4>
-                    <div class="form-group">
-                        <label for="months-ahead">Months to Predict:</label>
-                        <input type="number" id="months-ahead" value="6" min="1" max="12">
+                    <div>
+                        <h4 class="text-lg font-medium text-neutral-900 mb-4">Order Volume Parameters</h4>
+                        <div>
+                            <label for="months-ahead" class="block text-sm font-medium text-neutral-700 mb-2">Months to Predict:</label>
+                            <input type="number" id="months-ahead" value="6" min="1" max="12" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                        </div>
                     </div>
                 `;
                 break;
                 
             case 'tender-performance':
                 paramsHTML = `
-                    <h4>Tender Performance Parameters</h4>
-                    <div class="form-group">
-                        <label for="source-city">Source City (optional):</label>
-                        <input type="text" id="source-city" placeholder="Filter by source city">
-                    </div>
-                    <div class="form-group">
-                        <label for="dest-city">Destination City (optional):</label>
-                        <input type="text" id="dest-city" placeholder="Filter by destination city">
-                    </div>
-                    <div class="form-group">
-                        <label for="carrier">Carrier (optional):</label>
-                        <input type="text" id="carrier" placeholder="Filter by carrier">
+                    <div>
+                        <h4 class="text-lg font-medium text-neutral-900 mb-4">Tender Performance Parameters</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="source-city" class="block text-sm font-medium text-neutral-700 mb-2">Source City (optional):</label>
+                                <input type="text" id="source-city" placeholder="Filter by source city" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                            <div>
+                                <label for="dest-city" class="block text-sm font-medium text-neutral-700 mb-2">Destination City (optional):</label>
+                                <input type="text" id="dest-city" placeholder="Filter by destination city" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                            <div>
+                                <label for="carrier" class="block text-sm font-medium text-neutral-700 mb-2">Carrier (optional):</label>
+                                <input type="text" id="carrier" placeholder="Filter by carrier" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                        </div>
                     </div>
                 `;
                 break;
                 
             case 'carrier-performance':
                 paramsHTML = `
-                    <h4>Carrier Performance Parameters</h4>
-                    <div class="form-group">
-                        <label for="cp-source-city">Source City (optional):</label>
-                        <input type="text" id="cp-source-city" placeholder="Filter by source city">
-                    </div>
-                    <div class="form-group">
-                        <label for="cp-dest-city">Destination City (optional):</label>
-                        <input type="text" id="cp-dest-city" placeholder="Filter by destination city">
-                    </div>
-                    <div class="form-group">
-                        <label for="cp-carrier">Carrier (optional):</label>
-                        <input type="text" id="cp-carrier" placeholder="Filter by carrier">
+                    <div>
+                        <h4 class="text-lg font-medium text-neutral-900 mb-4">Carrier Performance Parameters</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="cp-source-city" class="block text-sm font-medium text-neutral-700 mb-2">Source City (optional):</label>
+                                <input type="text" id="cp-source-city" placeholder="Filter by source city" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                            <div>
+                                <label for="cp-dest-city" class="block text-sm font-medium text-neutral-700 mb-2">Destination City (optional):</label>
+                                <input type="text" id="cp-dest-city" placeholder="Filter by destination city" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                            <div>
+                                <label for="cp-carrier" class="block text-sm font-medium text-neutral-700 mb-2">Carrier (optional):</label>
+                                <input type="text" id="cp-carrier" placeholder="Filter by carrier" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            </div>
+                        </div>
                     </div>
                 `;
                 break;
@@ -913,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // IMPORTANT: Instead of clearing the entire container which removes all child elements,
         // find the loading indicator and only clear that
-        const loadingElement = predictionResult.querySelector('.loading');
+        const loadingElement = predictionResult.querySelector('.flex.items-center.justify-center');
         if (loadingElement) {
             console.log('Removing loading indicator');
             loadingElement.remove();
@@ -936,9 +1065,9 @@ document.addEventListener('DOMContentLoaded', () => {
             predictionResult.innerHTML = `
                 <div id="prediction-summary"></div>
                 <div id="prediction-table-container">
-                    <table id="prediction-table"></table>
+                    <table id="prediction-table" class="min-w-full bg-white border border-neutral-200 rounded-lg overflow-hidden mt-6"></table>
                 </div>
-                <div id="prediction-download" class="download-area"></div>
+                <div id="prediction-download" class="mt-6"></div>
             `;
             
             // Get the newly created elements
@@ -976,21 +1105,24 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Display prediction summary
         let summaryHTML = `
-            <div class="prediction-summary">
-                <p><strong>Prediction ID:</strong> ${predictionId || 'N/A'}</p>
-                <p><strong>Model ID:</strong> ${modelId || 'N/A'}</p>
-                <p><strong>Created:</strong> ${new Date(predictionTime).toLocaleString()}</p>
-                <p><strong>Total Predictions:</strong> ${predictionCount}</p>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-blue-900 mb-4">Prediction Summary</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                    <div><span class="font-medium text-blue-800">Prediction ID:</span> <span class="text-blue-700">${predictionId || 'N/A'}</span></div>
+                    <div><span class="font-medium text-blue-800">Model ID:</span> <span class="text-blue-700">${modelId || 'N/A'}</span></div>
+                    <div><span class="font-medium text-blue-800">Created:</span> <span class="text-blue-700">${new Date(predictionTime).toLocaleString()}</span></div>
+                    <div><span class="font-medium text-blue-800">Total Predictions:</span> <span class="text-blue-700">${predictionCount}</span></div>
+                </div>
         `;
         
         // Add model-specific metrics if available
         if (Object.keys(metrics).length > 0) {
-            summaryHTML += '<div class="metrics"><h4>Metrics:</h4><ul>';
+            summaryHTML += '<div class="mt-4"><h4 class="font-medium text-blue-800 mb-2">Metrics:</h4><ul class="space-y-1 text-sm">';
             for (const [key, value] of Object.entries(metrics)) {
                 const formattedValue = typeof value === 'number' ? 
                     (Math.abs(value) < 0.0001 ? value.toExponential(2) : value.toFixed(4)) : 
                     value;
-                summaryHTML += `<li>${formatColumnHeader(key)}: ${formattedValue}</li>`;
+                summaryHTML += `<li class="text-blue-700"><span class="font-medium">${formatColumnHeader(key)}:</span> ${formattedValue}</li>`;
             }
             summaryHTML += '</ul></div>';
         }
@@ -1003,9 +1135,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modelId) {
             // Important: Keep hyphens in the URL path for API endpoints
             const downloadHTML = `
-                <p>Download predictions:</p>
-                <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=csv" class="btn secondary" target="_blank">CSV</a>
-                <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=json" class="btn secondary" target="_blank">JSON</a>
+                <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                    <h4 class="font-medium text-neutral-900 mb-3">Download Predictions</h4>
+                    <div class="flex space-x-3">
+                        <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=csv" class="inline-flex items-center px-4 py-2 bg-neutral-600 text-white font-medium rounded-lg hover:bg-neutral-700 transition-colors" target="_blank">
+                            <i class="fas fa-download mr-2"></i>
+                            CSV
+                        </a>
+                        <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=json" class="inline-flex items-center px-4 py-2 bg-neutral-600 text-white font-medium rounded-lg hover:bg-neutral-700 transition-colors" target="_blank">
+                            <i class="fas fa-download mr-2"></i>
+                            JSON
+                        </a>
+                    </div>
+                </div>
             `;
             console.log('Setting download HTML');
             downloadElement.innerHTML = downloadHTML;
@@ -1083,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                        
         if (!predictions || !predictions.length) {
             console.warn('No predictions found in the response data');
-            tableElement.innerHTML = '<tr><td><p>No prediction data available.</p></td></tr>';
+            tableElement.innerHTML = '<tr><td class="px-6 py-4 text-center text-neutral-500 col-span-full">No prediction data available.</td></tr>';
             return;
         }
         
@@ -1095,11 +1237,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const columnHeaders = Object.keys(predictions[0]);
             console.log('Column headers:', columnHeaders);
             
-            let tableHTML = '<thead><tr>';
+            let tableHTML = '<thead class="bg-neutral-50"><tr>';
             columnHeaders.forEach(header => {
-                tableHTML += `<th>${formatColumnHeader(header)}</th>`;
+                tableHTML += `<th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">${formatColumnHeader(header)}</th>`;
             });
-            tableHTML += '</tr></thead><tbody>';
+            tableHTML += '</tr></thead><tbody class="bg-white divide-y divide-neutral-200">';
             
             // Add prediction rows (limit to first 20 for display)
             const displayLimit = Math.min(20, predictions.length);
@@ -1111,13 +1253,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const formattedValue = typeof cellValue === 'number' ? 
                         (Math.abs(cellValue) < 0.0001 ? cellValue.toExponential(2) : cellValue.toFixed(4)) : 
                         (cellValue || '');
-                    tableHTML += `<td>${formattedValue}</td>`;
+                    tableHTML += `<td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">${formattedValue}</td>`;
                 });
                 tableHTML += '</tr>';
             }
             
             if (predictions.length > displayLimit) {
-                tableHTML += `<tr><td colspan="${columnHeaders.length}">Showing ${displayLimit} of ${predictions.length} predictions. Download the full dataset to see all.</td></tr>`;
+                tableHTML += `<tr><td colspan="${columnHeaders.length}" class="px-6 py-4 text-center text-neutral-500">Showing ${displayLimit} of ${predictions.length} predictions. Download the full dataset to see all.</td></tr>`;
             }
             
             tableHTML += '</tbody>';
@@ -1141,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Table displayed successfully');
             } catch (innerError) {
                 console.error('Error setting table HTML:', innerError);
-                tableElement.innerHTML = `<tr><td><p class="error">Error displaying table: ${innerError.message}</p></td></tr>`;
+                tableElement.innerHTML = `<tr><td class="px-6 py-4 text-center text-red-600 col-span-full">Error displaying table: ${innerError.message}</td></tr>`;
             }
             
             // Verify the table was populated
@@ -1150,25 +1292,25 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error displaying prediction table:', error);
-            tableElement.innerHTML = `<tr><td><p class="error">Error displaying predictions: ${error.message}</p></td></tr>`;
+            tableElement.innerHTML = `<tr><td class="px-6 py-4 text-center text-red-600 col-span-full">Error displaying predictions: ${error.message}</td></tr>`;
         }
     }
     
     // Utility Functions
     function showLoading(element) {
-        element.innerHTML = '<div class="loading">Loading...</div>';
+        element.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mr-3"></div><span class="text-neutral-600">Loading...</span></div>';
     }
     
     function showError(element, message) {
-        element.innerHTML = `<div class="error">${message}</div>`;
+        element.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">${message}</div>`;
     }
     
     function showSuccess(element, message) {
-        element.innerHTML = `<div class="success-message">${message}</div>`;
+        element.innerHTML = `<div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">${message}</div>`;
     }
     
     function showInfo(element, message) {
-        element.innerHTML = `<div class="info-message">${message}</div>`;
+        element.innerHTML = `<div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">${message}</div>`;
     }
     
     function capitalizeFirstLetter(string) {
@@ -1216,18 +1358,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.authenticated) {
                 console.log('User is authenticated');
                 emailAuthText.textContent = 'Status: Authenticated';
-                gmailLogoutBtn.style.display = 'inline-block';
+                gmailLogoutBtn.classList.remove('hidden');
                 return true;
             } else {
                 console.log('User is not authenticated');
                 emailAuthText.textContent = 'Status: Not Authenticated';
-                gmailLogoutBtn.style.display = 'none';
+                gmailLogoutBtn.classList.add('hidden');
                 return false;
             }
         } catch (error) {
             console.error('Error in checkGmailAuthStatus:', error);
             emailAuthText.textContent = `Status: Error checking authentication (${error.message})`;
-            gmailLogoutBtn.style.display = 'none';
+            gmailLogoutBtn.classList.add('hidden');
             return false;
         }
     }
@@ -1257,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.open('gmail_login.html', '_blank');
                 
                 // Show a message to the user
-                showInfo(uploadResult, 'Please authenticate with Gmail in the new tab. After authentication, close that tab and click "Fetch Attachment from Email" again.');
+                showInfo(uploadResult, 'Please authenticate with Gmail in the new tab. After authentication, close that tab and click "Fetch from Email" again.');
             }
         } catch (error) {
             console.error('Error in handleFetchEmailClick:', error);
@@ -1285,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Update UI
             emailAuthText.textContent = 'Status: Logged out';
-            gmailLogoutBtn.style.display = 'none';
+            gmailLogoutBtn.classList.add('hidden');
             
             // Reset modal
             resetEmailModal();
@@ -1304,23 +1446,23 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function resetEmailModal() {
         // Reset email list
-        emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
+        emailsList.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div><span class="ml-3 text-neutral-600">Loading emails...</span></div>';
         
         // Reset attachments section
-        attachmentsSection.style.display = 'none';
-        attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
+        attachmentsSection.classList.add('hidden');
+        attachmentsList.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div><span class="ml-3 text-neutral-600">Loading attachments...</span></div>';
         selectedEmailSubject.textContent = 'None';
         
         // Reset status
-        emailModalStatus.style.display = 'none';
+        emailModalStatus.classList.add('hidden');
         emailModalStatus.textContent = '';
-        emailModalStatus.className = 'modal-status';
+        emailModalStatus.className = 'hidden';
         
         // Reset S3 upload status
         if (s3UploadStatus) {
-            s3UploadStatus.style.display = 'none';
+            s3UploadStatus.classList.add('hidden');
             s3UploadStatus.textContent = '';
-            s3UploadStatus.className = 'modal-status';
+            s3UploadStatus.className = 'hidden';
         }
         
         // Reset selected items
@@ -1335,27 +1477,27 @@ document.addEventListener('DOMContentLoaded', () => {
      * Shows success message in the email modal status area
      */
     function showModalSuccess(message) {
-        emailModalStatus.className = 'modal-status success';
+        emailModalStatus.className = 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4';
         emailModalStatus.textContent = message;
-        emailModalStatus.style.display = 'block';
+        emailModalStatus.classList.remove('hidden');
     }
     
     /**
      * Shows error message in the email modal status area
      */
     function showModalError(message) {
-        emailModalStatus.className = 'modal-status error';
+        emailModalStatus.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4';
         emailModalStatus.textContent = message;
-        emailModalStatus.style.display = 'block';
+        emailModalStatus.classList.remove('hidden');
     }
     
     /**
      * Shows loading message in the email modal status area
      */
     function showModalLoading(message) {
-        emailModalStatus.className = 'modal-status loading';
+        emailModalStatus.className = 'bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-4';
         emailModalStatus.textContent = message;
-        emailModalStatus.style.display = 'block';
+        emailModalStatus.classList.remove('hidden');
     }
     
     /**
@@ -1363,7 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function openEmailSelectionModal() {
         // Show the modal
-        emailAttachmentModal.style.display = 'block';
+        emailAttachmentModal.classList.remove('hidden');
         
         // List emails
         listGmailEmails();
@@ -1378,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showModalLoading('Fetching emails...');
             
             // Clear previous emails
-            emailsList.innerHTML = '<div class="loading">Loading emails...</div>';
+            emailsList.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div><span class="ml-3 text-neutral-600">Loading emails...</span></div>';
             
             // Fetch emails from the API
             const response = await fetch(`${GMAIL_S3_API_BASE_URL}/api/emails`, {
@@ -1404,7 +1546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const emails = Array.isArray(data) ? data : (data.emails || []);
             
             if (emails.length === 0) {
-                emailsList.innerHTML = '<div class="info-message">No emails found with attachments.</div>';
+                emailsList.innerHTML = '<div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">No emails found with attachments.</div>';
                 showModalInfo('No emails found with attachments');
                 return;
             }
@@ -1415,7 +1557,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error fetching emails:', error);
-            emailsList.innerHTML = `<div class="error">Error fetching emails: ${error.message}</div>`;
+            emailsList.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">Error fetching emails: ${error.message}</div>`;
             showModalError(`Error fetching emails: ${error.message}`);
         }
     }
@@ -1430,11 +1572,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create list of emails
         const list = document.createElement('ul');
-        list.className = 'emails-list';
+        list.className = 'divide-y divide-neutral-200';
         
         emails.forEach(email => {
             const item = document.createElement('li');
-            item.className = 'email-item';
+            item.className = 'p-4 hover:bg-neutral-50 cursor-pointer transition-colors';
             
             // Format the date
             const date = new Date(email.date);
@@ -1442,13 +1584,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Create email item content
             item.innerHTML = `
-                <div class="email-header">
-                    <span class="email-subject">${email.subject || 'No Subject'}</span>
-                    <span class="email-date">${formattedDate}</span>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-medium text-neutral-900 truncate flex-1">${email.subject || 'No Subject'}</span>
+                    <span class="text-sm text-neutral-500 ml-2">${formattedDate}</span>
                 </div>
-                <div class="email-details">
-                    <span class="email-from">From: ${email.from || 'Unknown'}</span>
-                    <span class="email-attachments-count">Attachments: ${email.attachments_count || (email.has_target_attachments ? 'Yes' : 'Unknown')}</span>
+                <div class="flex items-center justify-between text-sm text-neutral-600">
+                    <span class="truncate flex-1">From: ${email.from || 'Unknown'}</span>
+                    <span class="ml-2">Attachments: ${email.attachments_count || (email.has_target_attachments ? 'Yes' : 'Unknown')}</span>
                 </div>
             `;
             
@@ -1490,10 +1632,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // Show attachments section
-            attachmentsSection.style.display = 'block';
+            attachmentsSection.classList.remove('hidden');
             
             // Clear previous attachments
-            attachmentsList.innerHTML = '<div class="loading">Loading attachments...</div>';
+            attachmentsList.innerHTML = '<div class="flex items-center justify-center py-8"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div><span class="ml-3 text-neutral-600">Loading attachments...</span></div>';
             
             // Show loading status
             showModalLoading('Fetching attachments...');
@@ -1520,7 +1662,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const attachments = Array.isArray(data) ? data : (data.attachments || []);
             
             if (attachments.length === 0) {
-                attachmentsList.innerHTML = '<div class="info-message">No attachments found in this email.</div>';
+                attachmentsList.innerHTML = '<div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">No attachments found in this email.</div>';
                 showModalInfo('No attachments found in this email');
                 return;
             }
@@ -1531,7 +1673,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error selecting email:', error);
-            attachmentsList.innerHTML = `<div class="error">Error fetching attachments: ${error.message}</div>`;
+            attachmentsList.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">Error fetching attachments: ${error.message}</div>`;
             showModalError(`Error fetching attachments: ${error.message}`);
         }
     }
@@ -1546,23 +1688,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create list of attachments
         const list = document.createElement('ul');
-        list.className = 'attachments-list';
+        list.className = 'divide-y divide-neutral-200';
         
         attachments.forEach(attachment => {
             const item = document.createElement('li');
-            item.className = 'attachment-item';
+            item.className = 'p-4 hover:bg-neutral-50 cursor-pointer transition-colors';
             
             // Format file size
             const fileSize = formatFileSize(attachment.size);
             
             // Create attachment item content
             item.innerHTML = `
-                <div class="attachment-header">
-                    <span class="attachment-filename">${attachment.filename || 'Unnamed attachment'}</span>
-                    <span class="attachment-size">${fileSize}</span>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-medium text-neutral-900 truncate flex-1">${attachment.filename || 'Unnamed attachment'}</span>
+                    <span class="text-sm text-neutral-500 ml-2">${fileSize}</span>
                 </div>
-                <div class="attachment-details">
-                    <span class="attachment-mime-type">${attachment.mime_type || 'Unknown type'}</span>
+                <div class="text-sm text-neutral-600">
+                    <span class="italic">${attachment.mime_type || 'Unknown type'}</span>
                 </div>
             `;
             
@@ -1678,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // If S3 upload is requested, show the S3 upload status area
             if (shouldUploadToS3) {
-                s3UploadStatus.style.display = 'block';
+                s3UploadStatus.classList.remove('hidden');
                 showS3Loading('Preparing to upload to S3...');
             }
             
@@ -1752,7 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wait a moment to let the user see the success messages
             setTimeout(() => {
                 // Close the modal
-                emailAttachmentModal.style.display = 'none';
+                emailAttachmentModal.classList.add('hidden');
                 
                 // Show success message on the main page
                 showSuccess(uploadResult, `Attachment "${filename}" uploaded successfully! File ID: ${uploadData.file_id}`);
@@ -1773,27 +1915,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function showModalInfo(message) {
-        emailModalStatus.className = 'modal-status info';
+        emailModalStatus.className = 'bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-4';
         emailModalStatus.textContent = message;
-        emailModalStatus.style.display = 'block';
+        emailModalStatus.classList.remove('hidden');
     }
     
     function showS3Success(message) {
-        s3UploadStatus.className = 'modal-status success';
+        s3UploadStatus.className = 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mt-4';
         s3UploadStatus.textContent = message;
-        s3UploadStatus.style.display = 'block';
+        s3UploadStatus.classList.remove('hidden');
     }
     
     function showS3Error(message) {
-        s3UploadStatus.className = 'modal-status error';
+        s3UploadStatus.className = 'bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4';
         s3UploadStatus.textContent = message;
-        s3UploadStatus.style.display = 'block';
+        s3UploadStatus.classList.remove('hidden');
     }
     
     function showS3Loading(message) {
-        s3UploadStatus.className = 'modal-status loading';
+        s3UploadStatus.className = 'bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-4';
         s3UploadStatus.textContent = message;
-        s3UploadStatus.style.display = 'block';
+        s3UploadStatus.classList.remove('hidden');
     }
     
     function showS3Info(message) {
@@ -1803,39 +1945,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Color Scheme Demo Toggle
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleColorDemoBtn = document.getElementById('toggle-color-demo');
-    const colorSchemeDemo = document.getElementById('color-scheme-demo');
-    const closeColorDemo = document.getElementById('close-color-demo');
-    
-    if (toggleColorDemoBtn && colorSchemeDemo && closeColorDemo) {
-        toggleColorDemoBtn.addEventListener('click', function() {
-            colorSchemeDemo.style.display = 'block';
-            // Prevent scrolling on the body when demo is visible
-            document.body.style.overflow = 'hidden';
-        });
-        
-        closeColorDemo.addEventListener('click', function() {
-            colorSchemeDemo.style.display = 'none';
-            // Re-enable scrolling
-            document.body.style.overflow = '';
-        });
-        
-        // Close on click outside the demo content
-        window.addEventListener('click', function(event) {
-            if (event.target === colorSchemeDemo) {
-                colorSchemeDemo.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
-        
-        // Allow escape key to close
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && colorSchemeDemo.style.display === 'block') {
-                colorSchemeDemo.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        });
-    }
-}); 
+// Remove the color scheme demo functionality since it's no longer needed 

@@ -222,6 +222,22 @@
       "created_at": "2025-05-22T13:08:56.076591",
       "prediction_count": 1322,
       "prediction_file": "data\\predictions\\pred_706f43b4_20250522\\prediction_data.json"
+    },
+    "pred_12e9aa99_20250524": {
+      "prediction_id": "pred_12e9aa99_20250524",
+      "model_id": "carrier_performance_20250524125510",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-24T12:55:22.532051",
+      "prediction_count": 1322,
+      "prediction_file": "data/predictions/pred_12e9aa99_20250524/prediction_data.json"
+    },
+    "pred_db97feac_20250524": {
+      "prediction_id": "pred_db97feac_20250524",
+      "model_id": "carrier_performance_20250524125510",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-24T13:34:25.923003",
+      "prediction_count": 1322,
+      "prediction_file": "data/predictions/pred_db97feac_20250524/prediction_data.json"
     }
   }
 }

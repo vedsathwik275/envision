@@ -1,5 +1,36 @@
 # Changelog
 
+## [Unreleased] - 2025-05-24
+### Added
+- Persistent collapsible sidebar navigation with two states:
+  - Expanded state (w-64): Shows full branding, navigation text, and footer
+  - Collapsed state (w-16): Shows only icons and expand button
+- Smooth sidebar animations and transitions (300ms duration)
+- Dedicated toggle buttons for expand/collapse functionality
+- Icon-only navigation with tooltips when sidebar is collapsed
+- Responsive layout that adjusts main content and header margins based on sidebar state
+
+### Changed
+- **BREAKING**: Completely redesigned navigation from top horizontal tabs to persistent sidebar
+- Moved header to top-left corner with compact design
+- Relocated footer content to sidebar bottom area
+- Updated color scheme implementation to use pure Tailwind CSS classes
+- Improved navigation active states with better visual feedback
+- Enhanced sidebar spacing and icon alignment for better UX
+
+### Fixed
+- Navigation tabs not working due to CSS class conflicts between custom styles and Tailwind
+- Sidebar header button positioning - expand button now properly appears in header area when collapsed
+- Logo centering issues in collapsed sidebar state
+- Footer positioning problems across different pages
+- Removed brain logo from collapsed state as requested (only expand button visible)
+
+### Removed
+- Custom CSS navigation styles in favor of Tailwind implementation
+- Color scheme demo component and modal
+- Page-level footers (consolidated into sidebar)
+- Complex footer positioning logic (simplified with sidebar integration)
+
 ## [Unreleased] - 2025-05-22
 ### Added
 - **Neural Vision POC Frontend - Gmail to S3 Integration (Phase 1, 2, 3, 4 & 6)**:
@@ -484,4 +515,4 @@
 
 ---
 
-Timestamp: 2025-05-22 13:30:00
+Timestamp: 2025-05-24 13:37:00

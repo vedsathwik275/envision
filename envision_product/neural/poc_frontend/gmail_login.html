@@ -4,112 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gmail Authentication - Envision Neural</title>
-    <link rel="stylesheet" href="color_scheme.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        },
+                        accent: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c'
+                        },
+                        neutral: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body {
-            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: var(--text-dark);
-            background-color: var(--neutral-bg);
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .auth-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px var(--shadow-color);
-            padding: 30px;
-            margin-top: 50px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .logo {
-            font-size: 2.5rem;
-            color: var(--primary-main);
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            color: var(--primary-dark);
-            margin-bottom: 20px;
-        }
-        
-        p {
-            margin-bottom: 20px;
-            color: var(--text-medium);
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: 500;
-            text-align: center;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 10px 0;
-        }
-        
-        .btn.primary {
-            background-color: var(--primary-main);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn.primary:hover {
-            background-color: var(--primary-dark);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .status.error {
-            display: block;
-            background-color: var(--error-light);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-        
-        .status.success {
-            display: block;
-            background-color: var(--success-light);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-        
-        .status.loading {
-            display: block;
-            background-color: var(--info-light);
-            color: var(--info);
-            border: 1px solid var(--info);
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         }
     </style>
 </head>
-<body>
-    <div class="auth-container">
-        <div class="logo">
-            <i class="fas fa-envelope"></i>
+<body class="bg-neutral-50 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-md w-full">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 gradient-bg rounded-full mb-4">
+                <i class="fas fa-brain text-2xl text-blue-300"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-neutral-900">Envision Neural</h1>
+            <p class="text-neutral-600 mt-1">Transportation Logistics AI</p>
         </div>
-        <h1>Gmail Authentication</h1>
-        <p>To fetch email attachments, you need to authenticate with your Gmail account. Click the button below to start the authentication process.</p>
+
+        <!-- Authentication Card -->
+        <div class="bg-white rounded-xl shadow-lg border border-neutral-200 p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-primary-100 rounded-full mb-4">
+                    <i class="fas fa-envelope text-xl text-primary-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-neutral-900">Gmail Authentication</h2>
+                <p class="text-neutral-600 mt-2">To fetch email attachments, authenticate with your Gmail account</p>
+            </div>
+            
+            <button id="login-btn" class="w-full inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors">
+                <i class="fab fa-google mr-3"></i>
+                Login with Gmail
+            </button>
+            
+            <div id="auth-status" class="mt-6 p-4 rounded-lg hidden">
+                <!-- Status messages will appear here -->
+            </div>
+            
+            <div id="success-message" class="hidden mt-6 text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
+                    <i class="fas fa-check text-xl text-green-600"></i>
+                </div>
+                <h3 class="text-lg font-medium text-neutral-900 mb-2">Authentication Successful!</h3>
+                <p class="text-neutral-600 mb-4">You can now close this tab and return to the Envision Neural application.</p>
+                <p class="text-sm text-neutral-500">Click 'Fetch from Email' again to select an email attachment.</p>
+            </div>
+        </div>
         
-        <button id="login-btn" class="btn primary">Login with Gmail</button>
-        
-        <div id="auth-status" class="status"></div>
-        
-        <div id="success-message" style="display:none;">
-            <p>Authentication successful! You can now close this tab and return to the Envision Neural application.</p>
-            <p>Click 'Fetch Attachment from Email' again to select an email attachment.</p>
+        <!-- Footer -->
+        <div class="text-center mt-8">
+            <p class="text-neutral-500 text-sm">&copy; 2025 Envision Neural - Transportation Logistics AI</p>
         </div>
     </div>
 
@@ -121,19 +101,44 @@
             const authStatus = document.getElementById('auth-status');
             const successMessage = document.getElementById('success-message');
             
+            // Status message helpers
+            function showStatus(message, type = 'info') {
+                authStatus.className = `mt-6 p-4 rounded-lg ${getStatusClasses(type)}`;
+                authStatus.textContent = message;
+                authStatus.classList.remove('hidden');
+            }
+            
+            function getStatusClasses(type) {
+                switch (type) {
+                    case 'success':
+                        return 'bg-green-50 text-green-700 border border-green-200';
+                    case 'error':
+                        return 'bg-red-50 text-red-700 border border-red-200';
+                    case 'loading':
+                        return 'bg-blue-50 text-blue-700 border border-blue-200';
+                    default:
+                        return 'bg-neutral-50 text-neutral-700 border border-neutral-200';
+                }
+            }
+            
             // Check URL parameters for success message
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('success')) {
                 loginBtn.style.display = 'none';
-                successMessage.style.display = 'block';
-                authStatus.className = 'status success';
-                authStatus.textContent = 'Authentication successful!';
+                successMessage.classList.remove('hidden');
+                showStatus('Authentication successful!', 'success');
             }
             
             loginBtn.addEventListener('click', async () => {
                 try {
-                    authStatus.className = 'status loading';
-                    authStatus.textContent = 'Connecting to Gmail API...';
+                    showStatus('Connecting to Gmail API...', 'loading');
+                    
+                    // Add loading state to button
+                    loginBtn.disabled = true;
+                    loginBtn.innerHTML = `
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-3"></div>
+                        Connecting...
+                    `;
                     
                     const response = await fetch(`${GMAIL_S3_API_BASE_URL}/auth/login`);
                     if (!response.ok) {
@@ -149,23 +154,25 @@
                         throw new Error('Authorization URL not found in API response');
                     }
                 } catch (error) {
-                    authStatus.className = 'status error';
-                    authStatus.textContent = `Error: ${error.message}`;
+                    showStatus(`Error: ${error.message}`, 'error');
                     console.error('Login error:', error);
+                    
+                    // Reset button state
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = `
+                        <i class="fab fa-google mr-3"></i>
+                        Login with Gmail
+                    `;
                 }
             });
             
             // Check if we're on the callback page
             if (window.location.pathname.includes('auth/callback')) {
                 loginBtn.style.display = 'none';
-                successMessage.style.display = 'block';
-                authStatus.className = 'status success';
-                authStatus.textContent = 'Authentication successful!';
+                successMessage.classList.remove('hidden');
+                showStatus('Authentication successful!', 'success');
             }
         });
     </script>
-    
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </body>
 </html> 

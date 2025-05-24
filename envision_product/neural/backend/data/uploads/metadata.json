@@ -255,6 +255,14 @@
       "size": 53732,
       "upload_time": "2025-05-22T13:07:58.452898",
       "path": "data\\uploads\\1629f3d7-b73e-464b-865c-00af4687b494"
+    },
+    "3c12dc3f-00bd-46cf-8080-15b3b59e9792": {
+      "file_id": "3c12dc3f-00bd-46cf-8080-15b3b59e9792",
+      "filename": "carrier_performance_version2.csv",
+      "content_type": "text/csv",
+      "size": 52409,
+      "upload_time": "2025-05-24T12:54:50.812438",
+      "path": "data/uploads/3c12dc3f-00bd-46cf-8080-15b3b59e9792"
     }
   }
 }
