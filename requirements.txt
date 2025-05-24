@@ -11,6 +11,8 @@ langchain
 langchain-community
 langchain-openai
 langchain-core
+langchain-text-splitters
+chromadb
 pydantic
 fastapi
 uvicorn
@@ -29,3 +31,6 @@ python-dotenv
 pytest
 httpx
 pydantic-settings
+unstructured
+python-docx
+pypdf
