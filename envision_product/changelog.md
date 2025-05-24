@@ -11,6 +11,7 @@
 - Responsive layout that adjusts main content and header margins based on sidebar state
 
 - Added proof of concept preliminary RAG Chatbot tool
+- Enhanced the proof of concept rag chatbot tool with hybrid semantic + keyword matching
 
 ### Changed
 - **BREAKING**: Completely redesigned navigation from top horizontal tabs to persistent sidebar
