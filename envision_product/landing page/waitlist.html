@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Waitlist - Envision Neural</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1A202C 0%, #2D3748 100%);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #1A202C 0%, #2D3748 50%, #3B82F6 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(45, 55, 72, 0.8);
+        }
+        .envision-navy {
+            background-color: #2D3748;
+        }
+        .envision-dark {
+            background-color: #1A202C;
+        }
+        .envision-blue {
+            background-color: #3B82F6;
+        }
+        .envision-light-blue {
+            color: #60A5FA;
+        }
+        .bg-envision-navy {
+            background-color: #2D3748;
+        }
+        .bg-envision-dark {
+            background-color: #1A202C;
+        }
+        .bg-envision-blue {
+            background-color: #3B82F6;
+        }
+        .text-envision-light-blue {
+            color: #60A5FA;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Navigation -->
+    <nav class="bg-envision-navy border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-envision-blue rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Envision Neural</h1>
+                        <p class="text-sm text-gray-400">AI Platform</p>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="index.html" class="text-gray-300 hover:text-white transition-colors">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient py-20 relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-20"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                Be Among the First to Experience
+                <span class="text-envision-light-blue">Next-Gen Logistics AI</span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+                Join our exclusive waitlist and get early access to the platform that's transforming how logistics professionals make decisions.
+            </p>
+        </div>
+    </section>
+
+    <!-- Waitlist Form Section -->
+    <section class="py-20 bg-envision-dark">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-12 items-start">
+                <!-- Form -->
+                <div class="glass-effect rounded-xl p-8 border border-gray-600">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold mb-2">Join the Waitlist</h2>
+                        <p class="text-gray-300">Secure your spot for early access</p>
+                    </div>
+                    
+                    <form id="waitlist-form" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
+                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Work Email *</label>
+                            <input type="email" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
+                            <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Job Title *</label>
+                            <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Company Type</label>
+                            <select class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                                <option value="">Select company type</option>
+                                <option value="manufacturer">Manufacturing Company</option>
+                                <option value="3pl">Third-Party Logistics Provider</option>
+                                <option value="shipper">Shipper</option>
+                                <option value="broker">Freight Broker</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Biggest Logistics Challenge</label>
+                            <textarea rows="3" placeholder="What's your biggest challenge in carrier selection and logistics management?" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white resize-none"></textarea>
+                        </div>
+                        
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" id="updates" class="mt-1 w-4 h-4 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500">
+                            <label for="updates" class="text-sm text-gray-300">
+                                I'd like to receive updates about Envision Neural's development and exclusive early access opportunities
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-envision-blue hover:bg-blue-600 px-6 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105">
+                            Join Waitlist
+                        </button>
+                        
+                        <div class="text-center">
+                            <p class="text-sm text-gray-400">
+                                You'll receive a confirmation email with your waitlist position
+                            </p>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Benefits & Info -->
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-6">Waitlist Benefits</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-envision-blue rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white mb-2">Priority Early Access</h4>
+                                    <p class="text-gray-300">Be among the first to access Envision Neural when we launch, with priority onboarding support.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-envision-blue rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white mb-2">Exclusive Updates</h4>
+                                    <p class="text-gray-300">Receive behind-the-scenes development updates, feature previews, and industry insights.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-envision-blue rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white mb-2">Founder Beta Program</h4>
+                                    <p class="text-gray-300">Get invited to our exclusive beta program and help shape the platform's development.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-envision-blue rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zM14 6a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h8zM6 8a2 2 0 000 4h8a2 2 0 000-4H6z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white mb-2">Launch Pricing</h4>
+                                    <p class="text-gray-300">Lock in special launch pricing when the platform becomes available.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 border border-gray-600">
+                        <h4 class="font-bold text-white mb-4">What We're Building</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-envision-light-blue rounded-full"></div>
+                                <span class="text-gray-300">AI-powered carrier selection and optimization</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-envision-light-blue rounded-full"></div>
+                                <span class="text-gray-300">Predictive analytics for logistics performance</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-envision-light-blue rounded-full"></div>
+                                <span class="text-gray-300">Natural language logistics intelligence</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-envision-light-blue rounded-full"></div>
+                                <span class="text-gray-300">Seamless integration with existing systems</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-effect rounded-xl p-6 border border-gray-600 text-center">
+                        <h4 class="font-bold text-white mb-2">Launch Timeline</h4>
+                        <p class="text-envision-light-blue text-2xl font-bold">Q2 2025</p>
+                        <p class="text-gray-300 text-sm mt-2">Beta access starting Q1 2025</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-gray-400 mb-2">Already have an account or need immediate access?</p>
+                        <a href="#" class="text-envision-light-blue hover:text-blue-300 font-semibold transition-colors">
+                            Contact for Demo →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-envision-navy py-12 border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-3 mb-4 md:mb-0">
+                    <div class="w-10 h-10 bg-envision-blue rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Envision Neural</h3>
+                        <p class="text-sm text-gray-400">AI Platform</p>
+                    </div>
+                </div>
+                <div class="text-center md:text-right">
+                    <p class="text-gray-400">© 2025 Envision Neural Transportation Logistics AI</p>
+                    <p class="text-gray-500 text-sm">The future of logistics intelligence is here.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
