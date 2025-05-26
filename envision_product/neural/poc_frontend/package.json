@@ -1,0 +1,20 @@
+{
+  "name": "poc_frontend",
+  "version": "1.0.0",
+  "description": "This is a simple proof-of-concept frontend for the Envision Neural API, which demonstrates the capabilities of the backend API for transportation logistics predictions.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --watch",
+    "build": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --minify",
+    "serve": "npx live-server --port=5001",
+    "start": "npm run dev & npm run serve"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.7",
+    "tailwindcss": "^4.1.7"
+  }
+}
