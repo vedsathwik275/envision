@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Envision Neural Custom Theme */
+@theme {
+  /* Custom Colors - Now you can use envision-navy, envision-blue, etc. as Tailwind utilities */
+  --color-envision-navy: #2D3748;
+  --color-envision-dark: #1A202C; 
+  --color-envision-blue: #3B82F6;
+  --color-envision-light-blue: #60A5FA;
+  
+  /* Custom Fonts (if needed) */
+  --font-display: "Inter", "system-ui", "sans-serif";
+  
+  /* Custom Breakpoints (if needed) */
+  --breakpoint-3xl: 1920px;
+}
+
+/* Custom Components & Effects */
+.gradient-bg {
+    background: linear-gradient(135deg, var(--color-envision-dark) 0%, var(--color-envision-navy) 100%);
+}
+
+.hero-gradient {
+    background: linear-gradient(135deg, var(--color-envision-dark) 0%, var(--color-envision-navy) 50%, var(--color-envision-blue) 100%);
+}
+
+.glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(45, 55, 72, 0.8);
+}
+
+.ai-glow {
+    text-shadow: 0 0 5px rgba(96, 165, 250, 0.6),
+                 0 0 10px rgba(96, 165, 250, 0.4),
+                 0 0 20px rgba(96, 165, 250, 0.2);
+}

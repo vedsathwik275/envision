@@ -4,43 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact for Demo - Envision Neural</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #1A202C 0%, #2D3748 100%);
-        }
-        .hero-gradient {
-            background: linear-gradient(135deg, #1A202C 0%, #2D3748 50%, #3B82F6 100%);
-        }
-        .glass-effect {
-            backdrop-filter: blur(10px);
-            background: rgba(45, 55, 72, 0.8);
-        }
-        .envision-navy {
-            background-color: #2D3748;
-        }
-        .envision-dark {
-            background-color: #1A202C;
-        }
-        .envision-blue {
-            background-color: #3B82F6;
-        }
-        .envision-light-blue {
-            color: #60A5FA;
-        }
-        .bg-envision-navy {
-            background-color: #2D3748;
-        }
-        .bg-envision-dark {
-            background-color: #1A202C;
-        }
-        .bg-envision-blue {
-            background-color: #3B82F6;
-        }
-        .text-envision-light-blue {
-            color: #60A5FA;
-        }
-    </style>
+    <link href="./dist/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white">
     <!-- Navigation -->
@@ -68,11 +32,11 @@
     <!-- Hero Section -->
     <section class="hero-gradient py-16 relative overflow-hidden">
         <div class="absolute inset-0 bg-black opacity-20"></div>
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
             <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                See <span class="text-envision-light-blue">Envision Neural</span> in Action
+                See <span class="text-envision-light-blue ai-glow">Envision Neural</span> in Action
             </h1>
-            <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p class="text-xl text-gray-300 mb-8 max-w-4xl mx-auto">
                 Schedule a personalized demo and discover how AI can transform your logistics operations in minutes, not hours.
             </p>
         </div>
@@ -80,160 +44,164 @@
 
     <!-- Demo Form Section -->
     <section class="py-20 bg-envision-dark">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-2 gap-12 items-start">
-                <!-- Form -->
-                <div class="glass-effect rounded-xl p-8 border border-gray-600">
-                    <h2 class="text-2xl font-bold mb-6">Request Your Demo</h2>
-                    <form id="demo-form" class="space-y-6">
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
-                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
-                                <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Work Email *</label>
-                            <input type="email" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-                            <input type="tel" class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
-                            <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Job Title/Role *</label>
-                            <input type="text" required class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Company Type</label>
-                            <select class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                                <option value="">Select company type</option>
-                                <option value="manufacturer">Manufacturing Company</option>
-                                <option value="3pl">Third-Party Logistics Provider</option>
-                                <option value="shipper">Shipper</option>
-                                <option value="broker">Freight Broker</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Monthly Shipping Volume</label>
-                            <select class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                                <option value="">Select volume range</option>
-                                <option value="1-50">1-50 shipments</option>
-                                <option value="51-200">51-200 shipments</option>
-                                <option value="201-500">201-500 shipments</option>
-                                <option value="500+">500+ shipments</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Current Challenges</label>
-                            <textarea rows="4" placeholder="Tell us about your current logistics challenges and what you'd like to see in the demo..." class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white resize-none"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Preferred Demo Time</label>
-                            <select class="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
-                                <option value="">Select preferred time</option>
-                                <option value="morning">Morning (9 AM - 12 PM EST)</option>
-                                <option value="afternoon">Afternoon (12 PM - 5 PM EST)</option>
-                                <option value="flexible">I'm flexible</option>
-                            </select>
-                        </div>
-                        
-                        <button type="submit" class="w-full bg-envision-blue hover:bg-blue-600 px-6 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105">
-                            Schedule My Demo
-                        </button>
-                        
-                        <p class="text-sm text-gray-400 text-center">
-                            We'll contact you within 24 hours to schedule your personalized demo
-                        </p>
-                    </form>
-                </div>
-                
-                <!-- What to Expect -->
-                <div class="space-y-8">
-                    <div>
-                        <h3 class="text-2xl font-bold mb-4">What to Expect</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-start space-x-3">
-                                <div class="w-6 h-6 bg-envision-blue rounded-full flex items-center justify-center mt-1">
-                                    <span class="text-white text-sm font-bold">1</span>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-5 gap-8 lg:gap-16 items-start">
+                <!-- Form takes up 3 columns on large screens, full width on smaller -->
+                <div class="lg:col-span-3">
+                    <div class="glass-effect rounded-xl p-6 lg:p-10 border border-gray-600">
+                        <h2 class="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8">Request Your Demo</h2>
+                        <form id="demo-form" class="space-y-4 lg:space-y-6">
+                            <div class="grid sm:grid-cols-2 gap-4 lg:gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
+                                    <input name="firstName" type="text" required class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-white">Personalized Walkthrough</h4>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
+                                    <input name="lastName" type="text" required class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Work Email *</label>
+                                <input name="email" type="email" required class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                                <input name="phone" type="tel" class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Company Name *</label>
+                                <input name="company" type="text" required class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Job Title/Role *</label>
+                                <input name="jobTitle" type="text" required class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                            </div>
+                            
+                            <div class="grid sm:grid-cols-2 gap-4 lg:gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Company Type</label>
+                                    <select name="companyType" class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                                        <option value="">Select company type</option>
+                                        <option value="manufacturer">Manufacturing Company</option>
+                                        <option value="3pl">Third-Party Logistics Provider</option>
+                                        <option value="shipper">Shipper</option>
+                                        <option value="broker">Freight Broker</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Monthly Shipping Volume</label>
+                                    <select name="shippingVolume" class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                                        <option value="">Select volume range</option>
+                                        <option value="1-50">1-50 shipments</option>
+                                        <option value="51-200">51-200 shipments</option>
+                                        <option value="201-500">201-500 shipments</option>
+                                        <option value="500+">500+ shipments</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Current Challenges</label>
+                                <textarea name="challenges" rows="4" placeholder="Tell us about your current logistics challenges and what you'd like to see in the demo..." class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white resize-none"></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300 mb-2">Preferred Demo Time</label>
+                                <select name="preferredTime" class="w-full px-3 lg:px-4 py-2 lg:py-3 bg-gray-800 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white">
+                                    <option value="">Select preferred time</option>
+                                    <option value="morning">Morning (9 AM - 12 PM EST)</option>
+                                    <option value="afternoon">Afternoon (12 PM - 5 PM EST)</option>
+                                    <option value="flexible">I'm flexible</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-envision-blue hover:bg-blue-600 px-6 py-3 lg:py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105">
+                                Schedule My Demo
+                            </button>
+                            
+                            <p class="text-sm text-gray-400 text-center">
+                                We'll contact you within 24 hours to schedule your personalized demo
+                            </p>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- What to Expect takes up 2 columns on large screens, full width on smaller -->
+                <div class="lg:col-span-2 space-y-6 lg:space-y-8 mt-8 lg:mt-0">
+                    <div>
+                        <h3 class="text-2xl lg:text-3xl font-bold mb-4 lg:mb-6">What to Expect</h3>
+                        <div class="space-y-4 lg:space-y-6">
+                            <div class="flex items-start space-x-3 lg:space-x-4">
+                                <div class="w-6 h-6 lg:w-8 lg:h-8 bg-envision-blue rounded-full flex items-center justify-center mt-1 flex-shrink-0">
+                                    <span class="text-white text-sm lg:text-base font-bold">1</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white text-lg lg:text-xl mb-2">Personalized Walkthrough</h4>
                                     <p class="text-gray-300">See how Envision works with your specific logistics scenarios and challenges.</p>
                                 </div>
                             </div>
-                            <div class="flex items-start space-x-3">
-                                <div class="w-6 h-6 bg-envision-blue rounded-full flex items-center justify-center mt-1">
-                                    <span class="text-white text-sm font-bold">2</span>
+                            <div class="flex items-start space-x-3 lg:space-x-4">
+                                <div class="w-6 h-6 lg:w-8 lg:h-8 bg-envision-blue rounded-full flex items-center justify-center mt-1 flex-shrink-0">
+                                    <span class="text-white text-sm lg:text-base font-bold">2</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-white">Live AI Predictions</h4>
+                                    <h4 class="font-semibold text-white text-lg lg:text-xl mb-2">Live AI Predictions</h4>
                                     <p class="text-gray-300">Watch our AI models generate real-time carrier recommendations and performance predictions.</p>
                                 </div>
                             </div>
-                            <div class="flex items-start space-x-3">
-                                <div class="w-6 h-6 bg-envision-blue rounded-full flex items-center justify-center mt-1">
-                                    <span class="text-white text-sm font-bold">3</span>
+                            <div class="flex items-start space-x-3 lg:space-x-4">
+                                <div class="w-6 h-6 lg:w-8 lg:h-8 bg-envision-blue rounded-full flex items-center justify-center mt-1 flex-shrink-0">
+                                    <span class="text-white text-sm lg:text-base font-bold">3</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-white">ROI Discussion</h4>
+                                    <h4 class="font-semibold text-white text-lg lg:text-xl mb-2">ROI Discussion</h4>
                                     <p class="text-gray-300">Understand the potential time and cost savings for your specific operation.</p>
                                 </div>
                             </div>
-                            <div class="flex items-start space-x-3">
-                                <div class="w-6 h-6 bg-envision-blue rounded-full flex items-center justify-center mt-1">
-                                    <span class="text-white text-sm font-bold">4</span>
+                            <div class="flex items-start space-x-3 lg:space-x-4">
+                                <div class="w-6 h-6 lg:w-8 lg:h-8 bg-envision-blue rounded-full flex items-center justify-center mt-1 flex-shrink-0">
+                                    <span class="text-white text-sm lg:text-base font-bold">4</span>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-white">Q&A Session</h4>
+                                    <h4 class="font-semibold text-white text-lg lg:text-xl mb-2">Q&A Session</h4>
                                     <p class="text-gray-300">Get answers to your technical questions and implementation requirements.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="glass-effect rounded-xl p-6 border border-gray-600">
-                        <h4 class="font-bold text-white mb-3">Demo Highlights</h4>
-                        <ul class="space-y-2 text-gray-300">
-                            <li class="flex items-center space-x-2">
-                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full"></div>
+                    <div class="glass-effect rounded-xl p-6 lg:p-8 border border-gray-600">
+                        <h4 class="font-bold text-white mb-4 text-lg lg:text-xl">Demo Highlights</h4>
+                        <ul class="space-y-3 text-gray-300">
+                            <li class="flex items-start space-x-3">
+                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full mt-2 flex-shrink-0"></div>
                                 <span>Natural language carrier selection queries</span>
                             </li>
-                            <li class="flex items-center space-x-2">
-                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full"></div>
+                            <li class="flex items-start space-x-3">
+                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full mt-2 flex-shrink-0"></div>
                                 <span>Real-time rate comparison and analysis</span>
                             </li>
-                            <li class="flex items-center space-x-2">
-                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full"></div>
+                            <li class="flex items-start space-x-3">
+                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full mt-2 flex-shrink-0"></div>
                                 <span>Predictive carrier performance scoring</span>
                             </li>
-                            <li class="flex items-center space-x-2">
-                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full"></div>
+                            <li class="flex items-start space-x-3">
+                                <div class="w-1.5 h-1.5 bg-envision-light-blue rounded-full mt-2 flex-shrink-0"></div>
                                 <span>Integration with existing logistics systems</span>
                             </li>
                         </ul>
                     </div>
                     
-                    <div class="text-center">
+                    <div class="glass-effect rounded-xl p-6 lg:p-8 border border-gray-600 text-center">
                         <p class="text-gray-400 mb-4">Need to speak with someone immediately?</p>
-                        <p class="text-white font-semibold">Call us at: <span class="text-envision-light-blue">(555) 123-DEMO</span></p>
+                        <p class="text-white font-semibold text-lg">Call us at: <span class="text-envision-light-blue">(555) 123-DEMO</span></p>
                     </div>
                 </div>
             </div>
@@ -262,6 +230,7 @@
             </div>
         </div>
     </footer>
+
     <script src="script.js"></script>
 </body>
 </html>

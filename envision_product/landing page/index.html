@@ -4,43 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Envision Neural - AI-Powered Logistics Intelligence</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #1A202C 0%, #2D3748 100%);
-        }
-        .hero-gradient {
-            background: linear-gradient(135deg, #1A202C 0%, #2D3748 50%, #3B82F6 100%);
-        }
-        .glass-effect {
-            backdrop-filter: blur(10px);
-            background: rgba(45, 55, 72, 0.8);
-        }
-        .envision-navy {
-            background-color: #2D3748;
-        }
-        .envision-dark {
-            background-color: #1A202C;
-        }
-        .envision-blue {
-            background-color: #3B82F6;
-        }
-        .envision-light-blue {
-            color: #60A5FA;
-        }
-        .bg-envision-navy {
-            background-color: #2D3748;
-        }
-        .bg-envision-dark {
-            background-color: #1A202C;
-        }
-        .bg-envision-blue {
-            background-color: #3B82F6;
-        }
-        .text-envision-light-blue {
-            color: #60A5FA;
-        }
-    </style>
+    <link href="./dist/output.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white">
     <!-- Navigation -->
@@ -58,13 +22,18 @@
                         <p class="text-sm text-gray-400">AI Platform</p>
                     </div>
                 </div>
-                <div class="hidden md:flex space-x-8">
+                <div class="hidden md:flex items-center space-x-8">
                     <a href="#features" class="text-gray-300 hover:text-white transition-colors">Features</a>
                     <a href="#how-it-works" class="text-gray-300 hover:text-white transition-colors">How It Works</a>
                     <a href="#customers" class="text-gray-300 hover:text-white transition-colors">Customers</a>
-                    <button onclick="window.location.href='demo.html'" class="bg-envision-blue hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors">
-                        Contact for Demo
-                    </button>
+                    <div class="flex space-x-3">
+                        <button onclick="window.location.href='waitlist.html'" class="border-2 border-gray-400 hover:border-white px-4 py-2 rounded-lg font-medium transition-colors text-white">
+                            Join Waitlist
+                        </button>
+                        <button onclick="window.location.href='demo.html'" class="bg-envision-blue hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors text-white">
+                            Contact for Demo
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,7 +46,7 @@
             <div class="text-center">
                 <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
                     Transform Your Logistics with
-                    <span class="text-envision-light-blue">AI Intelligence</span>
+                    <span class="text-envision-light-blue ai-glow">AI Intelligence</span>
                 </h1>
                 <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed">
                     Automate carrier selection, optimize shipping costs, and eliminate hours of manual research with our AI-powered logistics intelligence platform.
@@ -336,13 +305,13 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 class="text-4xl md:text-5xl font-bold mb-6">
                 Ready to Transform Your 
-                <span class="text-envision-light-blue">Logistics Operations?</span>
+                <span class="text-envision-light-blue ai-glow">Logistics Operations?</span>
             </h2>
             <p class="text-xl text-gray-300 mb-8">
                 Join the leading organizations already using AI to gain unbeatable competitive advantages in logistics management.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button class="bg-envision-blue hover:bg-blue-600 px-8 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105">
+                <button onclick="window.location.href='demo.html'" class="bg-envision-blue hover:bg-blue-600 px-8 py-4 rounded-lg text-lg font-semibold transition-all transform hover:scale-105">
                     Contact for Demo
                 </button>
                 <button onclick="window.location.href='waitlist.html'" class="border-2 border-gray-400 hover:border-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors">

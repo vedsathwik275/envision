@@ -1,0 +1,19 @@
+{
+  "name": "envision-neural-landing-page",
+  "version": "1.0.0",
+  "description": "Envision Neural AI Logistics Platform Landing Page",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --watch",
+    "build": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --minify",
+    "serve": "npx live-server --port=8080",
+    "start": "npm run dev & npm run serve"
+  },
+  "keywords": ["logistics", "ai", "tailwind"],
+  "author": "Envision Neural",
+  "license": "MIT",
+  "devDependencies": {
+    "tailwindcss": "^4.1.4",
+    "@tailwindcss/cli": "^4.1.4"
+  }
+}
