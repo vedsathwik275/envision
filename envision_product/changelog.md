@@ -51,10 +51,61 @@
   - Added `__init__.py` to `envision_product/chat/backend/api/services/poc_chatbot_scripts/` to make it a package.
   - Updated `requirements.txt` with necessary FastAPI and related dependencies (`fastapi`, `uvicorn`, `websockets`, `python-multipart`, `pydantic`, `python-dotenv`).
 
+- **RAG Chatbot Frontend (Web Interface)**:
+  - Created comprehensive web frontend for the RAG chatbot matching Envision Neural design philosophy.
+  - Implemented responsive HTML interface using Tailwind CSS with neural frontend color scheme and design patterns.
+  - **Design System Integration**:
+    - Applied exact gradient background from neural frontend (`linear-gradient(135deg, #1e293b 0%, #334155 100%)`)
+    - Used consistent neutral color palette with primary/accent color schemes
+    - Implemented collapsible sidebar navigation with expanded/collapsed states
+    - Applied proper typography hierarchy with `text-neutral-900` for headings and `text-neutral-600` for descriptions
+    - Used `rounded-xl` for cards, `shadow-sm` for subtle shadows, and consistent spacing (`p-6`, `p-8`)
+  - **Navigation & Layout**:
+    - Fixed header with dynamic title and subtitle based on current section
+    - Collapsible sidebar with smooth animations and state management
+    - Three main sections: Dashboard, Knowledge Bases, and Chat
+    - Proper z-index layering and responsive design
+  - **Dashboard Features**:
+    - Statistics cards showing knowledge base count, document count, and active chats
+    - Quick action buttons for creating knowledge bases, uploading documents, and starting chats
+    - Modern card-based layout with proper visual hierarchy
+  - **Knowledge Base Management**:
+    - List view of all knowledge bases with status indicators
+    - Create, upload, and process functionality with modal interfaces
+    - Status-based action buttons (upload, process, chat) with proper disabled states
+    - Empty state with call-to-action for first-time users
+  - **Chat Interface**:
+    - Two-panel layout with knowledge base selector and chat interface
+    - Real-time status indicators and connection monitoring
+    - Message history with user/assistant distinction and timestamps
+    - Source citation display for RAG responses
+    - HTTP-based chat implementation with loading states
+  - **Interactive Components**:
+    - Modal dialogs for knowledge base creation and document upload
+    - File upload with proper validation (PDF, DOCX, TXT, MD, CSV)
+    - Loading overlays with modern spinner animations
+    - Toast notifications for user feedback
+    - Form validation and error handling
+  - **JavaScript Architecture**:
+    - Modular event handling and navigation management
+    - API integration with comprehensive error handling
+    - Sidebar collapse/expand functionality matching neural frontend
+    - Dynamic content loading and state management
+    - Proper cleanup and modal management
+
 ### Changed
 - **API Scope**: Moved file upload endpoint from bonus tasks to core Day 2 functionality
 - **Architecture Focus**: Simplified from complex production-ready system to minimal POC approach
 - **Implementation Strategy**: Emphasized wrapping existing code rather than rewriting components
+- **RAG Chatbot Frontend Design Alignment**: Updated frontend to match neural frontend design philosophy:
+  - Migrated from custom neural color scheme to standard neutral/primary/accent palette
+  - Updated gradient background to exact neural frontend colors (`#1e293b` to `#334155`)
+  - Replaced all `gray-*` classes with `neutral-*` for consistency
+  - Applied `primary-*` colors instead of custom `neural-blue` throughout interface
+  - Enhanced button styles with `font-medium` and proper focus states
+  - Improved modal styling with `shadow-2xl` and better spacing
+  - Updated chat interface with enhanced color contrast and status indicators
+  - Refined navigation patterns to match neural frontend exactly
 - **RAG Chatbot API Architecture**: Shifted from an initial over-engineered plan to a simplified Proof of Concept (POC) API, mirroring the existing terminal chatbot's core functionality.
 - **Integration Strategy**: Focused on directly wrapping the user's existing Python scripts (`poc_chatbot_scripts`) within the FastAPI services, minimizing code rewrites.
 - **`FixedEnhancedRAGChatbot`**:
@@ -73,6 +124,13 @@
   - Updated to call `get_enhanced_response` on the chatbot instance instead of the old `ask_question` method.
 - **Imports in `poc_chatbot_scripts`**: Changed direct imports (e.g., `from knowledge_base_manager import ...`) to relative imports (e.g., `from .knowledge_base_manager import ...`) to ensure they work correctly as part of a package.
 - **API Configuration**: User updated API port to `8004` in `.env` (reflected in `api/core/config.py`).
+- **Frontend File Upload Support**: Added CSV format to supported file types for document upload:
+  - Updated file input `accept` attribute to include `.csv` extension
+  - Added CSV to supported formats help text in upload modal
+  - Enhanced RAG system to handle CSV files for knowledge base processing
+- **Frontend Layout Optimizations**:
+  - Adjusted chat interface height from `calc(100vh - 12rem)` to `calc(100vh - 16rem)` for better page fit
+  - Improved responsive design and proper content scaling
 
 ### Fixed
 - **FastAPI Application Startup & Runtime Errors**:

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot - Envision Neural</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        'accent': {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 min-h-screen">
+    <!-- Top Header -->
+    <header class="bg-white shadow-sm border-b border-neutral-200 fixed top-0 left-64 right-0 z-30 transition-all duration-300 ease-in-out" id="header">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div>
+                    <h1 id="page-title" class="text-xl font-bold text-neutral-900">Dashboard</h1>
+                    <p id="page-subtitle" class="text-sm text-neutral-600">RAG Chatbot Management</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <div id="status-indicator" class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span id="status-text" class="text-sm text-neutral-600">API Connected</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 gradient-bg text-white transition-all duration-300 ease-in-out z-40">
+        <div class="p-4 border-b border-white/10 relative">
+            <!-- Expanded Header Content -->
+            <div class="sidebar-expanded-header">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-white/10 rounded-lg flex-shrink-0">
+                            <i class="fas fa-comments text-xl text-blue-300"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold">RAG Chatbot</h2>
+                            <p class="text-sm text-neutral-300">AI Platform</p>
+                        </div>
+                    </div>
+                    <button id="sidebar-toggle" class="p-2 rounded-lg text-neutral-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors flex-shrink-0">
+                        <i class="fas fa-chevron-left" id="sidebar-toggle-icon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Collapsed Header Content -->
+            <div class="sidebar-collapsed-header hidden absolute inset-0 flex items-center justify-center" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
+                <button id="sidebar-toggle-collapsed" class="p-2 rounded-lg text-neutral-300 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 transition-colors">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Navigation Menu -->
+        <nav class="p-2">
+            <ul class="space-y-1">
+                <li>
+                    <a href="#" id="nav-dashboard" class="nav-link flex items-center px-3 py-3 rounded-lg text-white bg-white/20 transition-all duration-300 group" data-section="dashboard" title="Dashboard">
+                        <i class="fas fa-tachometer-alt text-lg flex-shrink-0 w-6 text-center"></i>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-knowledge-bases" class="nav-link flex items-center px-3 py-3 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white transition-all duration-300 group" data-section="knowledge-bases" title="Knowledge Bases">
+                        <i class="fas fa-database text-lg flex-shrink-0 w-6 text-center"></i>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Knowledge Bases</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="nav-chat" class="nav-link flex items-center px-3 py-3 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white transition-all duration-300 group" data-section="chat" title="Chat">
+                        <i class="fas fa-comments text-lg flex-shrink-0 w-6 text-center"></i>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Chat</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- Sidebar Footer -->
+        <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-white/10">
+            <div class="text-center sidebar-text">
+                <div class="flex items-center justify-center space-x-3 mb-3">
+                    <i class="fas fa-robot text-lg text-neutral-300"></i>
+                    <i class="fas fa-brain text-lg text-blue-300"></i>
+                    <i class="fas fa-comments text-lg text-neutral-300"></i>
+                </div>
+                <p class="text-xs text-neutral-300">&copy; 2025 Envision Neural</p>
+                <p class="text-xs text-neutral-400">RAG Chatbot Platform</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="pt-20 ml-64 transition-all duration-300 ease-in-out min-h-screen flex flex-col" id="main-content">
+        <div class="flex-1">
+            <div class="max-w-7xl mx-auto px-6 py-8">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="block">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-neutral-900 flex items-center">
+                            <i class="fas fa-tachometer-alt mr-3 text-primary-500"></i>
+                            Dashboard Overview
+                        </h2>
+                        <p class="text-neutral-600 mt-2">Monitor your knowledge bases and chat activity</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-database text-primary-500 text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-neutral-500">Knowledge Bases</p>
+                                    <p id="kb-count" class="text-2xl font-semibold text-neutral-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-file-alt text-green-500 text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-neutral-500">Total Documents</p>
+                                    <p id="doc-count" class="text-2xl font-semibold text-neutral-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-comments text-purple-500 text-2xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-neutral-500">Active Chats</p>
+                                    <p id="chat-count" class="text-2xl font-semibold text-neutral-900">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-neutral-200 p-8">
+                        <h3 class="text-lg font-semibold text-neutral-900 mb-6 pb-3 border-b border-neutral-100">Quick Actions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button id="quick-create-kb" class="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Knowledge Base
+                            </button>
+                            <button id="quick-upload-doc" class="inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                                <i class="fas fa-upload mr-2"></i>
+                                Upload Document
+                            </button>
+                            <button id="quick-start-chat" class="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors">
+                                <i class="fas fa-comment mr-2"></i>
+                                Start Chat
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Knowledge Bases Section -->
+                <section id="knowledge-bases" class="hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-neutral-900 flex items-center">
+                            <i class="fas fa-database mr-3 text-primary-500"></i>
+                            Knowledge Base Repository
+                        </h2>
+                        <p class="text-neutral-600 mt-2">Manage your document collections and processing</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-neutral-200 p-8">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 pb-3 border-b border-neutral-100">
+                            <h3 class="text-lg font-semibold text-neutral-900">Available Knowledge Bases</h3>
+                            <button id="create-kb-btn" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors mt-4 sm:mt-0">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create New
+                            </button>
+                        </div>
+
+                        <div id="kb-list" class="space-y-4">
+                            <!-- Knowledge bases will be loaded here -->
+                        </div>
+                        <div id="kb-loading" class="text-center py-8 hidden">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                            <p class="text-neutral-600">Loading knowledge bases...</p>
+                        </div>
+                        <div id="kb-empty" class="text-center py-12 hidden">
+                            <i class="fas fa-database text-neutral-300 text-6xl mb-6"></i>
+                            <h4 class="text-lg font-medium text-neutral-900 mb-2">No Knowledge Bases Found</h4>
+                            <p class="text-neutral-600 mb-6">Create your first knowledge base to get started with document processing and chat.</p>
+                            <button class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Your First Knowledge Base
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chat Section -->
+                <section id="chat" class="hidden">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-neutral-900 flex items-center">
+                            <i class="fas fa-comments mr-3 text-primary-500"></i>
+                            RAG Chat Interface
+                        </h2>
+                        <p class="text-neutral-600 mt-2">Ask questions about your documents using AI-powered retrieval</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6" style="height: calc(100vh - 16rem);">
+                        <!-- Knowledge Base Selector -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full">
+                                <div class="p-4 border-b border-neutral-100">
+                                    <h3 class="font-semibold text-neutral-900">Select Knowledge Base</h3>
+                                </div>
+                                <div class="p-4">
+                                    <select id="chat-kb-select" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                        <option value="">Choose a knowledge base...</option>
+                                    </select>
+                                    <div id="selected-kb-info" class="mt-4 hidden">
+                                        <div class="bg-neutral-50 rounded-lg p-4">
+                                            <h4 id="selected-kb-name" class="font-medium text-neutral-900"></h4>
+                                            <p id="selected-kb-description" class="text-sm text-neutral-600 mt-1"></p>
+                                            <div class="flex items-center mt-3">
+                                                <span id="selected-kb-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Interface -->
+                        <div class="lg:col-span-3">
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
+                                <!-- Chat Header -->
+                                <div class="p-4 border-b border-neutral-100 flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-robot text-primary-500 mr-3"></i>
+                                        <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <div id="connection-status" class="flex items-center text-sm">
+                                            <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+                                            <span class="text-neutral-500">Not Ready</span>
+                                        </div>
+                                        <button id="clear-chat" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Messages -->
+                                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-robot text-white text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="bg-neutral-100 rounded-lg p-3">
+                                                <p class="text-neutral-800">Welcome! Select a knowledge base and start asking questions. I'll help you find relevant information from your documents using advanced retrieval techniques.</p>
+                                            </div>
+                                            <p class="text-xs text-neutral-500 mt-1">Just now</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Input -->
+                                <div class="p-4 border-t border-neutral-100">
+                                    <div class="flex space-x-3">
+                                        <div class="flex-1">
+                                            <input 
+                                                type="text" 
+                                                id="chat-input" 
+                                                placeholder="Ask a question about your documents..." 
+                                                class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:bg-neutral-50 disabled:text-neutral-400"
+                                                disabled
+                                            >
+                                        </div>
+                                        <button 
+                                            id="send-btn" 
+                                            class="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
+                                            disabled
+                                        >
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create KB Modal -->
+    <div id="create-kb-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="flex items-center justify-between p-6 border-b border-neutral-200">
+                    <h3 class="text-xl font-semibold text-neutral-900">Create Knowledge Base</h3>
+                    <button id="close-create-kb-modal" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <form id="create-kb-form" class="space-y-6">
+                        <div>
+                            <label for="kb-name" class="block text-sm font-medium text-neutral-700 mb-2">Name</label>
+                            <input type="text" id="kb-name" name="name" required class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                        </div>
+                        <div>
+                            <label for="kb-description" class="block text-sm font-medium text-neutral-700 mb-2">Description</label>
+                            <textarea id="kb-description" name="description" rows="3" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" placeholder="Brief description of this knowledge base..."></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" id="cancel-create-kb" class="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors">
+                                Create
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Document Modal -->
+    <div id="upload-doc-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="flex items-center justify-between p-6 border-b border-neutral-200">
+                    <h3 class="text-xl font-semibold text-neutral-900">Upload Document</h3>
+                    <button id="close-upload-doc-modal" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <form id="upload-doc-form" class="space-y-6">
+                        <div>
+                            <label for="upload-kb-select" class="block text-sm font-medium text-neutral-700 mb-2">Knowledge Base</label>
+                            <select id="upload-kb-select" name="kb_id" required class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                <option value="">Select a knowledge base...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="doc-file" class="block text-sm font-medium text-neutral-700 mb-2">Document</label>
+                            <input type="file" id="doc-file" name="file" required accept=".pdf,.docx,.txt,.md,.csv" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                            <p class="text-xs text-neutral-500 mt-2">Supported formats: PDF, DOCX, TXT, MD, CSV</p>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" id="cancel-upload-doc" class="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">
+                                Upload
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-xl shadow-2xl p-6 flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                <span id="loading-text" class="text-neutral-800">Processing...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
