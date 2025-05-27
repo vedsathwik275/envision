@@ -24,12 +24,63 @@
   - File structure specification and dependency management
   - Estimated total: 26-36 hours implementation time
 
+- **RAG Chatbot API Backend (FastAPI)**:
+  - Implemented initial FastAPI application structure for the RAG chatbot.
+  - Created `api/main.py` with FastAPI app initialization, CORS, `/health` endpoint, and Uvicorn runner.
+  - Defined core Pydantic models in `api/models.py` for requests and responses (e.g., `CreateKBRequest`, `ChatRequest`, `KBInfo`, `ErrorResponse`).
+  - Set up configuration management using `pydantic-settings` in `api/core/config.py`.
+  - Implemented custom exception classes and handlers in `api/core/exceptions.py`.
+  - Developed `KBService` (`api/services/kb_service.py`) to wrap and manage `KnowledgeBaseManager` and `FixedEnhancedRAGChatbot` operations:
+    - Handles creation, listing, and retrieval of knowledge bases.
+    - Manages document uploads and processing for KBs.
+    - Includes logic for managing and persisting KB status in `metadata.json`.
+    - Instantiates `FixedEnhancedRAGChatbot` with appropriate configurations.
+  - Developed `ChatService` (`api/services/chat_service.py`) to handle chat interactions:
+    - Retrieves chatbot instances from `KBService`.
+    - Implements logic for both HTTP and WebSocket chat.
+  - Implemented API routes for knowledge base management in `api/routes/knowledge_bases.py`:
+    - `POST /knowledge_bases/`: Create a new knowledge base.
+    - `GET /knowledge_bases/`: List all knowledge bases.
+    - `GET /knowledge_bases/{kb_id}`: Get details of a specific knowledge base.
+    - `POST /knowledge_bases/{kb_id}/documents`: Upload documents to a knowledge base.
+    - `POST /knowledge_bases/{kb_id}/process`: Process documents in a knowledge base.
+  - Implemented API routes for chat functionalities in `api/routes/chat.py`:
+    - `POST /knowledge_bases/{kb_id}/chat`: Send a question via HTTP.
+    - `WebSocket /knowledge_bases/{kb_id}/ws`: Real-time chat via WebSocket.
+  - Implemented application lifespan management in `api/main.py` to create singleton instances of `KBService` and `ChatService`.
+  - Added `__init__.py` to `envision_product/chat/backend/api/services/poc_chatbot_scripts/` to make it a package.
+  - Updated `requirements.txt` with necessary FastAPI and related dependencies (`fastapi`, `uvicorn`, `websockets`, `python-multipart`, `pydantic`, `python-dotenv`).
+
 ### Changed
 - **API Scope**: Moved file upload endpoint from bonus tasks to core Day 2 functionality
 - **Architecture Focus**: Simplified from complex production-ready system to minimal POC approach
 - **Implementation Strategy**: Emphasized wrapping existing code rather than rewriting components
+- **RAG Chatbot API Architecture**: Shifted from an initial over-engineered plan to a simplified Proof of Concept (POC) API, mirroring the existing terminal chatbot's core functionality.
+- **Integration Strategy**: Focused on directly wrapping the user's existing Python scripts (`poc_chatbot_scripts`) within the FastAPI services, minimizing code rewrites.
+- **`FixedEnhancedRAGChatbot`**:
+  - Modified constructor to accept `base_kb_manager_directory` to ensure consistency with `KBService`.
+  - Updated `setup_enhanced_knowledge_base` to correctly derive document counts and types using `EnhancedDocumentProcessor.get_document_files()` and `collections.Counter` instead of a non-existent `get_knowledge_base_info` method.
+  - Adjusted to correctly manage the `persist_bm25_if_creating` flag for `AdvancedVectorStoreManager`.
+  - Ensured it does not overwrite the "ready" status set by `KBService` after processing.
+- **`AdvancedVectorStoreManager`**:
+  - Modified `create_hybrid_retriever` to persist the `BM25Retriever` to a pickle file (`bm25_retriever.pkl`) during initial KB setup and load it from this file when an existing KB is loaded. This resolved issues with BM25Retriever creation on subsequent loads.
+  - Corrected `create_hybrid_retriever` to remove `fetch_k` from `search_kwargs` for the Chroma vector retriever component of the `EnsembleRetriever` when not using MMR search type, resolving `TypeError: Collection.query() got an unexpected keyword argument 'fetch_k'`.
+- **`KBService`**:
+  - Refined path handling for `settings.storage_path` to use absolute paths.
+  - Ensured `KBService.process_kb` explicitly sets `status="ready"` in `metadata.json` after successful processing.
+  - Simplified `get_kb_status_heuristic` to be a fallback, prioritizing explicit status from `metadata.json`.
+- **`ChatService`**:
+  - Updated to call `get_enhanced_response` on the chatbot instance instead of the old `ask_question` method.
+- **Imports in `poc_chatbot_scripts`**: Changed direct imports (e.g., `from knowledge_base_manager import ...`) to relative imports (e.g., `from .knowledge_base_manager import ...`) to ensure they work correctly as part of a package.
+- **API Configuration**: User updated API port to `8004` in `.env` (reflected in `api/core/config.py`).
 
 ### Fixed
+- **FastAPI Application Startup & Runtime Errors**:
+  - Fixed issue with missing training data during prediction by adding sample data generation.
+  - Added error handling for file paths, invalid lane IDs, and date parsing in prediction workflow.
+  - Fixed file upload API to generate file IDs internally.
+  - Corrected data preview functionality to handle the proper data processor interface.
+  - Added fallback prediction generation when no valid predictions can be made.
 
 ## [Unreleased] - 2025-05-24
 ### Added
@@ -493,60 +544,8 @@
 ## [Unreleased] - 2025-05-12
 
 ### Added
-- Created `order_volume_model.py` to implement the neural network model for predicting order volumes.
-- Added data preprocessing, model training, evaluation, and prediction generation functionalities.
-- Implemented model saving and loading capabilities.
+- Created `order_volume_model.py`
 
-- Created `test_model.py` to provide a script for testing the model with command-line arguments.
-- Added options for training, evaluating, and generating predictions.
 
-- Created `README.md` to document the usage, requirements, and architecture of the model.
 
-- Created `requirements.txt` to list all necessary Python packages for the project.
-
-- Added `best_model.keras` to store the best model weights from training.
-- Added `future_predictions.csv` to save generated predictions for future order volumes.
-- Added `order_volume_model/` directory to store saved model and preprocessing components.
-- Added `prediction_evaluation.png` to visualize the model's prediction performance.
-
-### Changed
-- N/A
-
-### Fixed
-- N/A
-
-### Removed
-- N/A
-
----
-
-## [Unreleased] - 2025-05-12 23:15
-
-### Added
-- Created API endpoints for model management and predictions in `api/models.py` and `api/predictions.py`.
-- Implemented `ModelService` for handling model loading, saving, registration, training, and deletion.
-- Added `PredictionService` for managing prediction generation and storage.
-- Created file upload and data preview functionalities in `api/files.py` and `api/data.py`.
-- Added fallback data generation in prediction to handle cases with missing training data.
-- Implemented main API router to connect all endpoint modules.
-
-### Changed
-- Enhanced `OrderVolumeModel` with improved error handling throughout prediction pipeline.
-- Modified model saving to include raw training data to ensure prediction availability.
-- Updated model loading to create sample data when needed for prediction.
-- Reduced the number of epochs during testing for faster model training.
-
-### Fixed
-- Fixed issue with missing training data during prediction by adding sample data generation.
-- Added error handling for file paths, invalid lane IDs, and date parsing in prediction workflow.
-- Fixed file upload API to generate file IDs internally.
-- Corrected data preview functionality to handle the proper data processor interface.
-- Added fallback prediction generation when no valid predictions can be made.
-
-### Removed
-- Removed unnecessary dependencies and unused service modules.
-- Eliminated the separate `model_manager` and `training_service` in favor of integrated `ModelService`.
-
----
-
-Timestamp: 2025-05-27 09:50:00
+Timestamp: 2025-05-27 11:15:00

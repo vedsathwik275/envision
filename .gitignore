@@ -13,6 +13,10 @@ client_secret_*.json
 .pnp.js
 node_modules
 
+# knowledge bases
+knowledge_bases
+
+
 # testing
 /coverage
 
