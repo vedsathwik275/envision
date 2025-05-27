@@ -1,5 +1,36 @@
 # Changelog
 
+## [Unreleased] - 2025-05-27
+### Added
+- **RAG Chatbot API Architecture**: Comprehensive analysis and documentation of existing RAG chatbot codebase
+  - Analyzed `EnhancedDocumentProcessor`, `AdvancedVectorStoreManager`, `EnhancedRAGChain`, `KnowledgeBaseManager`, and `FixedEnhancedRAGChatbot` components
+  - Created simplified FastAPI architecture document with 7 core endpoints
+  - Designed bare-bones API structure mirroring terminal functionality
+  - Added file upload endpoint for document management (`POST /knowledge_bases/{kb_id}/documents`)
+  - Defined Pydantic data models: `CreateKBRequest`, `ProcessKBRequest`, `ChatRequest`, `KBInfo`, `DocumentInfo`, `ChatResponse`
+  - Specified WebSocket protocol for real-time chat functionality
+  - Outlined integration strategy to reuse existing codebase without rewriting
+
+- **Added Main Page**: Main page for to redirect to chat or neural
+  - HTML and TailwindCSS
+
+- **RAG Chatbot API Implementation Plan**: Detailed 5-day TODO list for FastAPI development
+  - Day 1: Project setup, core configuration, and data models (6-8 hours)
+  - Day 2: Knowledge base service, routes, and file upload functionality (7-9 hours) 
+  - Day 3: Chat service and HTTP endpoints (4-6 hours)
+  - Day 4: WebSocket implementation for real-time chat (4-6 hours)
+  - Day 5: Frontend, documentation, and polish (5-7 hours)
+  - Comprehensive testing checklist and success criteria
+  - File structure specification and dependency management
+  - Estimated total: 26-36 hours implementation time
+
+### Changed
+- **API Scope**: Moved file upload endpoint from bonus tasks to core Day 2 functionality
+- **Architecture Focus**: Simplified from complex production-ready system to minimal POC approach
+- **Implementation Strategy**: Emphasized wrapping existing code rather than rewriting components
+
+### Fixed
+
 ## [Unreleased] - 2025-05-24
 ### Added
 - Persistent collapsible sidebar navigation with two states:
@@ -518,4 +549,4 @@
 
 ---
 
-Timestamp: 2025-05-24 13:37:00
+Timestamp: 2025-05-27 09:50:00
