@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Envision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 1.0s ease-out forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-8 fade-in-up">
+    
+    <!-- Logo/Brand Area -->
+    <div class="mb-8">
+        <div class="text-center">
+            <div class="bg-blue-600 text-white px-4 py-2 rounded-lg inline-block mb-2">
+                <span class="font-semibold text-lg">ENVISION</span>
+            </div>
+            <div class="text-gray-600 text-sm">
+                Transportation Logistics AI Platform
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Heading -->
+    <h1 class="text-5xl md:text-6xl font-bold text-gray-900 mb-10 text-center">
+        Welcome to Envision
+    </h1>
+    
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4">
+        
+        <!-- Envision Neural Button -->
+        <a href="http://localhost:5001" id="neuralBtn" class="bg-gray-800 hover:bg-gray-900 text-white px-8 py-3 rounded-lg font-medium text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg transform active:scale-95 min-w-[180px]">
+            Envision Neural
+        </a>
+        
+        <!-- Envision Chat Button -->
+        <button id="chatBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg transform active:scale-95 min-w-[180px]">
+            Envision Chat
+        </button>
+        
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

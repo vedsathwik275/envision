@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --watch",
     "build": "npx @tailwindcss/cli -i ./src/input.css -o ./dist/output.css --minify",
-    "serve": "npx live-server --port=8080",
+    "serve": "npx live-server --port=5010",
     "start": "npm run dev & npm run serve"
   },
   "keywords": ["logistics", "ai", "tailwind"],
