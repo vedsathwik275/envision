@@ -1,5 +1,42 @@
 # Changelog
 
+## [Unreleased] - 2025-05-28
+### Added
+- **RIQ Rate Quote Integration**: Complete FastAPI backend integration with Oracle Transportation Management RIQ system
+  - New FastAPI application in `tools/data_tool/` with two endpoints:
+    - `/rate-quote` - Full rate quote with detailed location and item specifications
+    - `/quick-quote` - Simplified rate quote with basic shipment parameters
+  - Comprehensive Pydantic models for request/response validation
+  - CORS middleware configuration for frontend integration
+  - Proper error handling and logging throughout the API
+- **RIQ Rate Quote Frontend Page**: New interactive page in the poc_frontend application
+  - Toggle between Quick Quote and Full Quote modes
+  - Dynamic item management (add/remove items with specifications)
+  - Country selection dropdowns for international shipping
+  - Advanced options including service provider and request type selection
+  - Pre-configured default values (Lancaster, TX to Owasso, OK example)
+- **Enhanced Rate Quote Display**: Beautiful, collapsible rate option cards
+  - Summary view showing key metrics (cost, transit time, provider, distance)
+  - Expandable detailed view with comprehensive cost breakdown
+  - Service details including equipment, timing, and itinerary information
+  - Shipment specifications display with weight and volume
+  - Interactive collapse/expand functionality with smooth animations
+- **Updated Navigation**: Added RIQ Rate Quote section to sidebar navigation with calculator icon
+- **Comprehensive Documentation**: Added detailed README.md with API usage examples and configuration instructions
+
+### Changed
+- **Enhanced API Response Handling**: Improved frontend to parse and display complex RIQ API response structures
+- **Improved Cost Display**: Added support for multiple cost types (total, per-unit, weighted costs)
+- **Better Date Formatting**: Enhanced date/time display for pickup and delivery schedules
+- **Responsive Design**: Ensured all new components work across desktop and mobile devices
+- **Code Organization**: Moved global functions outside document ready scope for better accessibility
+
+### Fixed
+- **Collapsible Card Functionality**: Resolved click handler issues by moving functions to global scope and using event listeners
+- **API Integration**: Fixed CORS and port configuration for seamless backend-frontend communication
+- **Form Validation**: Added proper input validation and error handling for quote requests
+- **Button Styling**: Corrected gradient button styling for consistent appearance
+
 ## [Unreleased] - 2025-05-27
 ### Added
 - **RAG Chatbot API Architecture**: Comprehensive analysis and documentation of existing RAG chatbot codebase
@@ -606,4 +643,4 @@
 
 
 
-Timestamp: 2025-05-27 11:15:00
+Timestamp: 2025-05-28 12:005:00

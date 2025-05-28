@@ -2,12 +2,40 @@
 const API_BASE_URL = 'http://localhost:8000/api';
 // Gmail to S3 API Base URL
 const GMAIL_S3_API_BASE_URL = 'http://localhost:8002';
+// RIQ Rate API Base URL
+const RIQ_API_BASE_URL = 'http://localhost:8006';
 
-// DOM Elements
+// Define global functions outside the document ready scope
+
+/**
+ * Toggle the visibility of a rate card's detailed content
+ */
+function toggleRateCard(cardId) {
+    const content = document.getElementById(`${cardId}-content`);
+    const icon = document.getElementById(`${cardId}-toggle-icon`);
+    
+    if (content && icon) {
+        const isHidden = content.classList.contains('hidden');
+        
+        if (isHidden) {
+            // Expand the card
+            content.classList.remove('hidden');
+            icon.innerHTML = '<i class="fas fa-chevron-up text-lg"></i>';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            // Collapse the card
+            content.classList.add('hidden');
+            icon.innerHTML = '<i class="fas fa-chevron-down text-lg"></i>';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+}
+
+// Document ready function
 document.addEventListener('DOMContentLoaded', () => {
     // Navigation and Sidebar
     const navLinks = document.querySelectorAll('.nav-link');
-    const sections = document.querySelectorAll('#file-upload, #model-training, #model-list, #predictions');
+    const sections = document.querySelectorAll('#file-upload, #model-training, #model-list, #predictions, #riq-rate-quote');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarToggleCollapsed = document.getElementById('sidebar-toggle-collapsed');
     const sidebar = document.getElementById('sidebar');
@@ -66,9 +94,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const s3UploadCheckbox = document.getElementById('s3-upload-checkbox');
     const s3UploadStatus = document.getElementById('s3-upload-status');
     
+    // RIQ Rate Quote Elements
+    const quickQuoteToggle = document.getElementById('quick-quote-toggle');
+    const fullQuoteToggle = document.getElementById('full-quote-toggle');
+    const quickQuoteForm = document.getElementById('quick-quote-form');
+    const fullQuoteForm = document.getElementById('full-quote-form');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const itemsContainer = document.getElementById('items-container');
+    const riqResult = document.getElementById('riq-result');
+    const quoteResultsContainer = document.getElementById('quote-results-container');
+    const quoteSummary = document.getElementById('quote-summary');
+    const quoteOptionsContainer = document.getElementById('quote-options-container');
+    
     // Gmail Integration Variables
     let currentMessageId = null;
     let currentAttachment = null;
+    
+    // RIQ Variables
+    let itemCounter = 1;
     
     // Initialize the app
     init();
@@ -95,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         loadUploadedFiles();
         loadModels();
+        setupRIQ();
     }
     
     function setupNavigation() {
@@ -268,6 +312,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fetch Attachment Button
         if (fetchAttachmentBtn) {
             fetchAttachmentBtn.addEventListener('click', handleFetchAttachment);
+        }
+        
+        // RIQ Rate Quote
+        if (quickQuoteToggle && fullQuoteToggle) {
+            quickQuoteToggle.addEventListener('click', () => switchQuoteMode('quick'));
+            fullQuoteToggle.addEventListener('click', () => switchQuoteMode('full'));
+        }
+        
+        if (quickQuoteForm) {
+            quickQuoteForm.addEventListener('submit', handleQuickQuote);
+        }
+        
+        if (fullQuoteForm) {
+            fullQuoteForm.addEventListener('submit', handleFullQuote);
+        }
+        
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', addNewItem);
+        }
+        
+        // Event delegation for remove item buttons (dynamically added)
+        if (itemsContainer) {
+            itemsContainer.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-item-btn')) {
+                    removeItem(e.target.closest('.item-row'));
+                }
+            });
         }
     }
     
@@ -1943,6 +2014,583 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentContent = s3UploadStatus.textContent;
         s3UploadStatus.textContent = `${currentContent}\n${message}`;
     }
-});
+    
+    /**
+     * Initialize RIQ Rate Quote section
+     */
+    function setupRIQ() {
+        // Set default values for quick quote form
+        if (document.getElementById('quick-source-city')) {
+            document.getElementById('quick-source-city').value = 'Lancaster';
+            document.getElementById('quick-source-state').value = 'TX';
+            document.getElementById('quick-source-zip').value = '75134';
+            document.getElementById('quick-dest-city').value = 'Owasso';
+            document.getElementById('quick-dest-state').value = 'OK';
+            document.getElementById('quick-dest-zip').value = '74055';
+            document.getElementById('quick-weight').value = '2400';
+            document.getElementById('quick-volume').value = '150';
+        }
+        
+        // Set default values for full quote form
+        if (document.getElementById('full-source-city')) {
+            document.getElementById('full-source-city').value = 'Lancaster';
+            document.getElementById('full-source-state').value = 'TX';
+            document.getElementById('full-source-zip').value = '75134';
+            document.getElementById('full-dest-city').value = 'Owasso';
+            document.getElementById('full-dest-state').value = 'OK';
+            document.getElementById('full-dest-zip').value = '74055';
+            document.getElementById('servprov-gid').value = 'BSL.RYGB';
+            document.getElementById('max-options').value = '99';
+        }
+        
+        // Set default values for the first item in full quote
+        const firstItemWeight = document.querySelector('.item-weight');
+        const firstItemVolume = document.querySelector('.item-volume');
+        const firstItemPackageCount = document.querySelector('.item-package-count');
+        
+        if (firstItemWeight) firstItemWeight.value = '2400';
+        if (firstItemVolume) firstItemVolume.value = '150';
+        if (firstItemPackageCount) firstItemPackageCount.value = '1';
+        
+        // Initialize remove button visibility
+        updateRemoveButtons();
+    }
+    
+    // RIQ Rate Quote Functions
+    
+    /**
+     * Switch between quick quote and full quote modes
+     */
+    function switchQuoteMode(mode) {
+        if (mode === 'quick') {
+            // Switch to quick quote mode
+            quickQuoteToggle.classList.remove('bg-neutral-200', 'text-neutral-600');
+            quickQuoteToggle.classList.add('bg-primary-600', 'text-white');
+            fullQuoteToggle.classList.remove('bg-primary-600', 'text-white');
+            fullQuoteToggle.classList.add('bg-neutral-200', 'text-neutral-600');
+            
+            quickQuoteForm.classList.remove('hidden');
+            fullQuoteForm.classList.add('hidden');
+        } else {
+            // Switch to full quote mode
+            fullQuoteToggle.classList.remove('bg-neutral-200', 'text-neutral-600');
+            fullQuoteToggle.classList.add('bg-primary-600', 'text-white');
+            quickQuoteToggle.classList.remove('bg-primary-600', 'text-white');
+            quickQuoteToggle.classList.add('bg-neutral-200', 'text-neutral-600');
+            
+            fullQuoteForm.classList.remove('hidden');
+            quickQuoteForm.classList.add('hidden');
+        }
+    }
+    
+    /**
+     * Handle quick quote form submission
+     */
+    async function handleQuickQuote(e) {
+        e.preventDefault();
+        
+        try {
+            showLoading(riqResult);
+            
+            // Get form data
+            const formData = new FormData(quickQuoteForm);
+            const sourceCity = formData.get('quick-source-city') || document.getElementById('quick-source-city').value;
+            const sourceState = formData.get('quick-source-state') || document.getElementById('quick-source-state').value;
+            const sourceZip = formData.get('quick-source-zip') || document.getElementById('quick-source-zip').value;
+            const destCity = formData.get('quick-dest-city') || document.getElementById('quick-dest-city').value;
+            const destState = formData.get('quick-dest-state') || document.getElementById('quick-dest-state').value;
+            const destZip = formData.get('quick-dest-zip') || document.getElementById('quick-dest-zip').value;
+            const weight = parseFloat(formData.get('quick-weight') || document.getElementById('quick-weight').value);
+            const volume = parseFloat(formData.get('quick-volume') || document.getElementById('quick-volume').value) || 0;
+            
+            // Validate required fields
+            if (!sourceCity || !sourceState || !sourceZip || !destCity || !destState || !destZip || !weight) {
+                throw new Error('Please fill in all required fields');
+            }
+            
+            // Create query parameters
+            const params = new URLSearchParams({
+                source_city: sourceCity,
+                source_state: sourceState,
+                source_zip: sourceZip,
+                dest_city: destCity,
+                dest_state: destState,
+                dest_zip: destZip,
+                weight: weight,
+                volume: volume
+            });
+            
+            // Make API call
+            const response = await fetch(`${RIQ_API_BASE_URL}/quick-quote?${params}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                throw new Error(errorData.detail || 'Failed to get rate quote');
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                displayQuoteResults(result.data, 'quick');
+                showSuccess(riqResult, 'Rate quote retrieved successfully!');
+            } else {
+                throw new Error(result.error || 'Failed to get rate quote');
+            }
+            
+        } catch (error) {
+            console.error('Error getting quick quote:', error);
+            showError(riqResult, `Error: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Handle full quote form submission
+     */
+    async function handleFullQuote(e) {
+        e.preventDefault();
+        
+        try {
+            showLoading(riqResult);
+            
+            // Get form data
+            const sourceLocation = {
+                city: document.getElementById('full-source-city').value,
+                province_code: document.getElementById('full-source-state').value,
+                postal_code: document.getElementById('full-source-zip').value,
+                country_code: document.getElementById('full-source-country').value
+            };
+            
+            const destinationLocation = {
+                city: document.getElementById('full-dest-city').value,
+                province_code: document.getElementById('full-dest-state').value,
+                postal_code: document.getElementById('full-dest-zip').value,
+                country_code: document.getElementById('full-dest-country').value
+            };
+            
+            // Get items
+            const items = [];
+            const itemRows = itemsContainer.querySelectorAll('.item-row');
+            
+            for (const row of itemRows) {
+                const weight = parseFloat(row.querySelector('.item-weight').value);
+                const weightUnit = row.querySelector('.item-weight-unit').value;
+                const volume = parseFloat(row.querySelector('.item-volume').value) || 0;
+                const volumeUnit = row.querySelector('.item-volume-unit').value;
+                const declaredValue = parseFloat(row.querySelector('.item-declared-value').value) || 0;
+                const currency = row.querySelector('.item-currency').value;
+                const packageCount = parseInt(row.querySelector('.item-package-count').value) || 1;
+                
+                if (weight > 0) {
+                    items.push({
+                        weight_value: weight,
+                        weight_unit: weightUnit,
+                        volume_value: volume,
+                        volume_unit: volumeUnit,
+                        declared_value: declaredValue,
+                        currency: currency,
+                        package_count: packageCount
+                    });
+                }
+            }
+            
+            // Validate
+            if (!sourceLocation.city || !sourceLocation.province_code || !sourceLocation.postal_code ||
+                !destinationLocation.city || !destinationLocation.province_code || !destinationLocation.postal_code ||
+                items.length === 0) {
+                throw new Error('Please fill in all required fields and add at least one item');
+            }
+            
+            // Get advanced options
+            const servprovGid = document.getElementById('servprov-gid').value || 'BSL.RYGB';
+            const requestType = document.getElementById('request-type').value || 'AllOptions';
+            const maxOptions = document.getElementById('max-options').value || '99';
+            
+            // Create request payload
+            const requestPayload = {
+                source_location: sourceLocation,
+                destination_location: destinationLocation,
+                items: items,
+                servprov_gid: servprovGid,
+                request_type: requestType,
+                max_primary_options: maxOptions,
+                primary_option_definition: 'BY_ITINERARY'
+            };
+            
+            // Make API call
+            const response = await fetch(`${RIQ_API_BASE_URL}/rate-quote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(requestPayload)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                throw new Error(errorData.detail || 'Failed to get rate quote');
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                displayQuoteResults(result.data, 'full');
+                showSuccess(riqResult, 'Rate quote retrieved successfully!');
+            } else {
+                throw new Error(result.error || 'Failed to get rate quote');
+            }
+            
+        } catch (error) {
+            console.error('Error getting full quote:', error);
+            showError(riqResult, `Error: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Add a new item to the full quote form
+     */
+    function addNewItem() {
+        itemCounter++;
+        
+        const newItemHtml = `
+            <div class="item-row border border-neutral-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h5 class="text-sm font-medium text-neutral-700">Item ${itemCounter}</h5>
+                    <button type="button" class="remove-item-btn text-red-500 hover:text-red-700 transition-colors">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Weight</label>
+                        <div class="flex">
+                            <input type="number" class="item-weight w-full px-3 py-2 border border-neutral-300 rounded-l-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" placeholder="0" min="0" step="0.1">
+                            <select class="item-weight-unit px-3 py-2 border-t border-r border-b border-neutral-300 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                <option value="LB">LB</option>
+                                <option value="KG">KG</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Volume</label>
+                        <div class="flex">
+                            <input type="number" class="item-volume w-full px-3 py-2 border border-neutral-300 rounded-l-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" placeholder="0" min="0" step="0.1">
+                            <select class="item-volume-unit px-3 py-2 border-t border-r border-b border-neutral-300 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                <option value="CUFT">CUFT</option>
+                                <option value="CBM">CBM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Declared Value</label>
+                        <div class="flex">
+                            <input type="number" class="item-declared-value w-full px-3 py-2 border border-neutral-300 rounded-l-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" placeholder="0" min="0" step="0.01">
+                            <select class="item-currency px-3 py-2 border-t border-r border-b border-neutral-300 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                <option value="USD">USD</option>
+                                <option value="CAD">CAD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Package Count</label>
+                        <input type="number" class="item-package-count w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors" placeholder="1" min="1" step="1">
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        itemsContainer.insertAdjacentHTML('beforeend', newItemHtml);
+        updateRemoveButtons();
+    }
+    
+    /**
+     * Remove an item from the full quote form
+     */
+    function removeItem(itemRow) {
+        itemRow.remove();
+        updateRemoveButtons();
+        renumberItems();
+    }
+    
+    /**
+     * Update visibility of remove buttons based on item count
+     */
+    function updateRemoveButtons() {
+        const itemRows = itemsContainer.querySelectorAll('.item-row');
+        const removeButtons = itemsContainer.querySelectorAll('.remove-item-btn');
+        
+        if (itemRows.length <= 1) {
+            // Hide remove button if only one item
+            removeButtons.forEach(btn => btn.classList.add('hidden'));
+        } else {
+            // Show remove buttons if more than one item
+            removeButtons.forEach(btn => btn.classList.remove('hidden'));
+        }
+    }
+    
+    /**
+     * Renumber items after removal
+     */
+    function renumberItems() {
+        const itemRows = itemsContainer.querySelectorAll('.item-row');
+        itemRows.forEach((row, index) => {
+            const header = row.querySelector('h5');
+            header.textContent = `Item ${index + 1}`;
+        });
+        itemCounter = itemRows.length;
+    }
+    
+    /**
+     * Display quote results
+     */
+    function displayQuoteResults(data, quoteType) {
+        const resultsContainer = document.getElementById('quote-results-container');
+        const summaryContainer = document.getElementById('quote-summary');
+        const optionsContainer = document.getElementById('quote-options-container');
+        
+        if (!data || !data.rateAndRouteResponse || !data.rateAndRouteResponse.length) {
+            showError(document.getElementById('riq-result'), 'No rate quotes found in the response.');
+            return;
+        }
+        
+        const rateOptions = data.rateAndRouteResponse;
+        
+        // Clear previous results
+        summaryContainer.innerHTML = '';
+        optionsContainer.innerHTML = '';
+        
+        // Create summary
+        const summaryCard = document.createElement('div');
+        summaryCard.className = 'bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-6 mb-6';
+        summaryCard.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-neutral-900 flex items-center">
+                    <i class="fas fa-shipping-fast mr-2 text-blue-500"></i>
+                    Quote Summary
+                </h4>
+                <span class="text-sm text-neutral-600">${rateOptions.length} option${rateOptions.length > 1 ? 's' : ''} found</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">${rateOptions.length}</div>
+                    <div class="text-sm text-neutral-600">Rate Option${rateOptions.length > 1 ? 's' : ''}</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">$${parseFloat(rateOptions[0].totalActualCost?.value || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                    <div class="text-sm text-neutral-600">Best Rate</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">${rateOptions[0].transitTime?.amount || 'N/A'} ${rateOptions[0].transitTime?.type === 'H' ? 'hrs' : rateOptions[0].transitTime?.type || ''}</div>
+                    <div class="text-sm text-neutral-600">Transit Time</div>
+                </div>
+            </div>
+        `;
+        summaryContainer.appendChild(summaryCard);
+        
+        // Display each rate option
+        rateOptions.forEach((option, index) => {
+            const optionCard = createDetailedRateCard(option, index);
+            optionsContainer.appendChild(optionCard);
+        });
+        
+        resultsContainer.classList.remove('hidden');
+        
+        // Scroll to results
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
-// Remove the color scheme demo functionality since it's no longer needed 
+    function createDetailedRateCard(option, index) {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-neutral-200 rounded-xl shadow-sm hover:shadow-md transition-shadow';
+        
+        // Extract shipment details from toShipments if available
+        const shipment = option.toShipments && option.toShipments[0] ? option.toShipments[0] : {};
+        
+        // Format dates
+        const formatDateTime = (dateString) => {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return 'N/A';
+            }
+        };
+        
+        // Get transport mode display name
+        const getTransportModeDisplay = (gid) => {
+            const modes = {
+                'TL': 'Truck Load (TL)',
+                'LTL': 'Less Than Truck Load (LTL)',
+                'AIR': 'Air Freight',
+                'RAIL': 'Rail',
+                'OCEAN': 'Ocean'
+            };
+            return modes[gid] || gid || 'Unknown';
+        };
+        
+        const cardId = `rate-card-${index}`;
+        
+        card.innerHTML = `
+            <!-- Card Header (Always Visible) -->
+            <div class="p-6 cursor-pointer rate-card-header" data-card-id="${cardId}">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            ${index + 1}
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-neutral-900">Rate Option ${index + 1}</h4>
+                            <p class="text-sm text-neutral-600">${getTransportModeDisplay(option.transportMode?.transportModeGid)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-green-600">$${parseFloat(option.totalActualCost?.value || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                            <div class="text-sm text-neutral-600">${option.totalActualCost?.currency || 'USD'}</div>
+                        </div>
+                        <div class="text-neutral-400 transition-transform duration-200" id="${cardId}-toggle-icon">
+                            <i class="fas fa-chevron-down text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Summary (Visible when collapsed) -->
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="text-center bg-purple-50 rounded-lg p-3">
+                        <div class="text-lg font-bold text-purple-700">${option.transitTime?.amount || 'N/A'}</div>
+                        <div class="text-xs text-purple-600">Transit ${option.transitTime?.type === 'H' ? 'Hours' : (option.transitTime?.type || 'Time')}</div>
+                    </div>
+                    <div class="text-center bg-blue-50 rounded-lg p-3">
+                        <div class="text-lg font-bold text-blue-700">${option.serviceProvider?.servprovGid || 'N/A'}</div>
+                        <div class="text-xs text-blue-600">Service Provider</div>
+                    </div>
+                    <div class="text-center bg-orange-50 rounded-lg p-3">
+                        <div class="text-lg font-bold text-orange-700">${shipment.distance?.amount ? parseFloat(shipment.distance.amount).toFixed(1) : 'N/A'}</div>
+                        <div class="text-xs text-orange-600">${shipment.distance?.type === 'MI' ? 'Miles' : (shipment.distance?.type || 'Distance')}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expandable Content -->
+            <div class="rate-card-content hidden" id="${cardId}-content">
+                <!-- Cost Breakdown -->
+                <div class="px-6 pb-6">
+                    <div class="border-t border-neutral-100 pt-6">
+                        <h5 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
+                            <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+                            Cost Breakdown
+                        </h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                                <div class="text-lg font-bold text-green-700">$${parseFloat(option.totalActualCost?.value || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                                <div class="text-xs text-green-600 mt-1">Total Cost</div>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                                <div class="text-lg font-bold text-blue-700">$${parseFloat(option.costPerUnit?.value || 0).toFixed(2)}</div>
+                                <div class="text-xs text-blue-600 mt-1">Cost Per Unit</div>
+                            </div>
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+                                <div class="text-lg font-bold text-purple-700">$${parseFloat(option.totalWeightedCost?.value || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                                <div class="text-xs text-purple-600 mt-1">Weighted Cost</div>
+                            </div>
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                                <div class="text-lg font-bold text-orange-700">$${parseFloat(option.weightedCostPerUnit?.value || 0).toFixed(2)}</div>
+                                <div class="text-xs text-orange-600 mt-1">Weighted Per Unit</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Details -->
+                    <div class="border-t border-neutral-100 pt-6 mt-6">
+                        <h5 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
+                            <i class="fas fa-truck mr-2 text-neutral-600"></i>
+                            Service Details
+                        </h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Service Provider:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${option.serviceProvider?.servprovGid || 'N/A'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Equipment:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${option.equipmentGroup?.equipmentGroupGid?.replace('BSL.', '') || 'N/A'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Rate Offering:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${option.primaryRateOffering?.rateOfferingGid?.replace('BSL.', '') || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Pickup Time:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${formatDateTime(option.startTime?.value)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Delivery Time:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${formatDateTime(option.endTime?.value)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-neutral-600">Itinerary:</span>
+                                    <span class="text-sm font-medium text-neutral-900">${option.itinerary?.itineraryGid?.replace('BSL.', '') || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipment Details -->
+                    ${shipment.weight || shipment.volume ? `
+                    <div class="border-t border-neutral-100 pt-6 mt-6">
+                        <h5 class="text-sm font-semibold text-neutral-900 mb-4 flex items-center">
+                            <i class="fas fa-boxes mr-2 text-neutral-600"></i>
+                            Shipment Specifications
+                        </h5>
+                        <div class="flex items-center justify-center space-x-8">
+                            ${shipment.weight ? `
+                            <div class="text-center">
+                                <div class="text-lg font-bold text-neutral-900">${parseFloat(shipment.weight.amount).toLocaleString()}</div>
+                                <div class="text-sm text-neutral-600">${shipment.weight.type}</div>
+                            </div>
+                            ` : ''}
+                            ${shipment.volume ? `
+                            <div class="text-center">
+                                <div class="text-lg font-bold text-neutral-900">${parseFloat(shipment.volume.amount).toLocaleString()}</div>
+                                <div class="text-sm text-neutral-600">${shipment.volume.type}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Action Button -->
+                    <div class="border-t border-neutral-100 pt-6 mt-6">
+                        <button class="w-full bg-gradient-to-r from-blue-600 to-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center justify-center">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Select This Rate Option
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add click event listener to the header
+        const header = card.querySelector('.rate-card-header');
+        header.addEventListener('click', function() {
+            toggleRateCard(cardId);
+        });
+        
+        return card;
+    }
+});
