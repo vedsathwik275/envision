@@ -2,6 +2,36 @@
 
 ## [Unreleased] - 2025-05-28
 ### Added
+- **Enhanced RAG Chatbot UI with Lane Information Parsing**: Major UI enhancement inspired by rate inquiry interface
+  - **Reduced Chat Window Height**: Optimized chat interface to use only 50% of viewport height to make room for information cards
+  - **Lane Information Cards**: Added two interactive cards below the chat interface:
+    - **Rate Inquiry Details Card**: Displays parsed lane information for rate-related queries with blue color scheme
+    - **Spot API Analysis Card**: Shows analysis parameters for performance and spot market queries with green color scheme
+  - **Intelligent Prompt Parsing**: Comprehensive natural language processing for transportation queries:
+    - **Lane Detection**: Supports multiple formats ("from X to Y", "X-Y", "between X and Y", "Elwood to Miami")
+    - **Shipment Details**: Automatically extracts weight (lbs, kg, tons), volume (cuft, cbm), zip codes, and states
+    - **Equipment Types**: Recognizes dry van, flatbed, refrigerated, tanker, LTL, FTL, container, and specialized equipment
+    - **Service Types**: Identifies expedited, standard, economy, same day, next day, and ground services
+    - **Carrier Information**: Advanced carrier name detection with multiple pattern matching
+  - **Smart Card Population**: Automatic categorization of queries:
+    - Rate inquiry keywords trigger Rate Inquiry card (rate, price, cost, quote, freight, shipping)
+    - Spot API keywords trigger Spot API card (performance, analytics, market, capacity, utilization)
+    - Ambiguous queries with clear lane info populate both cards
+  - **Enhanced Card Design**: Professional layout with:
+    - Color-coded status indicators and sections
+    - Organized parameter grids for easy scanning
+    - Original query preservation for reference
+    - Next steps guidance for API integration
+    - Visual hierarchy with icons and color-coded backgrounds
+  - **Improved UX Features**:
+    - Cards automatically clear when chat is cleared
+    - Enter key support for message sending
+    - Robust error handling for edge cases
+    - Default examples and help text when no data is available
+  - **Future-Ready Architecture**: Prepared for API integration with parsed parameters ready for:
+    - RIQ rate quote API calls with structured lane data
+    - Spot market analysis API integration
+    - Carrier performance prediction system
 - **RIQ Rate Quote Integration**: Complete FastAPI backend integration with Oracle Transportation Management RIQ system
   - New FastAPI application in `tools/data_tool/` with two endpoints:
     - `/rate-quote` - Full rate quote with detailed location and item specifications
@@ -23,6 +53,20 @@
   - Interactive collapse/expand functionality with smooth animations
 - **Updated Navigation**: Added RIQ Rate Quote section to sidebar navigation with calculator icon
 - **Comprehensive Documentation**: Added detailed README.md with API usage examples and configuration instructions
+- **Enhanced RAG Chatbot Backend Performance**: Major backend optimization for transportation lane queries
+  - **Enhanced Prompt Template**: Modified to focus on transportation/logistics documents and always start with best performance metric
+  - **Performance Extraction Methods**: Added `extract_performance_metrics()`, `find_best_performance()`, and `enhance_answer_with_performance()` methods
+  - **Enhanced Carrier and Lane Extraction**: Improved extraction from CSV content with support for tender performance metrics
+  - **Professional Response Formatting**: Implemented Claude-like formatting with clean typography and proper structure
+  - **Constraint System**: Added focused constraints to prevent unwanted lane comparisons and hallucination
+  - **Enhanced Retriever Implementation**: Created `EnhancedRetriever` class for improved document retrieval:
+    - Multiple query format attempts for better CSV matching
+    - Support for "source city X and destination city Y" pattern recognition
+    - CSV-like format queries (`REDLANDS,SHELBY`)
+    - Carrier-specific queries (`ODFL REDLANDS SHELBY`)
+    - Performance context queries (`predicted_ontime_performance REDLANDS SHELBY`)
+    - Smart deduplication and up to 8 document returns
+    - Increased search scope (k=6, fetch_k=20) for more diverse results
 
 ### Changed
 - **Enhanced API Response Handling**: Improved frontend to parse and display complex RIQ API response structures
@@ -30,12 +74,29 @@
 - **Better Date Formatting**: Enhanced date/time display for pickup and delivery schedules
 - **Responsive Design**: Ensured all new components work across desktop and mobile devices
 - **Code Organization**: Moved global functions outside document ready scope for better accessibility
+- **Enhanced Response Formatting**: Fixed duplicate confidence headers and improved markdown parsing in frontend
+- **Backend Retrieval Enhancement**: Implemented multiple query format attempts to address vector search limitations for specific lane combinations
 
 ### Fixed
 - **Collapsible Card Functionality**: Resolved click handler issues by moving functions to global scope and using event listeners
 - **API Integration**: Fixed CORS and port configuration for seamless backend-frontend communication
 - **Form Validation**: Added proper input validation and error handling for quote requests
 - **Button Styling**: Corrected gradient button styling for consistent appearance
+- **Duplicate Confidence Headers Issue**: LLM was generating proper format but post-processing added another header - improved detection logic
+- **Formatting Problems**: Raw responses showing ugly markdown - implemented professional formatting with clean typography
+- **Carrier Information Missing**: Enhanced prompt to always identify carrier associated with highest performance
+- **Hallucination and Unwanted Comparisons**: Added focused constraints to prevent mentions of irrelevant lanes
+
+### Issues to Address
+- **Critical Retrieval Problem**: Vector search fails to find specific lane data despite CSV containing target information
+  - **Symptom**: Query "for the source city redlands and the destination city shelby, give me the details" fails to retrieve `ODFL,REDLANDS,SHELBY,82.8957290649414` from CSV
+  - **Root Cause**: Vector search retrieves 9 documents but none contain REDLANDS to SHELBY combination (finds REDLANDS to SALEM, REDLANDS to RICHMOND, but not SHELBY)
+  - **Attempted Solution**: Enhanced Retriever with multiple query formats, but still experiencing retrieval failures
+  - **Next Steps**: 
+    - Consider improving document chunking strategy for CSV data
+    - Investigate embedding model performance on transportation data
+    - Potentially implement keyword-based search fallback
+    - Review CSV document preprocessing and indexing
 
 ## [Unreleased] - 2025-05-27
 ### Added
