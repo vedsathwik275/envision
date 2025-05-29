@@ -106,6 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const quoteSummary = document.getElementById('quote-summary');
     const quoteOptionsContainer = document.getElementById('quote-options-container');
     
+    // Knowledge Base Integration Elements
+    const uploadToKBModal = document.getElementById('upload-to-kb-modal');
+    const createKBModal = document.getElementById('create-kb-modal');
+    const selectKBModal = document.getElementById('select-kb-modal');
+    
     // Gmail Integration Variables
     let currentMessageId = null;
     let currentAttachment = null;
@@ -139,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUploadedFiles();
         loadModels();
         setupRIQ();
+        initializeKBModals();
     }
     
     function setupNavigation() {
@@ -1013,6 +1019,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Store the prediction metadata for summary
             const predictionMetadata = data;
             
+            // Reset any previous KB upload state for new predictions
+            currentUploadedKBId = null;
+            
             // Step 2: Fetch the actual prediction data using a separate API call
             console.log(`Step 2: Fetching prediction results for model ${modelId}`);
             
@@ -1204,9 +1213,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create download links - only if we have a model ID
         if (modelId) {
+            // Store prediction data globally for upload to knowledge base
+            window.currentPredictionData = predictionData;
+            window.currentModelType = modelType;
+            
             // Important: Keep hyphens in the URL path for API endpoints
             const downloadHTML = `
-                <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4 mb-4">
                     <h4 class="font-medium text-neutral-900 mb-3">Download Predictions</h4>
                     <div class="flex space-x-3">
                         <a href="${API_BASE_URL}/predictions/${modelType}/${modelId}/download?format=csv" class="inline-flex items-center px-4 py-2 bg-neutral-600 text-white font-medium rounded-lg hover:bg-neutral-700 transition-colors" target="_blank">
@@ -1219,9 +1232,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         </a>
                     </div>
                 </div>
+                <div class="bg-primary-50 border border-primary-200 rounded-lg p-4">
+                    <h4 class="font-medium text-neutral-900 mb-3">Knowledge Base Integration</h4>
+                    <button id="upload-to-kb-trigger" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-database mr-2"></i>
+                        Upload to Knowledge Base
+                    </button>
+                </div>
             `;
             console.log('Setting download HTML');
             downloadElement.innerHTML = downloadHTML;
+            
+            // Add event listener for the upload button
+            setTimeout(() => {
+                const uploadTriggerBtn = document.getElementById('upload-to-kb-trigger');
+                if (uploadTriggerBtn) {
+                    uploadTriggerBtn.addEventListener('click', () => {
+                        // Check if we have an uploaded KB ID - if so, open chat
+                        if (currentUploadedKBId) {
+                            window.open(`${RAG_CHATBOT_FRONTEND_URL}?kb=${currentUploadedKBId}`, '_blank');
+                        } else {
+                            // Otherwise, open the upload modal
+                            openUploadToKBModal();
+                        }
+                    });
+                }
+            }, 100);
         } else {
             downloadElement.innerHTML = '';
         }
@@ -2592,5 +2628,445 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         return card;
+    }
+
+    // Knowledge Base Integration Functions
+    
+    // Constants
+    const RAG_CHATBOT_API_BASE_URL = 'http://localhost:8004/api/v1';
+    const RAG_CHATBOT_FRONTEND_URL = 'http://localhost:5003';
+    
+    // Global variables for KB integration
+    let selectedKBId = null;
+    let availableKBs = [];
+    let currentUploadedKBId = null;
+    
+    /**
+     * Initialize Knowledge Base modal elements and event listeners
+     */
+    function initializeKBModals() {
+        // Modal elements are now declared at the top level
+        
+        // Upload to KB Modal events
+        document.getElementById('close-kb-modal').addEventListener('click', closeUploadToKBModal);
+        document.getElementById('create-new-kb-btn').addEventListener('click', openCreateKBModal);
+        document.getElementById('upload-to-existing-kb-btn').addEventListener('click', openSelectKBModal);
+        document.getElementById('view-kb-btn').addEventListener('click', openKBFrontend);
+        
+        // Create KB Modal events
+        document.getElementById('close-create-kb-modal').addEventListener('click', closeCreateKBModal);
+        document.getElementById('cancel-create-kb-btn').addEventListener('click', closeCreateKBModal);
+        document.getElementById('create-kb-form').addEventListener('submit', handleCreateKB);
+        
+        // Select KB Modal events
+        document.getElementById('close-select-kb-modal').addEventListener('click', closeSelectKBModal);
+        document.getElementById('cancel-select-kb-btn').addEventListener('click', closeSelectKBModal);
+        document.getElementById('upload-to-selected-kb-btn').addEventListener('click', handleUploadToSelectedKB);
+    }
+    
+    /**
+     * Open the main upload to knowledge base modal
+     */
+    function openUploadToKBModal() {
+        if (uploadToKBModal) {
+            uploadToKBModal.classList.remove('hidden');
+        }
+    }
+    
+    /**
+     * Close the main upload to knowledge base modal
+     */
+    function closeUploadToKBModal() {
+        if (uploadToKBModal) {
+            uploadToKBModal.classList.add('hidden');
+        }
+    }
+    
+    /**
+     * Open the create knowledge base modal
+     */
+    function openCreateKBModal() {
+        closeUploadToKBModal();
+        if (createKBModal) {
+            // Reset form
+            document.getElementById('kb-name').value = '';
+            document.getElementById('kb-description').value = '';
+            document.getElementById('create-kb-status').classList.add('hidden');
+            
+            createKBModal.classList.remove('hidden');
+        }
+    }
+    
+    /**
+     * Close the create knowledge base modal
+     */
+    function closeCreateKBModal() {
+        if (createKBModal) {
+            createKBModal.classList.add('hidden');
+        }
+    }
+    
+    /**
+     * Open the select existing knowledge base modal
+     */
+    async function openSelectKBModal() {
+        closeUploadToKBModal();
+        if (selectKBModal) {
+            selectKBModal.classList.remove('hidden');
+            await loadKnowledgeBases();
+        }
+    }
+    
+    /**
+     * Close the select knowledge base modal
+     */
+    function closeSelectKBModal() {
+        if (selectKBModal) {
+            selectKBModal.classList.add('hidden');
+            selectedKBId = null;
+            document.getElementById('upload-to-selected-kb-btn').disabled = true;
+        }
+    }
+    
+    /**
+     * Open the knowledge base frontend in a new tab
+     */
+    function openKBFrontend() {
+        window.open(RAG_CHATBOT_FRONTEND_URL, '_blank');
+        closeUploadToKBModal();
+    }
+    
+    /**
+     * Handle creating a new knowledge base and uploading predictions
+     */
+    async function handleCreateKB(e) {
+        e.preventDefault();
+        
+        const nameInput = document.getElementById('kb-name');
+        const descriptionInput = document.getElementById('kb-description');
+        const statusDiv = document.getElementById('create-kb-status');
+        const submitBtn = document.getElementById('submit-create-kb-btn');
+        
+        const name = nameInput.value.trim();
+        const description = descriptionInput.value.trim();
+        
+        if (!name) {
+            showKBStatus(statusDiv, 'error', 'Knowledge base name is required.');
+            return;
+        }
+        
+        try {
+            // Disable submit button and show loading
+            submitBtn.disabled = true;
+            showKBStatus(statusDiv, 'loading', 'Creating knowledge base...');
+            
+            // Create knowledge base
+            const createResponse = await fetch(`${RAG_CHATBOT_API_BASE_URL}/knowledge_bases`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description || null
+                })
+            });
+            
+            if (!createResponse.ok) {
+                const errorData = await createResponse.json().catch(() => ({ detail: 'Failed to create knowledge base' }));
+                throw new Error(errorData.detail || 'Failed to create knowledge base');
+            }
+            
+            const kbData = await createResponse.json();
+            showKBStatus(statusDiv, 'success', `Knowledge base "${name}" created successfully!`);
+            
+            // Upload predictions to the new knowledge base
+            await uploadPredictionsToKB(kbData.id, statusDiv);
+            
+            // Process the knowledge base
+            await processKnowledgeBase(kbData.id, statusDiv);
+            
+            // Success - offer to open chat
+            setTimeout(() => {
+                // Change the upload button to a chat button
+                changeUploadButtonToChat(kbData.id);
+                
+                // if (confirm('Knowledge base created and processed successfully! Would you like to open the chat interface?')) {
+                //     window.open(`${RAG_CHATBOT_FRONTEND_URL}?kb=${kbData.id}`, '_blank');
+                // }
+                closeCreateKBModal();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error creating knowledge base:', error);
+            showKBStatus(statusDiv, 'error', `Error: ${error.message}`);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+    
+    /**
+     * Load and display available knowledge bases
+     */
+    async function loadKnowledgeBases() {
+        const container = document.getElementById('kb-list-container');
+        const statusDiv = document.getElementById('select-kb-status');
+        
+        try {
+            showKBStatus(statusDiv, 'loading', 'Loading knowledge bases...');
+            
+            const response = await fetch(`${RAG_CHATBOT_API_BASE_URL}/knowledge_bases`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: 'Failed to load knowledge bases' }));
+                throw new Error(errorData.detail || 'Failed to load knowledge bases');
+            }
+            
+            availableKBs = await response.json();
+            
+            if (availableKBs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-database text-4xl text-neutral-300 mb-4"></i>
+                        <p class="text-neutral-600">No knowledge bases found.</p>
+                        <p class="text-sm text-neutral-500 mt-2">Create a new one to get started.</p>
+                    </div>
+                `;
+                showKBStatus(statusDiv, 'info', 'No knowledge bases found. Create a new one to get started.');
+                return;
+            }
+            
+            // Display knowledge bases
+            container.innerHTML = `
+                <div class="space-y-3">
+                    ${availableKBs.map(kb => `
+                        <div class="kb-item border border-neutral-200 rounded-lg p-4 cursor-pointer hover:bg-neutral-50 transition-colors" data-kb-id="${kb.id}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <h4 class="font-medium text-neutral-900">${kb.name}</h4>
+                                    ${kb.description ? `<p class="text-sm text-neutral-600 mt-1">${kb.description}</p>` : ''}
+                                    <div class="flex items-center space-x-4 mt-2 text-xs text-neutral-500">
+                                        <span>Documents: ${kb.document_count || 0}</span>
+                                        <span>Status: ${kb.status}</span>
+                                        ${kb.created_at ? `<span>Created: ${new Date(kb.created_at).toLocaleDateString()}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <i class="fas fa-circle text-neutral-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Add click event listeners
+            container.querySelectorAll('.kb-item').forEach(item => {
+                item.addEventListener('click', () => selectKnowledgeBase(item.dataset.kbId));
+            });
+            
+            showKBStatus(statusDiv, 'success', `Found ${availableKBs.length} knowledge base(s).`);
+            
+        } catch (error) {
+            console.error('Error loading knowledge bases:', error);
+            container.innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    Error loading knowledge bases: ${error.message}
+                </div>
+            `;
+            showKBStatus(statusDiv, 'error', `Error: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Select a knowledge base for upload
+     */
+    function selectKnowledgeBase(kbId) {
+        selectedKBId = kbId;
+        
+        // Update UI to show selection
+        document.querySelectorAll('.kb-item').forEach(item => {
+            if (item.dataset.kbId === kbId) {
+                item.classList.add('bg-primary-50', 'border-primary-300');
+                item.querySelector('.fas').className = 'fas fa-check-circle text-primary-500';
+            } else {
+                item.classList.remove('bg-primary-50', 'border-primary-300');
+                item.querySelector('.fas').className = 'fas fa-circle text-neutral-300';
+            }
+        });
+        
+        // Enable upload button
+        document.getElementById('upload-to-selected-kb-btn').disabled = false;
+    }
+    
+    /**
+     * Handle uploading to selected knowledge base
+     */
+    async function handleUploadToSelectedKB() {
+        if (!selectedKBId) {
+            return;
+        }
+        
+        const statusDiv = document.getElementById('select-kb-status');
+        const uploadBtn = document.getElementById('upload-to-selected-kb-btn');
+        
+        try {
+            uploadBtn.disabled = true;
+            
+            // Upload predictions to the selected knowledge base
+            await uploadPredictionsToKB(selectedKBId, statusDiv);
+            
+            // Process the knowledge base
+            await processKnowledgeBase(selectedKBId, statusDiv);
+            
+            // Success - offer to open chat
+            setTimeout(() => {
+                // Change the upload button to a chat button
+                changeUploadButtonToChat(selectedKBId);
+                
+                // if (confirm('Predictions uploaded and processed successfully! Would you like to open the chat interface?')) {
+                //     window.open(`${RAG_CHATBOT_FRONTEND_URL}?kb=${selectedKBId}`, '_blank');
+                // }
+                closeSelectKBModal();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error uploading to knowledge base:', error);
+            showKBStatus(statusDiv, 'error', `Error: ${error.message}`);
+        } finally {
+            uploadBtn.disabled = false;
+        }
+    }
+    
+    /**
+     * Upload prediction data to knowledge base as CSV
+     */
+    async function uploadPredictionsToKB(kbId, statusDiv) {
+        if (!window.currentPredictionData || !window.currentModelType) {
+            throw new Error('No prediction data available for upload');
+        }
+        
+        showKBStatus(statusDiv, 'loading', 'Converting predictions to CSV...');
+        
+        try {
+            // Get simplified CSV data from the backend
+            const modelId = window.currentPredictionData.model_id;
+            const response = await fetch(`${API_BASE_URL}/predictions/${window.currentModelType}/${modelId}/download?format=csv&simplified=true`, {
+                method: 'GET',
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to get CSV data from predictions API');
+            }
+            
+            const csvBlob = await response.blob();
+            
+            showKBStatus(statusDiv, 'loading', 'Uploading predictions to knowledge base...');
+            
+            // Create form data for upload
+            const formData = new FormData();
+            const filename = `predictions_${window.currentModelType}_${modelId}_${new Date().toISOString().split('T')[0]}.csv`;
+            formData.append('file', csvBlob, filename);
+            
+            // Upload to knowledge base
+            const uploadResponse = await fetch(`${RAG_CHATBOT_API_BASE_URL}/knowledge_bases/${kbId}/documents`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json().catch(() => ({ detail: 'Failed to upload document' }));
+                throw new Error(errorData.detail || 'Failed to upload document');
+            }
+            
+            showKBStatus(statusDiv, 'success', 'Predictions uploaded successfully!');
+            
+        } catch (error) {
+            console.error('Error uploading predictions:', error);
+            throw new Error(`Upload failed: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Process knowledge base after upload
+     */
+    async function processKnowledgeBase(kbId, statusDiv) {
+        showKBStatus(statusDiv, 'loading', 'Processing knowledge base...');
+        
+        try {
+            const response = await fetch(`${RAG_CHATBOT_API_BASE_URL}/knowledge_bases/${kbId}/process`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    retriever_type: 'hybrid'
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: 'Failed to process knowledge base' }));
+                throw new Error(errorData.detail || 'Failed to process knowledge base');
+            }
+            
+            showKBStatus(statusDiv, 'success', 'Knowledge base processed successfully!');
+            
+        } catch (error) {
+            console.error('Error processing knowledge base:', error);
+            throw new Error(`Processing failed: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Show status message in knowledge base modals
+     */
+    function showKBStatus(statusDiv, type, message) {
+        if (!statusDiv) return;
+        
+        const typeClasses = {
+            loading: 'bg-blue-50 border-blue-200 text-blue-700',
+            success: 'bg-green-50 border-green-200 text-green-700',
+            error: 'bg-red-50 border-red-200 text-red-700',
+            info: 'bg-neutral-50 border-neutral-200 text-neutral-700'
+        };
+        
+        const icons = {
+            loading: 'fas fa-spinner fa-spin',
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            info: 'fas fa-info-circle'
+        };
+        
+        statusDiv.className = `${typeClasses[type]} border px-4 py-3 rounded-lg flex items-center`;
+        statusDiv.innerHTML = `
+            <i class="${icons[type]} mr-2"></i>
+            ${message}
+        `;
+        statusDiv.classList.remove('hidden');
+    }
+    
+    /**
+     * Change the "Upload to Knowledge Base" button to a "Chat" button after successful upload
+     */
+    function changeUploadButtonToChat(kbId) {
+        const uploadButton = document.getElementById('upload-to-kb-trigger');
+        if (uploadButton) {
+            // Store the KB ID globally
+            currentUploadedKBId = kbId;
+            
+            // Update button appearance and text
+            uploadButton.innerHTML = `
+                <i class="fas fa-comments mr-2"></i>
+                Chat
+            `;
+            uploadButton.className = 'inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors';
+            
+            // The event listener will check currentUploadedKBId and act accordingly
+        }
     }
 });

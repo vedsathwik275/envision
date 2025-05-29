@@ -16,6 +16,7 @@ from datetime import datetime
 import pickle
 import logging
 import json
+from typing import Dict, Optional, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,14 @@ np.random.seed(42)
 tf.random.set_seed(42)
 
 class CarrierPerformanceModel:
-    def __init__(self, data_path=None, model_path=None):
+    """
+    Carrier Performance Neural Network Model for predicting on-time performance.
+    
+    This model handles both legacy quarter-based data and new month-based data with 
+    expanded geographic features including state and country information.
+    """
+    
+    def __init__(self, data_path: Optional[str] = None, model_path: Optional[str] = None) -> None:
         """Initialize the Carrier Performance prediction model.
         
         Args:
@@ -35,9 +43,13 @@ class CarrierPerformanceModel:
         self.model_path = model_path
         self.model = None
         self.carrier_encoder = None
-        self.source_encoder = None
-        self.dest_encoder = None
-        self.quarter_encoder = None
+        self.source_city_encoder = None
+        self.source_state_encoder = None
+        self.source_country_encoder = None
+        self.dest_city_encoder = None
+        self.dest_state_encoder = None
+        self.dest_country_encoder = None
+        self.time_encoder = None  # For quarter or tracking_month
         self.scaler = None
         self.preprocessed_data = None
         self.X_train = None
@@ -45,6 +57,7 @@ class CarrierPerformanceModel:
         self.y_train = None
         self.y_test = None
         self.feature_columns = None
+        self.data_format = None  # 'legacy' or 'new'
         
         # If data path is provided, load and preprocess the data
         if data_path:
@@ -54,10 +67,40 @@ class CarrierPerformanceModel:
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
     
-    def load_data(self):
+    def _detect_data_format(self, data: pd.DataFrame) -> str:
+        """Detect whether the data is in legacy or new format.
+        
+        Args:
+            data: The loaded DataFrame
+            
+        Returns:
+            'legacy' for quarter-based data or 'new' for month-based data
+        """
+        # Check for new format indicators
+        has_tracking_month = 'TRACKING_MONTH' in data.columns
+        has_state_columns = 'SOURCE_STATE' in data.columns and 'DEST_STATE' in data.columns
+        has_country_columns = 'SOURCE_COUNTRY' in data.columns and 'DEST_COUNTRY' in data.columns
+        
+        # Check for legacy format indicators
+        has_qtr = 'QTR' in data.columns
+        
+        if has_tracking_month and has_state_columns and has_country_columns:
+            return 'new'
+        elif has_qtr:
+            return 'legacy'
+        else:
+            # Default to legacy if ambiguous
+            logger.warning("Data format ambiguous, defaulting to legacy format")
+            return 'legacy'
+    
+    def load_data(self) -> pd.DataFrame:
         """Load and perform initial preprocessing of the data."""
         logger.info(f"Loading data from {self.data_path}...")
         self.raw_data = pd.read_csv(self.data_path)
+        
+        # Detect data format
+        self.data_format = self._detect_data_format(self.raw_data)
+        logger.info(f"Detected data format: {self.data_format}")
         
         # Check data integrity
         if self.raw_data.isnull().sum().sum() > 0:
@@ -67,24 +110,156 @@ class CarrierPerformanceModel:
         logger.info(f"Data loaded successfully. Shape: {self.raw_data.shape}")
         return self.raw_data
     
-    def preprocess_data(self):
+    def preprocess_data(self) -> pd.DataFrame:
         """Preprocess the data for training the neural network."""
         logger.info("Preprocessing data...")
         
         # Create a copy of the raw data
         data = self.raw_data.copy()
         
+        if self.data_format == 'new':
+            return self._preprocess_new_format(data)
+        else:
+            return self._preprocess_legacy_format(data)
+    
+    def _preprocess_new_format(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess data in the new format with tracking months and expanded location data."""
+        logger.info("Preprocessing new format data with tracking months and expanded location features...")
+        
+        # Create comprehensive lane identifier
+        data['LANE_ID'] = (data['SOURCE_CITY'] + '_' + data['SOURCE_STATE'] + '_' + 
+                          data['SOURCE_COUNTRY'] + '_TO_' + data['DEST_CITY'] + '_' + 
+                          data['DEST_STATE'] + '_' + data['DEST_COUNTRY'])
+        
+        # One-hot encoding for categorical variables
+        logger.info("Encoding categorical variables for new format...")
+        
+        # Time encoding (tracking month)
+        self.time_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        time_encoded = self.time_encoder.fit_transform(data[['TRACKING_MONTH']])
+        time_columns = [f'TRACKING_MONTH_{i}' for i in range(time_encoded.shape[1])]
+        time_df = pd.DataFrame(time_encoded, columns=time_columns)
+        
+        # Carrier encoding
+        self.carrier_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        carrier_encoded = self.carrier_encoder.fit_transform(data[['CARRIER']])
+        carrier_columns = [f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])]
+        carrier_df = pd.DataFrame(carrier_encoded, columns=carrier_columns)
+        
+        # Source location encoding
+        self.source_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_city_encoded = self.source_city_encoder.fit_transform(data[['SOURCE_CITY']])
+        source_city_columns = [f'SOURCE_CITY_{i}' for i in range(source_city_encoded.shape[1])]
+        source_city_df = pd.DataFrame(source_city_encoded, columns=source_city_columns)
+        
+        self.source_state_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_state_encoded = self.source_state_encoder.fit_transform(data[['SOURCE_STATE']])
+        source_state_columns = [f'SOURCE_STATE_{i}' for i in range(source_state_encoded.shape[1])]
+        source_state_df = pd.DataFrame(source_state_encoded, columns=source_state_columns)
+        
+        self.source_country_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_country_encoded = self.source_country_encoder.fit_transform(data[['SOURCE_COUNTRY']])
+        source_country_columns = [f'SOURCE_COUNTRY_{i}' for i in range(source_country_encoded.shape[1])]
+        source_country_df = pd.DataFrame(source_country_encoded, columns=source_country_columns)
+        
+        # Destination location encoding - handle high cardinality for cities
+        dest_city_counts = data['DEST_CITY'].value_counts()
+        top_dest_cities = dest_city_counts.nlargest(50).index.tolist()  # Use top 50 destination cities
+        data['DEST_CITY_GROUPED'] = data['DEST_CITY'].apply(lambda x: x if x in top_dest_cities else 'OTHER')
+        
+        self.dest_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_city_encoded = self.dest_city_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
+        dest_city_columns = [f'DEST_CITY_{i}' for i in range(dest_city_encoded.shape[1])]
+        dest_city_df = pd.DataFrame(dest_city_encoded, columns=dest_city_columns)
+        
+        self.dest_state_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_state_encoded = self.dest_state_encoder.fit_transform(data[['DEST_STATE']])
+        dest_state_columns = [f'DEST_STATE_{i}' for i in range(dest_state_encoded.shape[1])]
+        dest_state_df = pd.DataFrame(dest_state_encoded, columns=dest_state_columns)
+        
+        self.dest_country_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_country_encoded = self.dest_country_encoder.fit_transform(data[['DEST_COUNTRY']])
+        dest_country_columns = [f'DEST_COUNTRY_{i}' for i in range(dest_country_encoded.shape[1])]
+        dest_country_df = pd.DataFrame(dest_country_encoded, columns=dest_country_columns)
+        
+        # Scale numerical features
+        self.scaler = StandardScaler()
+        numerical_cols = ['ORDER_COUNT', 'AVG_TRANSIT_DAYS', 'ACTUAL_TRANSIT_DAYS']
+        if set(numerical_cols).issubset(data.columns):
+            numerical_data = self.scaler.fit_transform(data[numerical_cols])
+            numerical_df = pd.DataFrame(numerical_data, columns=numerical_cols)
+        else:
+            logger.warning(f"Not all numerical columns found in data. Available columns: {data.columns}")
+            numerical_df = pd.DataFrame()
+            available_num_cols = [col for col in numerical_cols if col in data.columns]
+            if available_num_cols:
+                numerical_data = self.scaler.fit_transform(data[available_num_cols])
+                numerical_df = pd.DataFrame(numerical_data, columns=available_num_cols)
+        
+        # Reset indices to ensure proper concatenation
+        for df in [data, time_df, carrier_df, source_city_df, source_state_df, source_country_df,
+                  dest_city_df, dest_state_df, dest_country_df]:
+            df.reset_index(drop=True, inplace=True)
+        if not numerical_df.empty:
+            numerical_df.reset_index(drop=True, inplace=True)
+        
+        # Create the final processed dataset
+        dfs_to_concat = [
+            data[['ONTIME_PERFORMANCE']],
+            time_df,
+            carrier_df,
+            source_city_df,
+            source_state_df,
+            source_country_df,
+            dest_city_df,
+            dest_state_df,
+            dest_country_df
+        ]
+        
+        if not numerical_df.empty:
+            dfs_to_concat.append(numerical_df)
+        
+        processed_data = pd.concat(dfs_to_concat, axis=1)
+        
+        # Save feature columns for prediction
+        self.feature_columns = list(processed_data.columns)
+        self.feature_columns.remove('ONTIME_PERFORMANCE')
+        
+        logger.info(f"New format data preprocessing complete. Processed shape: {processed_data.shape}")
+        self.preprocessed_data = processed_data
+        
+        # Save information about the features for later use
+        self.feature_info = {
+            'data_format': 'new',
+            'time_categories': self.time_encoder.categories_[0].tolist(),
+            'carrier_categories': self.carrier_encoder.categories_[0].tolist(),
+            'source_city_categories': self.source_city_encoder.categories_[0].tolist(),
+            'source_state_categories': self.source_state_encoder.categories_[0].tolist(),
+            'source_country_categories': self.source_country_encoder.categories_[0].tolist(),
+            'dest_city_categories': self.dest_city_encoder.categories_[0].tolist(),
+            'dest_state_categories': self.dest_state_encoder.categories_[0].tolist(),
+            'dest_country_categories': self.dest_country_encoder.categories_[0].tolist(),
+            'numerical_columns': numerical_cols if not numerical_df.empty else [],
+            'feature_columns': self.feature_columns
+        }
+        
+        return processed_data
+    
+    def _preprocess_legacy_format(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess data in the legacy format with quarters and city-only location data."""
+        logger.info("Preprocessing legacy format data with quarters...")
+        
         # Create lane identifier (combination of source and destination)
         data['LANE_ID'] = data['SOURCE_CITY'] + '_' + data['DEST_CITY']
         
         # One-hot encoding for categorical variables
-        logger.info("Encoding categorical variables...")
+        logger.info("Encoding categorical variables for legacy format...")
         
         # Quarter encoding
-        self.quarter_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        quarter_encoded = self.quarter_encoder.fit_transform(data[['QTR']])
-        quarter_columns = [f'QTR_{i}' for i in range(quarter_encoded.shape[1])]
-        quarter_df = pd.DataFrame(quarter_encoded, columns=quarter_columns)
+        self.time_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        time_encoded = self.time_encoder.fit_transform(data[['QTR']])
+        time_columns = [f'QTR_{i}' for i in range(time_encoded.shape[1])]
+        time_df = pd.DataFrame(time_encoded, columns=time_columns)
         
         # Carrier encoding
         self.carrier_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
@@ -93,8 +268,8 @@ class CarrierPerformanceModel:
         carrier_df = pd.DataFrame(carrier_encoded, columns=carrier_columns)
         
         # Source city encoding
-        self.source_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        source_encoded = self.source_encoder.fit_transform(data[['SOURCE_CITY']])
+        self.source_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_encoded = self.source_city_encoder.fit_transform(data[['SOURCE_CITY']])
         source_columns = [f'SOURCE_{i}' for i in range(source_encoded.shape[1])]
         source_df = pd.DataFrame(source_encoded, columns=source_columns)
         
@@ -106,8 +281,8 @@ class CarrierPerformanceModel:
         data['DEST_CITY_GROUPED'] = data['DEST_CITY'].apply(lambda x: x if x in top_dests else 'OTHER')
         
         # One-hot encode the grouped destinations
-        self.dest_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        dest_encoded = self.dest_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
+        self.dest_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_encoded = self.dest_city_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
         dest_columns = [f'DEST_{i}' for i in range(dest_encoded.shape[1])]
         dest_df = pd.DataFrame(dest_encoded, columns=dest_columns)
         
@@ -120,7 +295,6 @@ class CarrierPerformanceModel:
         else:
             logger.warning(f"Not all numerical columns found in data. Available columns: {data.columns}")
             numerical_df = pd.DataFrame()
-            # Filter down to available columns
             available_num_cols = [col for col in numerical_cols if col in data.columns]
             if available_num_cols:
                 numerical_data = self.scaler.fit_transform(data[available_num_cols])
@@ -128,7 +302,7 @@ class CarrierPerformanceModel:
         
         # Reset indices to ensure proper concatenation
         data.reset_index(drop=True, inplace=True)
-        quarter_df.reset_index(drop=True, inplace=True)
+        time_df.reset_index(drop=True, inplace=True)
         carrier_df.reset_index(drop=True, inplace=True)
         source_df.reset_index(drop=True, inplace=True)
         dest_df.reset_index(drop=True, inplace=True)
@@ -138,7 +312,7 @@ class CarrierPerformanceModel:
         # Create the final processed dataset
         dfs_to_concat = [
             data[['ONTIME_PERFORMANCE']],
-            quarter_df,
+            time_df,
             carrier_df,
             source_df,
             dest_df
@@ -153,15 +327,16 @@ class CarrierPerformanceModel:
         self.feature_columns = list(processed_data.columns)
         self.feature_columns.remove('ONTIME_PERFORMANCE')
         
-        logger.info(f"Data preprocessing complete. Processed shape: {processed_data.shape}")
+        logger.info(f"Legacy format data preprocessing complete. Processed shape: {processed_data.shape}")
         self.preprocessed_data = processed_data
         
         # Save information about the features for later use
         self.feature_info = {
-            'quarter_categories': self.quarter_encoder.categories_[0].tolist(),
+            'data_format': 'legacy',
+            'quarter_categories': self.time_encoder.categories_[0].tolist(),
             'carrier_categories': self.carrier_encoder.categories_[0].tolist(),
-            'source_categories': self.source_encoder.categories_[0].tolist(),
-            'dest_categories': self.dest_encoder.categories_[0].tolist(),
+            'source_categories': self.source_city_encoder.categories_[0].tolist(),
+            'dest_categories': self.dest_city_encoder.categories_[0].tolist(),
             'numerical_columns': numerical_cols if not numerical_df.empty else [],
             'feature_columns': self.feature_columns
         }
@@ -314,27 +489,206 @@ class CarrierPerformanceModel:
         
         return evaluation
     
-    def predict(self, carrier, source_city, dest_city, quarter=None, order_count=None, avg_transit_days=None, actual_transit_days=None):
+    def predict(self, carrier: str, source_city: str, dest_city: str, 
+                source_state: Optional[str] = None, source_country: Optional[str] = None,
+                dest_state: Optional[str] = None, dest_country: Optional[str] = None,
+                tracking_month: Optional[str] = None, quarter: Optional[str] = None,
+                order_count: Optional[float] = None, avg_transit_days: Optional[float] = None, 
+                actual_transit_days: Optional[float] = None) -> Optional[Dict[str, Any]]:
         """Predict the on-time performance for a specific carrier and lane.
+        
+        Supports both legacy format (quarter-based with city-only locations) and
+        new format (month-based with state/country location data).
         
         Args:
             carrier: Carrier name
             source_city: Source city name
             dest_city: Destination city name
-            quarter: Quarter (e.g., '2025 1')
+            source_state: Source state (required for new format)
+            source_country: Source country (required for new format)
+            dest_state: Destination state (required for new format)
+            dest_country: Destination country (required for new format)
+            tracking_month: Tracking month for new format (e.g., '2025 05')
+            quarter: Quarter for legacy format (e.g., '2025 1')
             order_count: Number of orders
             avg_transit_days: Average transit days
             actual_transit_days: Actual transit days
             
         Returns:
-            Predicted on-time performance percentage
+            Dictionary with prediction results or None if prediction fails
         """
         if self.model is None:
             logger.error("No model available for prediction. Train or load a model first.")
             return None
         
+        # Determine which format to use based on available data and model format
+        if hasattr(self, 'feature_info') and self.feature_info:
+            model_format = self.feature_info.get('data_format', 'legacy')
+        else:
+            # Fallback to detection based on available parameters
+            model_format = 'new' if all([source_state, source_country, dest_state, dest_country]) else 'legacy'
+        
+        if model_format == 'new':
+            return self._predict_new_format(
+                carrier, source_city, dest_city, source_state, source_country,
+                dest_state, dest_country, tracking_month, order_count, 
+                avg_transit_days, actual_transit_days
+            )
+        else:
+            return self._predict_legacy_format(
+                carrier, source_city, dest_city, quarter, order_count,
+                avg_transit_days, actual_transit_days
+            )
+    
+    def _predict_new_format(self, carrier: str, source_city: str, dest_city: str,
+                           source_state: str, source_country: str, dest_state: str, 
+                           dest_country: str, tracking_month: Optional[str] = None,
+                           order_count: Optional[float] = None, avg_transit_days: Optional[float] = None,
+                           actual_transit_days: Optional[float] = None) -> Optional[Dict[str, Any]]:
+        """Predict using new format with expanded location data."""
+        
+        # Check if all required encoders are available for new format
+        required_encoders = [
+            self.carrier_encoder, self.source_city_encoder, self.source_state_encoder,
+            self.source_country_encoder, self.dest_city_encoder, self.dest_state_encoder,
+            self.dest_country_encoder, self.time_encoder
+        ]
+        
+        if not all(required_encoders):
+            logger.error("Not all encoders available for new format prediction.")
+            return None
+        
+        # Validate required parameters for new format
+        if not all([source_state, source_country, dest_state, dest_country]):
+            logger.error("Missing required location parameters for new format prediction.")
+            return None
+        
+        try:
+            # Create input dataframe
+            input_data = pd.DataFrame({
+                'CARRIER': [carrier],
+                'SOURCE_CITY': [source_city],
+                'SOURCE_STATE': [source_state],
+                'SOURCE_COUNTRY': [source_country],
+                'DEST_CITY': [dest_city],
+                'DEST_STATE': [dest_state],
+                'DEST_COUNTRY': [dest_country]
+            })
+            
+            # Add time feature
+            if tracking_month is not None:
+                input_data['TRACKING_MONTH'] = [tracking_month]
+            else:
+                # Use the most recent tracking month from training data
+                input_data['TRACKING_MONTH'] = [self.time_encoder.categories_[0][-1]]
+            
+            # Add numerical features with defaults
+            numerical_features = {}
+            if order_count is not None:
+                numerical_features['ORDER_COUNT'] = [order_count]
+            if avg_transit_days is not None:
+                numerical_features['AVG_TRANSIT_DAYS'] = [avg_transit_days]
+            if actual_transit_days is not None:
+                numerical_features['ACTUAL_TRANSIT_DAYS'] = [actual_transit_days]
+            
+            # Apply encodings
+            # Time encoding
+            time_encoded = self.time_encoder.transform(input_data[['TRACKING_MONTH']])
+            time_df = pd.DataFrame(time_encoded, columns=[f'TRACKING_MONTH_{i}' for i in range(time_encoded.shape[1])])
+            
+            # Carrier encoding
+            carrier_encoded = self.carrier_encoder.transform(input_data[['CARRIER']])
+            carrier_df = pd.DataFrame(carrier_encoded, columns=[f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])])
+            
+            # Source location encodings
+            source_city_encoded = self.source_city_encoder.transform(input_data[['SOURCE_CITY']])
+            source_city_df = pd.DataFrame(source_city_encoded, columns=[f'SOURCE_CITY_{i}' for i in range(source_city_encoded.shape[1])])
+            
+            source_state_encoded = self.source_state_encoder.transform(input_data[['SOURCE_STATE']])
+            source_state_df = pd.DataFrame(source_state_encoded, columns=[f'SOURCE_STATE_{i}' for i in range(source_state_encoded.shape[1])])
+            
+            source_country_encoded = self.source_country_encoder.transform(input_data[['SOURCE_COUNTRY']])
+            source_country_df = pd.DataFrame(source_country_encoded, columns=[f'SOURCE_COUNTRY_{i}' for i in range(source_country_encoded.shape[1])])
+            
+            # Destination location encodings
+            # Handle destination city grouping
+            dest_city_categories = self.dest_city_encoder.categories_[0]
+            dest_city_grouped = dest_city if dest_city in dest_city_categories else 'OTHER'
+            input_data['DEST_CITY_GROUPED'] = [dest_city_grouped]
+            
+            dest_city_encoded = self.dest_city_encoder.transform(input_data[['DEST_CITY_GROUPED']])
+            dest_city_df = pd.DataFrame(dest_city_encoded, columns=[f'DEST_CITY_{i}' for i in range(dest_city_encoded.shape[1])])
+            
+            dest_state_encoded = self.dest_state_encoder.transform(input_data[['DEST_STATE']])
+            dest_state_df = pd.DataFrame(dest_state_encoded, columns=[f'DEST_STATE_{i}' for i in range(dest_state_encoded.shape[1])])
+            
+            dest_country_encoded = self.dest_country_encoder.transform(input_data[['DEST_COUNTRY']])
+            dest_country_df = pd.DataFrame(dest_country_encoded, columns=[f'DEST_COUNTRY_{i}' for i in range(dest_country_encoded.shape[1])])
+            
+            # Combine all encoded features
+            encoded_dfs = [
+                time_df, carrier_df, source_city_df, source_state_df, source_country_df,
+                dest_city_df, dest_state_df, dest_country_df
+            ]
+            
+            # Add numerical features if available
+            if numerical_features and self.scaler is not None:
+                # Create DataFrame with all possible numerical columns, filling missing with defaults
+                num_data = pd.DataFrame({
+                    'ORDER_COUNT': numerical_features.get('ORDER_COUNT', [1]),
+                    'AVG_TRANSIT_DAYS': numerical_features.get('AVG_TRANSIT_DAYS', [2]),
+                    'ACTUAL_TRANSIT_DAYS': numerical_features.get('ACTUAL_TRANSIT_DAYS', [2])
+                })
+                
+                # Scale the numerical features
+                scaled_numerical = self.scaler.transform(num_data)
+                numerical_df = pd.DataFrame(scaled_numerical, columns=num_data.columns)
+                encoded_dfs.append(numerical_df)
+            
+            # Concatenate all features
+            model_input = pd.concat(encoded_dfs, axis=1)
+            
+            # Ensure the input has all required features in the correct order
+            model_input = model_input.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Make prediction
+            prediction = self.model.predict(model_input)
+            
+            # Convert back to percentage
+            ontime_performance = float(prediction[0][0] * 100)
+            
+            result = {
+                'carrier': carrier,
+                'source_city': source_city,
+                'source_state': source_state,
+                'source_country': source_country,
+                'dest_city': dest_city,
+                'dest_state': dest_state,
+                'dest_country': dest_country,
+                'ontime_performance': ontime_performance
+            }
+            
+            if tracking_month is not None:
+                result['tracking_month'] = tracking_month
+            
+            # Add any provided numerical features to the result
+            for key, value in numerical_features.items():
+                result[key.lower()] = value[0]
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error during new format prediction: {str(e)}")
+            return None
+    
+    def _predict_legacy_format(self, carrier: str, source_city: str, dest_city: str,
+                              quarter: Optional[str] = None, order_count: Optional[float] = None,
+                              avg_transit_days: Optional[float] = None, 
+                              actual_transit_days: Optional[float] = None) -> Optional[Dict[str, Any]]:
+        """Predict using legacy format with quarter and city-only location data."""
+        
         # Check if all encoders are available
-        if not all([self.carrier_encoder, self.source_encoder, self.dest_encoder]):
+        if not all([self.carrier_encoder, self.source_city_encoder, self.dest_city_encoder]):
             logger.error("Encoders not available. The model needs to be trained first or loaded from a complete saved model.")
             return None
         
@@ -351,7 +705,7 @@ class CarrierPerformanceModel:
                 input_data['QTR'] = [quarter]
             else:
                 # Use the most recent quarter from training data
-                input_data['QTR'] = [self.quarter_encoder.categories_[0][-1]]
+                input_data['QTR'] = [self.time_encoder.categories_[0][-1]]
             
             # Add optional numerical features
             numerical_features = {}
@@ -362,16 +716,14 @@ class CarrierPerformanceModel:
             if actual_transit_days is not None:
                 numerical_features['ACTUAL_TRANSIT_DAYS'] = [actual_transit_days]
             
-            # Apply preprocessing steps
-            
             # Quarter encoding
-            quarter_encoded = self.quarter_encoder.transform(input_data[['QTR']])
+            quarter_encoded = self.time_encoder.transform(input_data[['QTR']])
             quarter_df = pd.DataFrame(
                 quarter_encoded, 
                 columns=[f'QTR_{i}' for i in range(quarter_encoded.shape[1])]
             )
             
-            # Carrier encoding
+            # Carrier encoding  
             carrier_encoded = self.carrier_encoder.transform(input_data[['CARRIER']])
             carrier_df = pd.DataFrame(
                 carrier_encoded, 
@@ -379,7 +731,7 @@ class CarrierPerformanceModel:
             )
             
             # Source city encoding
-            source_encoded = self.source_encoder.transform(input_data[['SOURCE_CITY']])
+            source_encoded = self.source_city_encoder.transform(input_data[['SOURCE_CITY']])
             source_df = pd.DataFrame(
                 source_encoded, 
                 columns=[f'SOURCE_{i}' for i in range(source_encoded.shape[1])]
@@ -387,42 +739,39 @@ class CarrierPerformanceModel:
             
             # Destination city encoding
             # Check if dest_city is in the top destinations, otherwise use 'OTHER'
-            top_dests = self.dest_encoder.categories_[0]
+            top_dests = self.dest_city_encoder.categories_[0]
             dest_city_grouped = dest_city if dest_city in top_dests else 'OTHER'
             input_data['DEST_CITY_GROUPED'] = [dest_city_grouped]
             
-            dest_encoded = self.dest_encoder.transform(input_data[['DEST_CITY_GROUPED']])
+            dest_encoded = self.dest_city_encoder.transform(input_data[['DEST_CITY_GROUPED']])
             dest_df = pd.DataFrame(
                 dest_encoded, 
                 columns=[f'DEST_{i}' for i in range(dest_encoded.shape[1])]
             )
             
-            # Scale numerical features if provided
-            numerical_df = pd.DataFrame()
+            # Combine all categorical features
+            categorical_features = pd.concat([quarter_df, carrier_df, source_df, dest_df], axis=1)
+            
+            # Handle numerical features
             if numerical_features and self.scaler is not None:
-                available_num_cols = [col for col in numerical_features.keys() if col in self.feature_info.get('numerical_columns', [])]
-                if available_num_cols:
-                    num_input = pd.DataFrame({col: numerical_features[col] for col in available_num_cols})
-                    scaled_numerical = self.scaler.transform(num_input)
-                    numerical_df = pd.DataFrame(
-                        scaled_numerical,
-                        columns=available_num_cols
-                    )
+                # Create a DataFrame with default values for missing features
+                num_data = pd.DataFrame({
+                    'ORDER_COUNT': numerical_features.get('ORDER_COUNT', [1]),
+                    'AVG_TRANSIT_DAYS': numerical_features.get('AVG_TRANSIT_DAYS', [2]),
+                    'ACTUAL_TRANSIT_DAYS': numerical_features.get('ACTUAL_TRANSIT_DAYS', [2])
+                })
+                
+                # Scale the numerical features
+                scaled_numerical = self.scaler.transform(num_data)
+                numerical_df = pd.DataFrame(scaled_numerical, columns=num_data.columns)
+                
+                # Combine categorical and numerical features
+                model_input = pd.concat([categorical_features, numerical_df], axis=1)
+            else:
+                model_input = categorical_features
             
-            # Combine all features
-            dfs_to_concat = [quarter_df, carrier_df, source_df, dest_df]
-            if not numerical_df.empty:
-                dfs_to_concat.append(numerical_df)
-            
-            # Create the input feature vector
-            features = pd.concat(dfs_to_concat, axis=1)
-            
-            # Align feature columns with model's expected input
-            # Make sure we have all required columns in the correct order
-            model_input = pd.DataFrame(0, index=[0], columns=self.feature_columns)
-            for col in features.columns:
-                if col in model_input.columns:
-                    model_input[col] = features[col].values[0]
+            # Ensure the input has all required features in the correct order
+            model_input = model_input.reindex(columns=self.feature_columns, fill_value=0)
             
             # Make prediction
             prediction = self.model.predict(model_input)
@@ -447,7 +796,7 @@ class CarrierPerformanceModel:
             return result
             
         except Exception as e:
-            logger.error(f"Error during prediction: {str(e)}")
+            logger.error(f"Error during legacy format prediction: {str(e)}")
             return None
     
     def predict_batch(self, carriers, source_cities, dest_cities, quarters=None):
@@ -480,7 +829,7 @@ class CarrierPerformanceModel:
                 
         return results
     
-    def predict_on_training_data(self, output_dir=None):
+    def predict_on_training_data(self, output_dir: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """
         Generate predictions on the training data and calculate performance metrics.
         
@@ -530,22 +879,43 @@ class CarrierPerformanceModel:
             mape = np.mean(percentage_errors[~np.isinf(percentage_errors)])  # Exclude inf values from zero division
             rmse = np.sqrt(np.mean(np.square(y_actual - y_pred)))
             
-            # Prepare results
+            # Prepare results based on data format
             predictions = []
             for i, row in data.iterrows():
-                prediction = {
-                    'carrier': row['CARRIER'],
-                    'source_city': row['SOURCE_CITY'],
-                    'dest_city': row['DEST_CITY'],
-                    'quarter': row['QTR'],
-                    'order_count': int(row['ORDER_COUNT']),
-                    'avg_transit_days': float(row['AVG_TRANSIT_DAYS']),
-                    'actual_transit_days': float(row['ACTUAL_TRANSIT_DAYS']),
-                    'actual_performance': float(row['ONTIME_PERFORMANCE']),
-                    'predicted_performance': float(row['predicted_performance']),
-                    'absolute_error': float(row['absolute_error']),
-                    'percent_error': float(row['percent_error']) if not np.isinf(row['percent_error']) else None
-                }
+                if self.data_format == 'new':
+                    # New format with tracking month and expanded location data
+                    prediction = {
+                        'carrier': row['CARRIER'],
+                        'source_city': row['SOURCE_CITY'],
+                        'source_state': row['SOURCE_STATE'],
+                        'source_country': row['SOURCE_COUNTRY'],
+                        'dest_city': row['DEST_CITY'],
+                        'dest_state': row['DEST_STATE'],
+                        'dest_country': row['DEST_COUNTRY'],
+                        'tracking_month': row['TRACKING_MONTH'],
+                        'order_count': int(row['ORDER_COUNT']),
+                        'avg_transit_days': float(row['AVG_TRANSIT_DAYS']),
+                        'actual_transit_days': float(row['ACTUAL_TRANSIT_DAYS']),
+                        'actual_performance': float(row['ONTIME_PERFORMANCE']),
+                        'predicted_performance': float(row['predicted_performance']),
+                        'absolute_error': float(row['absolute_error']),
+                        'percent_error': float(row['percent_error']) if not np.isinf(row['percent_error']) else None
+                    }
+                else:
+                    # Legacy format with quarter and city-only data
+                    prediction = {
+                        'carrier': row['CARRIER'],
+                        'source_city': row['SOURCE_CITY'],
+                        'dest_city': row['DEST_CITY'],
+                        'quarter': row['QTR'],
+                        'order_count': int(row['ORDER_COUNT']),
+                        'avg_transit_days': float(row['AVG_TRANSIT_DAYS']),
+                        'actual_transit_days': float(row['ACTUAL_TRANSIT_DAYS']),
+                        'actual_performance': float(row['ONTIME_PERFORMANCE']),
+                        'predicted_performance': float(row['predicted_performance']),
+                        'absolute_error': float(row['absolute_error']),
+                        'percent_error': float(row['percent_error']) if not np.isinf(row['percent_error']) else None
+                    }
                 predictions.append(prediction)
             
             # Prepare metrics
@@ -553,7 +923,8 @@ class CarrierPerformanceModel:
                 'mae': float(mae),
                 'mape': float(mape),
                 'rmse': float(rmse),
-                'records_analyzed': len(data)
+                'records_analyzed': len(data),
+                'data_format': self.data_format
             }
             
             # Save results to file if output directory is specified
@@ -563,6 +934,7 @@ class CarrierPerformanceModel:
                 # Save as JSON
                 output_json = {
                     'prediction_time': datetime.now().isoformat(),
+                    'data_format': self.data_format,
                     'metrics': metrics,
                     'predictions': predictions
                 }
@@ -572,18 +944,28 @@ class CarrierPerformanceModel:
                     json.dump(output_json, f, indent=2)
                 logger.info(f"Predictions saved to JSON: {json_path}")
                 
-                # Also save as CSV for easier analysis
+                # Also save as CSV for easier analysis (format-specific columns)
                 csv_path = os.path.join(output_dir, "prediction_data.csv")
-                df_to_save = data[['QTR', 'CARRIER', 'SOURCE_CITY', 'DEST_CITY', 
-                                  'ORDER_COUNT', 'AVG_TRANSIT_DAYS', 'ACTUAL_TRANSIT_DAYS',
-                                  'ONTIME_PERFORMANCE', 'predicted_performance', 
-                                  'absolute_error', 'percent_error']]
+                if self.data_format == 'new':
+                    # New format CSV columns
+                    csv_columns = ['TRACKING_MONTH', 'CARRIER', 'SOURCE_CITY', 'SOURCE_STATE', 'SOURCE_COUNTRY',
+                                  'DEST_CITY', 'DEST_STATE', 'DEST_COUNTRY', 'ORDER_COUNT', 'AVG_TRANSIT_DAYS', 
+                                  'ACTUAL_TRANSIT_DAYS', 'ONTIME_PERFORMANCE', 'predicted_performance', 
+                                  'absolute_error', 'percent_error']
+                else:
+                    # Legacy format CSV columns
+                    csv_columns = ['QTR', 'CARRIER', 'SOURCE_CITY', 'DEST_CITY', 'ORDER_COUNT', 'AVG_TRANSIT_DAYS', 
+                                  'ACTUAL_TRANSIT_DAYS', 'ONTIME_PERFORMANCE', 'predicted_performance', 
+                                  'absolute_error', 'percent_error']
+                
+                df_to_save = data[csv_columns]
                 df_to_save.to_csv(csv_path, index=False)
                 logger.info(f"Predictions saved to CSV: {csv_path}")
             
             # Return the results
             return {
                 'prediction_time': datetime.now().isoformat(),
+                'data_format': self.data_format,
                 'metrics': metrics,
                 'predictions': predictions
             }
@@ -592,12 +974,15 @@ class CarrierPerformanceModel:
             logger.error(f"Error generating predictions on training data: {str(e)}")
             return None
     
-    def save_model(self, path="carrier_performance_model"):
+    def save_model(self, path: str = "carrier_performance_model") -> bool:
         """
         Save the trained model and all preprocessing components.
         
         Args:
             path: Directory path to save the model
+            
+        Returns:
+            True if successful, False otherwise
         """
         logger.info(f"Saving model to {path}...")
         
@@ -615,12 +1000,18 @@ class CarrierPerformanceModel:
             logger.info(f"Neural network model saved to {model_path}")
             
             # Save the preprocessors and other necessary components
+            # Include all possible encoders (some may be None for legacy format)
             preprocessors = {
                 'carrier_encoder': self.carrier_encoder,
-                'source_encoder': self.source_encoder,
-                'dest_encoder': self.dest_encoder,
-                'quarter_encoder': self.quarter_encoder,
-                'scaler': self.scaler
+                'source_city_encoder': self.source_city_encoder,
+                'source_state_encoder': getattr(self, 'source_state_encoder', None),
+                'source_country_encoder': getattr(self, 'source_country_encoder', None),
+                'dest_city_encoder': self.dest_city_encoder,
+                'dest_state_encoder': getattr(self, 'dest_state_encoder', None),
+                'dest_country_encoder': getattr(self, 'dest_country_encoder', None),
+                'time_encoder': self.time_encoder,
+                'scaler': self.scaler,
+                'data_format': getattr(self, 'data_format', 'legacy')  # Save the data format
             }
             
             with open(os.path.join(path, "preprocessors.pkl"), 'wb') as f:
@@ -645,12 +1036,15 @@ class CarrierPerformanceModel:
             logger.error(f"Error saving model: {str(e)}")
             return False
     
-    def load_model(self, path):
+    def load_model(self, path: str) -> bool:
         """
         Load a trained model and all preprocessing components.
         
         Args:
             path: Directory path containing the saved model
+            
+        Returns:
+            True if successful, False otherwise
         """
         logger.info(f"Loading model from {path}...")
         
@@ -670,11 +1064,29 @@ class CarrierPerformanceModel:
                 with open(preprocessor_path, 'rb') as f:
                     preprocessors = pickle.load(f)
                 
+                # Load common encoders
                 self.carrier_encoder = preprocessors.get('carrier_encoder')
-                self.source_encoder = preprocessors.get('source_encoder')
-                self.dest_encoder = preprocessors.get('dest_encoder')
-                self.quarter_encoder = preprocessors.get('quarter_encoder')
+                self.source_city_encoder = preprocessors.get('source_city_encoder')
+                self.dest_city_encoder = preprocessors.get('dest_city_encoder')
+                self.time_encoder = preprocessors.get('time_encoder')
                 self.scaler = preprocessors.get('scaler')
+                
+                # Load new format encoders (may be None for legacy models)
+                self.source_state_encoder = preprocessors.get('source_state_encoder')
+                self.source_country_encoder = preprocessors.get('source_country_encoder')
+                self.dest_state_encoder = preprocessors.get('dest_state_encoder')
+                self.dest_country_encoder = preprocessors.get('dest_country_encoder')
+                
+                # Get data format (default to legacy for backward compatibility)
+                self.data_format = preprocessors.get('data_format', 'legacy')
+                
+                # Backward compatibility: handle old preprocessor structure
+                if self.source_city_encoder is None and 'source_encoder' in preprocessors:
+                    self.source_city_encoder = preprocessors.get('source_encoder')
+                if self.dest_city_encoder is None and 'dest_encoder' in preprocessors:
+                    self.dest_city_encoder = preprocessors.get('dest_encoder')
+                if self.time_encoder is None and 'quarter_encoder' in preprocessors:
+                    self.time_encoder = preprocessors.get('quarter_encoder')
                 
                 logger.info("Preprocessors loaded successfully")
             else:
@@ -688,6 +1100,11 @@ class CarrierPerformanceModel:
                     
                 # Get feature columns from feature_info if available
                 self.feature_columns = self.feature_info.get('feature_columns', [])
+                
+                # Set data format from feature_info if not already set
+                if not hasattr(self, 'data_format') or self.data_format is None:
+                    self.data_format = self.feature_info.get('data_format', 'legacy')
+                
                 logger.info("Feature information loaded successfully")
             else:
                 logger.warning("Feature information file not found, some functionality may be limited")
@@ -698,13 +1115,9 @@ class CarrierPerformanceModel:
                 self.X_train = pd.read_csv(sample_features_path)
                 logger.info("Sample features loaded successfully")
             else:
-                logger.warning("Sample features file not found, creating dummy X_train")
-                # Create a dummy X_train with the right columns if we have feature_columns
-                if self.feature_columns:
-                    self.X_train = pd.DataFrame(columns=self.feature_columns)
-                    self.X_train.loc[0] = 0  # Add one row with zeros
+                logger.warning("Sample features file not found")
             
-            logger.info("Model loaded successfully")
+            logger.info(f"Model successfully loaded from {path}")
             return True
             
         except Exception as e:

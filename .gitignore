@@ -16,6 +16,7 @@ node_modules
 # knowledge bases
 knowledge_bases
 
+envision_product/neural/backend/data
 
 # testing
 /coverage

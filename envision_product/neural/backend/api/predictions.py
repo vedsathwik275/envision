@@ -336,14 +336,26 @@ async def get_tender_performance_by_lane(
             simplified_predictions = []
             for pred in filtered_predictions:
                 simplified_pred = {
-                    'carrier': pred.get('carrier', ''),
-                    'source_city': pred.get('source_city', ''),
-                    'dest_city': pred.get('dest_city', ''),
-                    'predicted_performance': pred.get('predicted_performance', 0)
+                    "carrier": pred.get("carrier", ""),
+                    "source_city": pred.get("source_city", ""),
+                    "dest_city": pred.get("dest_city", "")
                 }
+                
+                # Include state and country information if available (for new format)
+                if "source_state" in pred:
+                    simplified_pred["source_state"] = pred.get("source_state", "")
+                if "source_country" in pred:
+                    simplified_pred["source_country"] = pred.get("source_country", "")
+                if "dest_state" in pred:
+                    simplified_pred["dest_state"] = pred.get("dest_state", "")
+                if "dest_country" in pred:
+                    simplified_pred["dest_country"] = pred.get("dest_country", "")
+                
+                # Add predicted performance as the final field
+                simplified_pred["predicted_ontime_performance"] = pred.get("predicted_performance", 0)
+                
                 simplified_predictions.append(simplified_pred)
             
-            # Replace full predictions with simplified ones
             filtered_predictions = simplified_predictions
         
         return {
@@ -1065,12 +1077,26 @@ async def get_carrier_performance_predictions(
         if simplified and "data" in prediction and "predictions" in prediction["data"]:
             simplified_predictions = []
             for pred in prediction["data"]["predictions"]:
+                # Build simplified prediction with correct field order
                 simplified_pred = {
                     "carrier": pred.get("carrier", ""),
                     "source_city": pred.get("source_city", ""),
-                    "dest_city": pred.get("dest_city", ""),
-                    "predicted_ontime_performance": pred.get("predicted_performance", 0)
+                    "dest_city": pred.get("dest_city", "")
                 }
+                
+                # Include state and country information if available (for new format)
+                if "source_state" in pred:
+                    simplified_pred["source_state"] = pred.get("source_state", "")
+                if "source_country" in pred:
+                    simplified_pred["source_country"] = pred.get("source_country", "")
+                if "dest_state" in pred:
+                    simplified_pred["dest_state"] = pred.get("dest_state", "")
+                if "dest_country" in pred:
+                    simplified_pred["dest_country"] = pred.get("dest_country", "")
+                
+                # Add predicted performance as the final field
+                simplified_pred["predicted_ontime_performance"] = pred.get("predicted_performance", 0)
+                
                 simplified_predictions.append(simplified_pred)
             
             prediction["data"]["predictions"] = simplified_predictions
@@ -1212,12 +1238,26 @@ async def get_carrier_performance_by_lane(
         if simplified:
             simplified_predictions = []
             for pred in filtered_predictions:
+                # Build simplified prediction with correct field order
                 simplified_pred = {
                     "carrier": pred.get("carrier", ""),
                     "source_city": pred.get("source_city", ""),
-                    "dest_city": pred.get("dest_city", ""),
-                    "predicted_ontime_performance": pred.get("predicted_performance", 0)
+                    "dest_city": pred.get("dest_city", "")
                 }
+                
+                # Include state and country information if available (for new format)
+                if "source_state" in pred:
+                    simplified_pred["source_state"] = pred.get("source_state", "")
+                if "source_country" in pred:
+                    simplified_pred["source_country"] = pred.get("source_country", "")
+                if "dest_state" in pred:
+                    simplified_pred["dest_state"] = pred.get("dest_state", "")
+                if "dest_country" in pred:
+                    simplified_pred["dest_country"] = pred.get("dest_country", "")
+                
+                # Add predicted performance as the final field
+                simplified_pred["predicted_ontime_performance"] = pred.get("predicted_performance", 0)
+                
                 simplified_predictions.append(simplified_pred)
             
             filtered_predictions = simplified_predictions

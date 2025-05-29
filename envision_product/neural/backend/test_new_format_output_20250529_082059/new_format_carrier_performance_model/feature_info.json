@@ -1,0 +1,93 @@
+{
+  "data_format": "new",
+  "time_categories": [
+    "2025 01",
+    "2025 02",
+    "2025 03",
+    "2025 04",
+    "2025 05"
+  ],
+  "carrier_categories": [
+    "FDEG",
+    "FXFC",
+    "HOSD",
+    "ODFL",
+    "RBTW"
+  ],
+  "source_city_categories": [
+    "ELWOOD",
+    "GRAND RAPIDS",
+    "LANCASTER",
+    "REDLANDS",
+    "RICHMOND"
+  ],
+  "source_state_categories": [
+    "CA",
+    "IN",
+    "MI",
+    "PA",
+    "VA"
+  ],
+  "source_country_categories": [
+    "US"
+  ],
+  "dest_city_categories": [
+    "HOPKINS",
+    "MERIDIAN",
+    "MIAMI",
+    "OMAHA",
+    "WINDSOR"
+  ],
+  "dest_state_categories": [
+    "CT",
+    "FL",
+    "MN",
+    "MS",
+    "NE"
+  ],
+  "dest_country_categories": [
+    "US"
+  ],
+  "numerical_columns": [
+    "ORDER_COUNT",
+    "AVG_TRANSIT_DAYS",
+    "ACTUAL_TRANSIT_DAYS"
+  ],
+  "feature_columns": [
+    "TRACKING_MONTH_0",
+    "TRACKING_MONTH_1",
+    "TRACKING_MONTH_2",
+    "TRACKING_MONTH_3",
+    "TRACKING_MONTH_4",
+    "CARRIER_0",
+    "CARRIER_1",
+    "CARRIER_2",
+    "CARRIER_3",
+    "CARRIER_4",
+    "SOURCE_CITY_0",
+    "SOURCE_CITY_1",
+    "SOURCE_CITY_2",
+    "SOURCE_CITY_3",
+    "SOURCE_CITY_4",
+    "SOURCE_STATE_0",
+    "SOURCE_STATE_1",
+    "SOURCE_STATE_2",
+    "SOURCE_STATE_3",
+    "SOURCE_STATE_4",
+    "SOURCE_COUNTRY_0",
+    "DEST_CITY_0",
+    "DEST_CITY_1",
+    "DEST_CITY_2",
+    "DEST_CITY_3",
+    "DEST_CITY_4",
+    "DEST_STATE_0",
+    "DEST_STATE_1",
+    "DEST_STATE_2",
+    "DEST_STATE_3",
+    "DEST_STATE_4",
+    "DEST_COUNTRY_0",
+    "ORDER_COUNT",
+    "AVG_TRANSIT_DAYS",
+    "ACTUAL_TRANSIT_DAYS"
+  ]
+}

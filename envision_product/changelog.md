@@ -1,5 +1,53 @@
 # Changelog
 
+## [Unreleased] - 2025-05-29
+### Added
+- **Neural Network Prediction Integration with RAG Chatbot System**: Complete integration allowing users to upload neural network prediction results to RAG chatbot knowledge bases
+  - **"Upload to Knowledge Base" Button**: Added new action button to prediction results page enabling users to upload prediction CSV data to RAG chatbot knowledge bases
+  - **Knowledge Base Modal Interface**: Created comprehensive modal system for knowledge base management:
+    - **Main Upload Modal**: Central interface with options to create new KB, upload to existing KB, or view KB frontend
+    - **Create KB Modal**: Form interface for creating new knowledge bases with name and description fields
+    - **Select KB Modal**: Interactive interface for browsing and selecting existing knowledge bases
+  - **Automated Knowledge Base Workflow**: Streamlined process for uploading predictions:
+    - Automatic conversion of prediction data to simplified CSV format
+    - Knowledge base creation with user-provided metadata
+    - Document upload to knowledge base via FastAPI backend
+    - Automated processing with hybrid retriever configuration
+    - Status feedback throughout the entire workflow
+  - **Smart Button State Management**: Dynamic button behavior based on upload status:
+    - Initial state shows "Upload to Knowledge Base" with database icon
+    - After successful upload, button transforms to "Chat" with comments icon and green styling
+    - Button remembers uploaded KB ID and opens chat interface directly on subsequent clicks
+  - **Modal Management System**: Comprehensive modal handling with:
+    - Proper event listener setup and cleanup
+    - Status indicators for loading, success, and error states
+    - Form validation and error handling
+    - Modal backdrop click handling for better UX
+
+### Changed
+- **Enhanced User Experience Flow**: Streamlined the workflow from prediction generation to chat interaction
+  - **Removed Confirmation Popups**: Eliminated confirmation dialogs that interrupted the user workflow
+  - **Automatic Button Transformation**: Upload button automatically becomes a chat button after successful upload
+  - **Direct Chat Access**: Users can now access the chat interface directly without additional confirmation steps
+- **Improved Knowledge Base Integration**: Enhanced the integration between neural frontend and RAG chatbot system
+  - **Simplified CSV Upload**: Predictions are automatically converted to simplified CSV format optimized for RAG processing
+  - **Consistent API Integration**: Unified API calls to RAG chatbot backend for seamless data transfer
+  - **Enhanced Status Feedback**: Improved user feedback with detailed status messages throughout the upload and processing pipeline
+
+### Fixed
+- **Button Event Listener Management**: Resolved issues with upload button event listeners not being properly attached
+  - Fixed timing issues with DOM element availability using setTimeout approach
+  - Added proper event listener cleanup and reattachment for dynamic button states
+  - Ensured consistent button behavior across different prediction result scenarios
+- **Knowledge Base Modal State Management**: Fixed modal state persistence and proper cleanup
+  - Resolved form reset issues when modals are closed and reopened
+  - Fixed status message display and hiding logic
+  - Ensured proper modal backdrop click handling
+- **Global Variable Initialization**: Fixed initialization issues with `currentUploadedKBId` tracking
+  - Added proper variable declaration and initialization
+  - Ensured consistent tracking of uploaded knowledge base IDs
+  - Fixed button state management based on current upload status
+
 ## [Unreleased] - 2025-05-28
 ### Added
 - **Enhanced RAG Chatbot UI with Lane Information Parsing**: Major UI enhancement inspired by rate inquiry interface

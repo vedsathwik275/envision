@@ -326,19 +326,33 @@ def convert_tender_performance_simplified(prediction_dir: Union[str, Path]) -> O
             logger.info(f"Created empty simplified CSV with headers: {simplified_csv_file}")
             return simplified_csv_file
         
-        # Create simplified data with only the essential fields
-        csv_data = []
+        # Create simplified data with only essential fields
+        simplified_data = []
         for pred in predictions:
+            # Build row with correct field order
             row = {
                 'carrier': pred.get('carrier', ''),
                 'source_city': pred.get('source_city', ''),
-                'dest_city': pred.get('dest_city', ''),
-                'predicted_performance': pred.get('predicted_performance', 0)
+                'dest_city': pred.get('dest_city', '')
             }
-            csv_data.append(row)
+            
+            # Include state and country information if available (for new format)
+            if 'source_state' in pred:
+                row['source_state'] = pred.get('source_state', '')
+            if 'source_country' in pred:
+                row['source_country'] = pred.get('source_country', '')
+            if 'dest_state' in pred:
+                row['dest_state'] = pred.get('dest_state', '')
+            if 'dest_country' in pred:
+                row['dest_country'] = pred.get('dest_country', '')
+            
+            # Add predicted performance as the final field
+            row['predicted_ontime_performance'] = pred.get('predicted_performance', 0)
+            
+            simplified_data.append(row)
         
         # Convert to DataFrame and save as CSV
-        df = pd.DataFrame(csv_data)
+        df = pd.DataFrame(simplified_data)
         df.to_csv(simplified_csv_file, index=False)
         
         logger.info(f"Successfully created simplified CSV: {simplified_csv_file}")
@@ -438,6 +452,17 @@ def convert_carrier_performance_simplified(prediction_dir: Union[str, Path]) -> 
                 'dest_city': pred.get('dest_city', ''),
                 'predicted_ontime_performance': pred.get('predicted_performance', 0)
             }
+            
+            # Include state and country information if available (for new format)
+            if 'source_state' in pred:
+                row['source_state'] = pred.get('source_state', '')
+            if 'source_country' in pred:
+                row['source_country'] = pred.get('source_country', '')
+            if 'dest_state' in pred:
+                row['dest_state'] = pred.get('dest_state', '')
+            if 'dest_country' in pred:
+                row['dest_country'] = pred.get('dest_country', '')
+            
             simplified_data.append(row)
         
         # Convert to DataFrame and save as CSV

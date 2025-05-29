@@ -238,6 +238,174 @@
       "created_at": "2025-05-24T13:34:25.923003",
       "prediction_count": 1322,
       "prediction_file": "data/predictions/pred_db97feac_20250524/prediction_data.json"
+    },
+    "pred_be3d0da4_20250529": {
+      "prediction_id": "pred_be3d0da4_20250529",
+      "model_id": "carrier_performance_20250529082402",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:24:22.352729",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_be3d0da4_20250529\\prediction_data.json"
+    },
+    "pred_6a883c2e_20250529": {
+      "prediction_id": "pred_6a883c2e_20250529",
+      "model_id": "carrier_performance_20250529082402",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:31:45.601593",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_6a883c2e_20250529\\prediction_data.json"
+    },
+    "pred_0684d0cd_20250529": {
+      "prediction_id": "pred_0684d0cd_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:32:19.360155",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_0684d0cd_20250529\\prediction_data.json"
+    },
+    "pred_c31cd373_20250529": {
+      "prediction_id": "pred_c31cd373_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:37:42.646672",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_c31cd373_20250529\\prediction_data.json"
+    },
+    "pred_4c391cb2_20250529": {
+      "prediction_id": "pred_4c391cb2_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:44:35.819255",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_4c391cb2_20250529\\prediction_data.json"
+    },
+    "pred_98de64b9_20250529": {
+      "prediction_id": "pred_98de64b9_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:44:45.057814",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_98de64b9_20250529\\prediction_data.json"
+    },
+    "pred_6375951a_20250529": {
+      "prediction_id": "pred_6375951a_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:45:03.790721",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_6375951a_20250529\\prediction_data.json"
+    },
+    "pred_8fb02905_20250529": {
+      "prediction_id": "pred_8fb02905_20250529",
+      "model_id": "carrier_performance_20250529084502",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:45:11.980048",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_8fb02905_20250529\\prediction_data.json"
+    },
+    "pred_b150becd_20250529": {
+      "prediction_id": "pred_b150becd_20250529",
+      "model_id": "carrier_performance_20250529083212",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:45:35.219351",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_b150becd_20250529\\prediction_data.json"
+    },
+    "pred_e1d17b86_20250529": {
+      "prediction_id": "pred_e1d17b86_20250529",
+      "model_id": "carrier_performance_20250529084502",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:45:39.839825",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_e1d17b86_20250529\\prediction_data.json"
+    },
+    "pred_d61b53be_20250529": {
+      "prediction_id": "pred_d61b53be_20250529",
+      "model_id": "carrier_performance_20250529084502",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:49:20.376197",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_d61b53be_20250529\\prediction_data.json"
+    },
+    "pred_2f0d7123_20250529": {
+      "prediction_id": "pred_2f0d7123_20250529",
+      "model_id": "carrier_performance_20250529084502",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:49:26.108011",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_2f0d7123_20250529\\prediction_data.json"
+    },
+    "pred_382608fe_20250529": {
+      "prediction_id": "pred_382608fe_20250529",
+      "model_id": "carrier_performance_20250529084502",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:49:46.117446",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_382608fe_20250529\\prediction_data.json"
+    },
+    "pred_1be8013b_20250529": {
+      "prediction_id": "pred_1be8013b_20250529",
+      "model_id": "carrier_performance_20250529084942",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:49:49.856656",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_1be8013b_20250529\\prediction_data.json"
+    },
+    "pred_3250d166_20250529": {
+      "prediction_id": "pred_3250d166_20250529",
+      "model_id": "carrier_performance_20250529085243",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:52:55.233238",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_3250d166_20250529\\prediction_data.json"
+    },
+    "pred_46488389_20250529": {
+      "prediction_id": "pred_46488389_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T08:57:48.095125",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_46488389_20250529\\prediction_data.json"
+    },
+    "pred_ae61c61e_20250529": {
+      "prediction_id": "pred_ae61c61e_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T09:17:33.449151",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_ae61c61e_20250529\\prediction_data.json"
+    },
+    "pred_8ac5b5e4_20250529": {
+      "prediction_id": "pred_8ac5b5e4_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T09:20:17.178158",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_8ac5b5e4_20250529\\prediction_data.json"
+    },
+    "pred_6c278ddf_20250529": {
+      "prediction_id": "pred_6c278ddf_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T09:26:40.387987",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_6c278ddf_20250529\\prediction_data.json"
+    },
+    "pred_78c96865_20250529": {
+      "prediction_id": "pred_78c96865_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T09:31:15.226286",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_78c96865_20250529\\prediction_data.json"
+    },
+    "pred_60f64a9b_20250529": {
+      "prediction_id": "pred_60f64a9b_20250529",
+      "model_id": "carrier_performance_20250529085736",
+      "model_type": "carrier_performance",
+      "created_at": "2025-05-29T09:32:31.382627",
+      "prediction_count": 1930,
+      "prediction_file": "data\\predictions\\pred_60f64a9b_20250529\\prediction_data.json"
     }
   }
 }
