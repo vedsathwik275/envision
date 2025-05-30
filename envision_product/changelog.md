@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased] - 2025-05-30
+### Added
+- **Enhanced RIQ and Spot API Integration Cards**: Added dedicated API parameter cards for both Rate Inquiry (RIQ) and Spot API workflows
+- **Structured Data Parsing**: Implemented robust parsing system that extracts lane information, carrier performance data, order weight, and order volume from chatbot responses
+- **Interactive Date Pickers**: Added date selection functionality for shipment planning in both RIQ and Spot API cards
+- **Action-Oriented Button Cards**: Introduced "Retrieve Rate Inquiry Details" and "Perform Spot Analysis" button cards for direct API integration
+- **Real-time Parameter Display**: Dynamic cards that populate with parsed data from user queries including origin/destination cities, preferred/avoid carriers, equipment types, and service levels
+- **Enhanced Prompt Template**: Updated backend prompt to include structured data section with ORDER_WEIGHT and ORDER_VOLUME fields for comprehensive data extraction
+
+### Changed
+- **Simplified Card Structure**: Consolidated multiple information sections into single comprehensive parameter cards for better user experience
+- **Improved Data Extraction**: Enhanced parsing logic to handle both structured data format and fallback regex patterns for reliable information extraction
+- **Streamlined UI**: Removed redundant "Original Query" and "API Integration Status" sections in favor of actionable button interfaces
+- **Carrier Labeling**: Updated carrier references to use more intuitive labels ("Preferred Carrier" vs "Avoid Carrier" for RIQ, "Best Performer" vs "Worst Performer" for Spot API)
+- **Date Input Optimization**: Modified RIQ to use single date input (today's date default) while Spot API maintains date range functionality
+
+### Fixed
+- **Structured Data Visibility**: Resolved issue where structured data section was being displayed to users by implementing proper content filtering in `formatRAGResponse`
+- **Parsing Reliability**: Improved fallback parsing mechanisms to ensure consistent data extraction even when structured format is unavailable
+- **UI Consistency**: Standardized card layouts and color schemes across both RIQ (blue theme) and Spot API (green/purple theme) sections
+
 ## [Unreleased] - 2025-05-29
 ### Added
 - **Neural Network Prediction Integration with RAG Chatbot System**: Complete integration allowing users to upload neural network prediction results to RAG chatbot knowledge bases

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -121,6 +120,7 @@ export function FileUpload({
           className={cn(
             "border-2 border-dashed rounded-lg p-8 text-center transition-all",
             isDragging ? "border-neural-primary bg-neural-primary/5" : "border-border",
+            file && uploadStatus === "idle" && "border-neural-success bg-neural-success/5",
             uploadStatus === "success" && "border-neural-success bg-neural-success/5",
             uploadStatus === "error" && "border-neural-error bg-neural-error/5"
           )}
@@ -163,14 +163,17 @@ export function FileUpload({
           {file && uploadStatus === "idle" && (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="rounded-full bg-muted p-4">
-                  <File className="h-8 w-8 text-primary" />
+                <div className="rounded-full bg-neural-success/20 p-4">
+                  <CheckCircle className="h-8 w-8 text-neural-success" />
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-medium">{file.name}</h3>
+                <h3 className="text-lg font-medium text-neural-success">{file.name}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {(file.size / 1024).toFixed(1)} KB • {file.type || "CSV"}
+                </p>
+                <p className="text-sm text-neural-success mt-1 font-medium">
+                  File selected successfully!
                 </p>
               </div>
               <div className="flex space-x-2 justify-center">

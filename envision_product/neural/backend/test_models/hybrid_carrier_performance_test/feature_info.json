@@ -1,0 +1,98 @@
+{
+  "data_format": "hybrid",
+  "has_qtr": false,
+  "time_categories": [],
+  "carrier_categories": [
+    "FDX",
+    "ODFL",
+    "UPS"
+  ],
+  "source_city_categories": [
+    "BOSTON",
+    "CHICAGO",
+    "DENVER",
+    "ELWOOD",
+    "MIAMI",
+    "NEW YORK",
+    "RICHMOND"
+  ],
+  "source_state_categories": [
+    "CO",
+    "FL",
+    "IL",
+    "MA",
+    "NY",
+    "VA"
+  ],
+  "source_country_categories": [
+    "US"
+  ],
+  "dest_city_categories": [
+    "ABINGDON",
+    "ATLANTA",
+    "DALLAS",
+    "LOS ANGELES",
+    "PHOENIX",
+    "PORTLAND",
+    "SEATTLE",
+    "WINDSOR"
+  ],
+  "dest_state_categories": [
+    "AZ",
+    "CA",
+    "CT",
+    "GA",
+    "OR",
+    "TX",
+    "VA",
+    "WA"
+  ],
+  "dest_country_categories": [
+    "US"
+  ],
+  "numerical_columns": [
+    "ORDER_COUNT",
+    "AVG_TRANSIT_DAYS",
+    "ACTUAL_TRANSIT_DAYS"
+  ],
+  "feature_columns": [
+    "DEFAULT_TIME",
+    "CARRIER_0",
+    "CARRIER_1",
+    "CARRIER_2",
+    "SOURCE_CITY_0",
+    "SOURCE_CITY_1",
+    "SOURCE_CITY_2",
+    "SOURCE_CITY_3",
+    "SOURCE_CITY_4",
+    "SOURCE_CITY_5",
+    "SOURCE_CITY_6",
+    "SOURCE_STATE_0",
+    "SOURCE_STATE_1",
+    "SOURCE_STATE_2",
+    "SOURCE_STATE_3",
+    "SOURCE_STATE_4",
+    "SOURCE_STATE_5",
+    "SOURCE_COUNTRY_0",
+    "DEST_CITY_0",
+    "DEST_CITY_1",
+    "DEST_CITY_2",
+    "DEST_CITY_3",
+    "DEST_CITY_4",
+    "DEST_CITY_5",
+    "DEST_CITY_6",
+    "DEST_CITY_7",
+    "DEST_STATE_0",
+    "DEST_STATE_1",
+    "DEST_STATE_2",
+    "DEST_STATE_3",
+    "DEST_STATE_4",
+    "DEST_STATE_5",
+    "DEST_STATE_6",
+    "DEST_STATE_7",
+    "DEST_COUNTRY_0",
+    "ORDER_COUNT",
+    "AVG_TRANSIT_DAYS",
+    "ACTUAL_TRANSIT_DAYS"
+  ]
+}

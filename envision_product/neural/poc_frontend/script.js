@@ -257,6 +257,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // File Upload
         uploadForm.addEventListener('submit', handleFileUpload);
         
+        // File input change event to update styling
+        fileInput.addEventListener('change', handleFileSelection);
+        
+        // Add drag and drop event listeners
+        const fileInputContainer = document.querySelector('.file-input-container');
+        if (fileInputContainer) {
+            fileInputContainer.addEventListener('dragover', handleDragOver);
+            fileInputContainer.addEventListener('dragleave', handleDragLeave);
+            fileInputContainer.addEventListener('drop', handleFileDrop);
+        }
+        
         // Model Training
         trainingForm.addEventListener('submit', handleModelTraining);
         
@@ -387,6 +398,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Display success message
                 showSuccess(uploadResult, `File "${uploadedFileName}" uploaded successfully! File ID: ${uploadedFileId}`);
                 
+                // Reset file input styling
+                fileInput.value = ''; // Clear the file input
+                updateFileInputStyling(null);
+                
                 // Immediately fetch and display the file preview
                 await previewFile(uploadedFileId);
                 
@@ -493,15 +508,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function displayFilePreview(previewData) {
-        // Display file info
-        fileInfo.innerHTML = `
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div><span class="font-medium text-neutral-700">File ID:</span> <span class="text-neutral-600">${previewData.file_id}</span></div>
-                <div><span class="font-medium text-neutral-700">Total Rows:</span> <span class="text-neutral-600">${previewData.total_rows}</span></div>
-                <div><span class="font-medium text-neutral-700">Total Columns:</span> <span class="text-neutral-600">${previewData.total_columns}</span></div>
-                <div><span class="font-medium text-neutral-700">Missing Data:</span> <span class="text-neutral-600">${previewData.missing_data_summary.total_missing} cells (${previewData.missing_data_summary.percent_missing}%)</span></div>
-            </div>
-        `;
+        // Hide the file info container since we don't want to show metadata
+        fileInfo.style.display = 'none';
         
         // Set up table headers
         const columnHeaders = Object.keys(previewData.sample_rows[0] || {});
@@ -606,18 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         statusElement.innerHTML = `
                             <div class="space-y-3">
                                 <p class="font-medium">Model training completed!</p>
-                                <div class="text-sm space-y-1">
-                                    <p><span class="font-medium">Model ID:</span> ${matchedModel.model_id}</p>
-                                    <p><span class="font-medium">Created:</span> ${new Date(matchedModel.created_at).toLocaleString()}</p>
-                                    <div>
-                                        <p class="font-medium">Performance metrics:</p>
-                                        <ul class="list-disc list-inside ml-4 space-y-1">
-                                            ${Object.entries(matchedModel.evaluation || {}).map(([key, value]) => 
-                                                `<li>${key}: ${typeof value === 'number' ? value.toFixed(4) : value}</li>`
-                                            ).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
                                 <button id="view-trained-model" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">View Model Details</button>
                             </div>
                         `;
@@ -698,19 +694,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add data attribute for model ID to help with highlighting
             row.setAttribute('data-model-id', model.model_id);
             
-            // Format metrics
-            let metricsHTML = '<ul class="text-sm space-y-1">';
-            for (const [key, value] of Object.entries(model.evaluation || {})) {
-                const formattedValue = typeof value === 'number' ? value.toFixed(4) : value;
-                metricsHTML += `<li><span class="font-medium">${key}:</span> ${formattedValue}</li>`;
-            }
-            metricsHTML += '</ul>';
-            
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">${model.model_id}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">${model.model_type}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">${new Date(model.created_at).toLocaleString()}</td>
-                <td class="px-6 py-4 text-sm text-neutral-500">${metricsHTML}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button class="view-model-btn inline-flex items-center px-3 py-1 bg-neutral-600 text-white text-sm font-medium rounded hover:bg-neutral-700 transition-colors" data-model-id="${model.model_id}">Details</button>
                     <button class="predict-model-btn inline-flex items-center px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded hover:bg-primary-700 transition-colors" data-model-id="${model.model_id}" data-model-type="${model.model_type}">Predict</button>
@@ -763,13 +750,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         trainingParamsHTML += '</ul>';
         
-        // Format evaluation metrics
-        let evaluationHTML = '<ul class="space-y-1">';
-        for (const [key, value] of Object.entries(model.evaluation || {})) {
-            evaluationHTML += `<li><span class="font-medium">${key}:</span> ${value}</li>`;
-        }
-        evaluationHTML += '</ul>';
-        
         modelDetailsContent.innerHTML = `
             <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -789,13 +769,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="text-sm text-neutral-600">
                             ${trainingParamsHTML}
                         </div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-medium text-neutral-900 mb-3">Evaluation Metrics</h3>
-                    <div class="text-sm text-neutral-600">
-                        ${evaluationHTML}
                     </div>
                 </div>
             </div>
@@ -1188,24 +1161,22 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                 <h3 class="text-lg font-medium text-blue-900 mb-4">Prediction Summary</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div><span class="font-medium text-blue-800">Prediction ID:</span> <span class="text-blue-700">${predictionId || 'N/A'}</span></div>
-                    <div><span class="font-medium text-blue-800">Model ID:</span> <span class="text-blue-700">${modelId || 'N/A'}</span></div>
                     <div><span class="font-medium text-blue-800">Created:</span> <span class="text-blue-700">${new Date(predictionTime).toLocaleString()}</span></div>
                     <div><span class="font-medium text-blue-800">Total Predictions:</span> <span class="text-blue-700">${predictionCount}</span></div>
                 </div>
         `;
         
         // Add model-specific metrics if available
-        if (Object.keys(metrics).length > 0) {
-            summaryHTML += '<div class="mt-4"><h4 class="font-medium text-blue-800 mb-2">Metrics:</h4><ul class="space-y-1 text-sm">';
-            for (const [key, value] of Object.entries(metrics)) {
-                const formattedValue = typeof value === 'number' ? 
-                    (Math.abs(value) < 0.0001 ? value.toExponential(2) : value.toFixed(4)) : 
-                    value;
-                summaryHTML += `<li class="text-blue-700"><span class="font-medium">${formatColumnHeader(key)}:</span> ${formattedValue}</li>`;
-            }
-            summaryHTML += '</ul></div>';
-        }
+        // if (Object.keys(metrics).length > 0) {
+        //     summaryHTML += '<div class="mt-4"><h4 class="font-medium text-blue-800 mb-2">Metrics:</h4><ul class="space-y-1 text-sm">';
+        //     for (const [key, value] of Object.entries(metrics)) {
+        //         const formattedValue = typeof value === 'number' ? 
+        //             (Math.abs(value) < 0.0001 ? value.toExponential(2) : value.toFixed(4)) : 
+        //             value;
+        //         summaryHTML += `<li class="text-blue-700"><span class="font-medium">${formatColumnHeader(key)}:</span> ${formattedValue}</li>`;
+        //     }
+        //     summaryHTML += '</ul></div>';
+        // }
         
         summaryHTML += '</div>';
         console.log('Setting summary HTML');
@@ -3067,6 +3038,73 @@ document.addEventListener('DOMContentLoaded', () => {
             uploadButton.className = 'inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors';
             
             // The event listener will check currentUploadedKBId and act accordingly
+        }
+    }
+    
+    // File Selection and Drag/Drop Handlers
+    function handleFileSelection(e) {
+        const file = e.target.files[0];
+        updateFileInputStyling(file);
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const fileInputContainer = document.querySelector('.file-input-container');
+        fileInputContainer.classList.add('border-primary-400', 'bg-primary-50/50');
+        fileInputContainer.classList.remove('border-neutral-300');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const fileInputContainer = document.querySelector('.file-input-container');
+        const file = fileInput.files[0];
+        if (!file) {
+            fileInputContainer.classList.remove('border-primary-400', 'bg-primary-50/50', 'border-green-400', 'bg-green-50/50');
+            fileInputContainer.classList.add('border-neutral-300');
+        }
+    }
+    
+    function handleFileDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            fileInput.files = files; // Set the file input files
+            updateFileInputStyling(file);
+        }
+    }
+    
+    function updateFileInputStyling(file) {
+        const fileInputContainer = document.querySelector('.file-input-container');
+        const fileInputHelper = document.querySelector('.file-input-helper');
+        
+        if (file) {
+            // Change to green styling
+            fileInputContainer.classList.remove('border-neutral-300', 'border-primary-400', 'bg-primary-50/50');
+            fileInputContainer.classList.add('border-green-400', 'bg-green-50/50');
+            
+            // Update the content to show file selected
+            fileInputHelper.innerHTML = `
+                <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                <p class="text-lg text-green-700 font-medium mb-2">${file.name}</p>
+                <p class="text-sm text-green-600">File selected successfully!</p>
+                <p class="text-xs text-neutral-500 mt-2">${(file.size / 1024).toFixed(1)} KB</p>
+            `;
+        } else {
+            // Reset to default styling
+            fileInputContainer.classList.remove('border-green-400', 'bg-green-50/50', 'border-primary-400', 'bg-primary-50/50');
+            fileInputContainer.classList.add('border-neutral-300');
+            
+            // Reset to default content
+            fileInputHelper.innerHTML = `
+                <i class="fas fa-cloud-upload-alt text-4xl text-neutral-400 mb-4"></i>
+                <p class="text-lg text-neutral-600 mb-2">Drag and drop your CSV file here</p>
+                <p class="text-sm text-neutral-500">or click to browse</p>
+            `;
         }
     }
 });

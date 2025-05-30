@@ -653,6 +653,9 @@ function formatRAGResponse(content) {
     // Clean up the content first
     let formatted = content.trim();
     
+    // Remove the structured data section before formatting (it's only for parsing)
+    formatted = formatted.replace(/---STRUCTURED_DATA---[\s\S]*?---END_STRUCTURED_DATA---/gi, '');
+    
     // Remove the confidence indicator and extract it (only the FIRST occurrence)
     let confidence = null;
     const confidenceMatch = formatted.match(/🎯\s*\*\*Answer\*\*\s*\(Confidence:\s*(\d+\.?\d*)%\)/);
@@ -664,6 +667,9 @@ function formatRAGResponse(content) {
     
     // Remove any duplicate confidence headers that might exist
     formatted = formatted.replace(/🎯\s*\*\*Answer\*\*\s*\(Confidence:\s*(\d+\.?\d*)%\)\s*/g, '');
+    
+    // Clean up any extra whitespace left from removing the structured data
+    formatted = formatted.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
     
     // Split content into sections
     const sections = formatted.split(/📚\s*\*\*Sources\*\*/);
@@ -913,32 +919,20 @@ function showNotification(message, type = 'info') {
 
 // Lane Information Parsing Functions
 function parseAndUpdateLaneInfo(userMessage, response) {
-    const laneInfo = parseLaneInformation(userMessage);
+    const laneInfo = parseLaneInformationFromResponse(response.answer);
     
-    // Check if we have any meaningful lane information
-    const hasLaneInfo = laneInfo.sourceCity || laneInfo.destinationCity || 
-                       laneInfo.weight || laneInfo.volume || laneInfo.equipmentType || 
-                       laneInfo.carrierName || laneInfo.serviceType;
+    // Check if we have performance analysis data
+    const hasPerformanceAnalysis = laneInfo.bestCarrier || laneInfo.worstCarrier || 
+                                 laneInfo.sourceCity || laneInfo.destinationCity;
     
-    if (hasLaneInfo) {
-        // Determine if this is a rate inquiry or spot API request
-        const isRateInquiry = isRateInquiryPrompt(userMessage);
-        const isSpotAPI = isSpotAPIPrompt(userMessage);
-        
-        // Update cards based on query type
-        if (isRateInquiry) {
-            updateRateInquiryCard(laneInfo, userMessage, response);
-        } else if (isSpotAPI) {
-            updateSpotAPICard(laneInfo, userMessage, response);
-        } else if (laneInfo.sourceCity && laneInfo.destinationCity) {
-            // If we have lane info but unclear intent, show both cards
-            updateRateInquiryCard(laneInfo, userMessage, response);
-            updateSpotAPICard(laneInfo, userMessage, response);
-        }
+    if (hasPerformanceAnalysis) {
+        // Update cards with parsed performance data
+        updateRateInquiryCard(laneInfo, userMessage, response);
+        updateSpotAPICard(laneInfo, userMessage, response);
     }
 }
 
-function parseLaneInformation(message) {
+function parseLaneInformationFromResponse(answer) {
     const laneInfo = {
         sourceCity: null,
         destinationCity: null,
@@ -949,33 +943,140 @@ function parseLaneInformation(message) {
         equipmentType: null,
         serviceType: null,
         carrierName: null,
-        requestType: null
+        requestType: null,
+        bestCarrier: null,
+        bestPerformance: null,
+        worstCarrier: null,
+        worstPerformance: null,
+        laneName: null
     };
     
-    // Parse cities (from X to Y, X-Y, between X and Y)
-    const cityPatterns = [
-        /from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /between\s+([a-zA-Z\s,]+?)\s+and\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /([a-zA-Z\s,]+?)\s*[-–—]\s*([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /lane\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /shipping\s+from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /transport\s+from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
-        /([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s+lane|\s+route|\s+corridor)(?:\s|$|[.?!,])/i
-    ];
+    // Look for the structured data section
+    const structuredDataMatch = answer.match(/---STRUCTURED_DATA---([\s\S]*?)---END_STRUCTURED_DATA---/i);
     
-    for (const pattern of cityPatterns) {
-        const match = message.match(pattern);
-        if (match) {
-            laneInfo.sourceCity = cleanCityName(match[1]);
-            laneInfo.destinationCity = cleanCityName(match[2]);
-            break;
+    if (structuredDataMatch) {
+        const structuredData = structuredDataMatch[1];
+        
+        // Parse each field from the structured data
+        const laneMatch = structuredData.match(/LANE:\s*(.+)/i);
+        if (laneMatch && laneMatch[1].trim() !== 'N/A') {
+            laneInfo.laneName = laneMatch[1].trim();
+            // Extract source and destination from lane
+            const laneParts = laneInfo.laneName.split(' to ');
+            if (laneParts.length === 2) {
+                laneInfo.sourceCity = laneParts[0].trim();
+                laneInfo.destinationCity = laneParts[1].trim();
+            }
+        }
+        
+        const bestCarrierMatch = structuredData.match(/BEST_CARRIER:\s*(.+)/i);
+        if (bestCarrierMatch && bestCarrierMatch[1].trim() !== 'N/A') {
+            laneInfo.bestCarrier = bestCarrierMatch[1].trim();
+        }
+        
+        const bestPerformanceMatch = structuredData.match(/BEST_PERFORMANCE:\s*(.+)/i);
+        if (bestPerformanceMatch && bestPerformanceMatch[1].trim() !== 'N/A') {
+            laneInfo.bestPerformance = bestPerformanceMatch[1].trim();
+        }
+        
+        const worstCarrierMatch = structuredData.match(/WORST_CARRIER:\s*(.+)/i);
+        if (worstCarrierMatch && worstCarrierMatch[1].trim() !== 'N/A') {
+            laneInfo.worstCarrier = worstCarrierMatch[1].trim();
+        }
+        
+        const worstPerformanceMatch = structuredData.match(/WORST_PERFORMANCE:\s*(.+)/i);
+        if (worstPerformanceMatch && worstPerformanceMatch[1].trim() !== 'N/A') {
+            laneInfo.worstPerformance = worstPerformanceMatch[1].trim();
+        }
+        
+        const orderWeightMatch = structuredData.match(/ORDER_WEIGHT:\s*(.+)/i);
+        if (orderWeightMatch && orderWeightMatch[1].trim() !== 'N/A') {
+            laneInfo.weight = orderWeightMatch[1].trim();
+        }
+        
+        const orderVolumeMatch = structuredData.match(/ORDER_VOLUME:\s*(.+)/i);
+        if (orderVolumeMatch && orderVolumeMatch[1].trim() !== 'N/A') {
+            laneInfo.volume = orderVolumeMatch[1].trim();
+        }
+        
+        console.log('Parsed structured data:', {
+            lane: laneInfo.laneName,
+            bestCarrier: laneInfo.bestCarrier,
+            bestPerformance: laneInfo.bestPerformance,
+            worstCarrier: laneInfo.worstCarrier,
+            worstPerformance: laneInfo.worstPerformance,
+            weight: laneInfo.weight,
+            volume: laneInfo.volume
+        });
+        
+        return laneInfo;
+    }
+    
+    // Fallback: If no structured data found, try the old regex patterns as backup
+    console.log('No structured data found, trying fallback parsing...');
+    
+    // Parse Best Performance Analysis section - more flexible patterns
+    let bestPerformanceMatch = answer.match(/Best Performance Analysis[^]*?(?:best predicted performance|best.*?performance)\s+is\s+(\d+\.?\d*%)\s+for carrier\s+([A-Z\s&.-]+?)\s+on.*?([A-Z\s]+?)\s+to\s+([A-Z\s]+?)\s+lane/i);
+    if (!bestPerformanceMatch) {
+        // Try alternative pattern
+        bestPerformanceMatch = answer.match(/(?:best|highest).*?performance.*?(\d+\.?\d*%)[^]*?carrier[^]*?([A-Z\s&.-]+?)[^]*?([A-Z\s]+?)\s+to\s+([A-Z\s]+?)/i);
+    }
+    if (bestPerformanceMatch) {
+        laneInfo.bestPerformance = bestPerformanceMatch[1];
+        laneInfo.bestCarrier = bestPerformanceMatch[2].trim();
+        laneInfo.sourceCity = cleanCityName(bestPerformanceMatch[3]);
+        laneInfo.destinationCity = cleanCityName(bestPerformanceMatch[4]);
+    }
+    
+    // Parse Worst Performance Analysis section - more flexible patterns
+    let worstPerformanceMatch = answer.match(/Worst Performance Analysis[^]*?(?:worst predicted performance|worst.*?performance)\s+is\s+(\d+\.?\d*%)\s+for carrier\s+([A-Z\s&.-]+?)\s+on.*?([A-Z\s]+?)\s+to\s+([A-Z\s]+?)\s+lane/i);
+    if (!worstPerformanceMatch) {
+        // Try alternative pattern
+        worstPerformanceMatch = answer.match(/(?:worst|lowest).*?performance.*?(\d+\.?\d*%)[^]*?carrier[^]*?([A-Z\s&.-]+?)[^]*?([A-Z\s]+?)\s+to\s+([A-Z\s]+?)/i);
+    }
+    if (worstPerformanceMatch) {
+        laneInfo.worstPerformance = worstPerformanceMatch[1];
+        laneInfo.worstCarrier = worstPerformanceMatch[2].trim();
+        // Use the lane info from worst performance if best performance didn't provide it
+        if (!laneInfo.sourceCity) {
+            laneInfo.sourceCity = cleanCityName(worstPerformanceMatch[3]);
+        }
+        if (!laneInfo.destinationCity) {
+            laneInfo.destinationCity = cleanCityName(worstPerformanceMatch[4]);
+        }
+    }
+    
+    // Create lane name if we have source and destination
+    if (laneInfo.sourceCity && laneInfo.destinationCity) {
+        laneInfo.laneName = `${laneInfo.sourceCity} to ${laneInfo.destinationCity}`;
+    }
+    
+    // Parse cities (from X to Y, X-Y, between X and Y) - fallback if performance sections don't have them
+    if (!laneInfo.sourceCity || !laneInfo.destinationCity) {
+        const cityPatterns = [
+            /from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /between\s+([a-zA-Z\s,]+?)\s+and\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /([a-zA-Z\s,]+?)\s*[-–—]\s*([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /lane\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /shipping\s+from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /transport\s+from\s+([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s|$|[.?!,])/i,
+            /([a-zA-Z\s,]+?)\s+to\s+([a-zA-Z\s,]+?)(?:\s+lane|\s+route|\s+corridor)(?:\s|$|[.?!,])/i
+        ];
+        
+        for (const pattern of cityPatterns) {
+            const match = answer.match(pattern);
+            if (match) {
+                if (!laneInfo.sourceCity) laneInfo.sourceCity = cleanCityName(match[1]);
+                if (!laneInfo.destinationCity) laneInfo.destinationCity = cleanCityName(match[2]);
+                break;
+            }
         }
     }
     
     // Additional city parsing for specific formats like "Elwood to Miami"
     if (!laneInfo.sourceCity && !laneInfo.destinationCity) {
         const simplePattern = /\b([A-Z][a-zA-Z\s]{2,})\s+to\s+([A-Z][a-zA-Z\s]{2,})\b/;
-        const simpleMatch = message.match(simplePattern);
+        const simpleMatch = answer.match(simplePattern);
         if (simpleMatch) {
             laneInfo.sourceCity = cleanCityName(simpleMatch[1]);
             laneInfo.destinationCity = cleanCityName(simpleMatch[2]);
@@ -983,25 +1084,25 @@ function parseLaneInformation(message) {
     }
     
     // Parse weight (lbs, pounds, kg, tons)
-    const weightMatch = message.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(lbs?|pounds?|kg|tons?|#)/i);
+    const weightMatch = answer.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(lbs?|pounds?|kg|tons?|#)/i);
     if (weightMatch) {
         laneInfo.weight = `${weightMatch[1]} ${weightMatch[2] === '#' ? 'lbs' : weightMatch[2]}`;
     }
     
     // Parse volume (cuft, cubic feet, cbm)
-    const volumeMatch = message.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(cuft|cubic\s*feet?|cbm|cubic\s*meters?|ft3|m3)/i);
+    const volumeMatch = answer.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(cuft|cubic\s*feet?|cbm|cubic\s*meters?|ft3|m3)/i);
     if (volumeMatch) {
         laneInfo.volume = `${volumeMatch[1]} ${volumeMatch[2]}`;
     }
     
     // Parse zip codes
-    const zipMatch = message.match(/\b(\d{5}(?:-\d{4})?)\b/);
+    const zipMatch = answer.match(/\b(\d{5}(?:-\d{4})?)\b/);
     if (zipMatch) {
         laneInfo.zipCode = zipMatch[1];
     }
     
     // Parse states (both abbreviations and full names)
-    const stateMatch = message.match(/\b([A-Z]{2})\b/);
+    const stateMatch = answer.match(/\b([A-Z]{2})\b/);
     if (stateMatch) {
         laneInfo.state = stateMatch[1];
     }
@@ -1021,7 +1122,7 @@ function parseLaneInformation(message) {
     ];
     
     for (const { pattern, name } of equipmentPatterns) {
-        if (pattern.test(message)) {
+        if (pattern.test(answer)) {
             laneInfo.equipmentType = name;
             break;
         }
@@ -1051,7 +1152,7 @@ function parseLaneInformation(message) {
     ];
     
     for (const pattern of carrierPatterns) {
-        const match = message.match(pattern);
+        const match = answer.match(pattern);
         if (match) {
             let carrierName = match[1].trim();
             
@@ -1078,7 +1179,7 @@ function parseLaneInformation(message) {
     ];
     
     for (const { pattern, name } of servicePatterns) {
-        if (pattern.test(message)) {
+        if (pattern.test(answer)) {
             laneInfo.serviceType = name;
             break;
         }
@@ -1125,27 +1226,44 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
     
     // Update status
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
-    statusElement.textContent = 'Active';
+    statusElement.textContent = 'Ready for API Call';
     
-    // Build content
+    // Build content with parsed data ready for RIQ API
     let content = `
         <div class="space-y-4">
+    `;
+    
+    // Combined API Parameters Card for RIQ
+    content += `
             <div class="bg-blue-50 rounded-lg p-4">
-                <h4 class="font-medium text-blue-900 mb-3">Lane Details</h4>
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-cog text-blue-600 mr-2"></i>
+                    RIQ API Parameters
+                </h4>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3 text-sm">
     `;
     
     if (laneInfo.sourceCity) {
-        content += `<div><span class="text-neutral-600">From:</span> <span class="font-medium">${laneInfo.sourceCity}</span></div>`;
+        content += `<div><span class="text-neutral-600">Origin:</span> <span class="font-medium">${laneInfo.sourceCity}</span></div>`;
     }
     if (laneInfo.destinationCity) {
-        content += `<div><span class="text-neutral-600">To:</span> <span class="font-medium">${laneInfo.destinationCity}</span></div>`;
+        content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${laneInfo.destinationCity}</span></div>`;
+    }
+    if (laneInfo.laneName) {
+        content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
+    }
+    if (laneInfo.bestCarrier) {
+        content += `<div><span class="text-neutral-600">Preferred Carrier:</span> <span class="font-medium text-green-600">${laneInfo.bestCarrier}</span></div>`;
+    }
+    if (laneInfo.worstCarrier) {
+        content += `<div><span class="text-neutral-600">Avoid Carrier:</span> <span class="font-medium text-red-600">${laneInfo.worstCarrier}</span></div>`;
     }
     if (laneInfo.weight) {
-        content += `<div><span class="text-neutral-600">Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
+        content += `<div><span class="text-neutral-600">Order Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
     }
     if (laneInfo.volume) {
-        content += `<div><span class="text-neutral-600">Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
+        content += `<div><span class="text-neutral-600">Order Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
     }
     if (laneInfo.equipmentType) {
         content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
@@ -1153,31 +1271,61 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
     if (laneInfo.serviceType) {
         content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
     }
-    if (laneInfo.zipCode) {
-        content += `<div><span class="text-neutral-600">Zip Code:</span> <span class="font-medium">${laneInfo.zipCode}</span></div>`;
-    }
-    if (laneInfo.state) {
-        content += `<div><span class="text-neutral-600">State:</span> <span class="font-medium">${laneInfo.state}</span></div>`;
-    }
+    
+    content += `<div><span class="text-neutral-600">Type:</span> <span class="font-medium">Rate Inquiry</span></div>`;
+    content += `<div><span class="text-neutral-600">Status:</span> <span class="font-medium text-blue-600">Ready for API Call</span></div>`;
     
     content += `
+                    </div>
+                    <div class="border-t border-blue-200 pt-3">
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Expected Ship Date</label>
+                        <div class="flex space-x-2">
+                            <input type="date" id="riq-ship-date-start" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <span class="flex items-center text-sm text-neutral-500">to</span>
+                            <input type="date" id="riq-ship-date-end" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-1">Select single date or date range for shipment</p>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white border border-blue-200 rounded-lg p-4">
-                <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
-                    <i class="fas fa-quote-left text-blue-500 mr-2"></i>
-                    Original Query
-                </h5>
-                <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
+    `;
+    
+    // // Query Analysis Section
+    // content += `
+    //         <div class="bg-white border border-blue-200 rounded-lg p-4">
+    //             <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
+    //                 <i class="fas fa-quote-left text-blue-500 mr-2"></i>
+    //                 Original Query
+    //             </h5>
+    //             <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
+    //         </div>
+    // `;
+    
+    // // API Integration Status
+    // content += `
+    //         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    //             <h5 class="font-medium text-blue-800 mb-2 flex items-center">
+    //                 <i class="fas fa-plug text-blue-600 mr-2"></i>
+    //                 RIQ API Integration
+    //             </h5>
+    //             <p class="text-sm text-blue-700">Ready to query RIQ API for rate quotes with parsed parameters and selected ship dates.</p>
+    //         </div>
+    // `;
+    
+    // Retrieve Rate Inquiry Details Button Card
+    content += `
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="font-medium mb-1">Retrieve Rate Inquiry Details</h5>
+                        <p class="text-blue-100 text-sm">Get rate quotes using parsed parameters</p>
+                    </div>
+                    <button onclick="retrieveRateInquiry()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Get Rates
+                    </button>
+                </div>
             </div>
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h5 class="font-medium text-yellow-800 mb-2 flex items-center">
-                    <i class="fas fa-clock text-yellow-600 mr-2"></i>
-                    Next Steps
-                </h5>
-                <p class="text-sm text-yellow-700">Ready to request rate quote from RIQ API with parsed parameters.</p>
-            </div>
-        </div>
     `;
     
     contentElement.innerHTML = content;
@@ -1189,14 +1337,22 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     
     // Update status
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
-    statusElement.textContent = 'Analyzing';
+    statusElement.textContent = 'Ready for API Call';
     
-    // Build content
+    // Build content with analysis parameters
     let content = `
         <div class="space-y-4">
+    `;
+    
+    // Combined Spot API Parameters Section
+    content += `
             <div class="bg-green-50 rounded-lg p-4">
-                <h4 class="font-medium text-green-900 mb-3">Analysis Parameters</h4>
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <h4 class="font-medium text-green-900 mb-3 flex items-center">
+                    <i class="fas fa-analytics text-green-600 mr-2"></i>
+                    Spot API Parameters
+                </h4>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3 text-sm">
     `;
     
     if (laneInfo.sourceCity) {
@@ -1205,9 +1361,15 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     if (laneInfo.destinationCity) {
         content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${laneInfo.destinationCity}</span></div>`;
     }
-    if (laneInfo.carrierName) {
-        content += `<div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${laneInfo.carrierName}</span></div>`;
+    if (laneInfo.laneName) {
+        content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
     }
+    // if (laneInfo.bestCarrier) {
+    //     content += `<div><span class="text-neutral-600">Best Performer:</span> <span class="font-medium text-green-600">${laneInfo.bestCarrier}</span></div>`;
+    // }
+    // if (laneInfo.worstCarrier) {
+    //     content += `<div><span class="text-neutral-600">Worst Performer:</span> <span class="font-medium text-red-600">${laneInfo.worstCarrier}</span></div>`;
+    // }
     if (laneInfo.equipmentType) {
         content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
     }
@@ -1215,43 +1377,107 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
         content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
     }
     if (laneInfo.weight) {
-        content += `<div><span class="text-neutral-600">Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
+        content += `<div><span class="text-neutral-600">Order Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
+    }
+    if (laneInfo.volume) {
+        content += `<div><span class="text-neutral-600">Order Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
     }
     
-    // Add analysis type based on keywords
-    let analysisType = 'General Analysis';
-    if (userMessage.toLowerCase().includes('performance')) {
-        analysisType = 'Carrier Performance';
-    } else if (userMessage.toLowerCase().includes('spot')) {
-        analysisType = 'Spot Market Analysis';
-    } else if (userMessage.toLowerCase().includes('capacity')) {
-        analysisType = 'Capacity Analysis';
-    } else if (userMessage.toLowerCase().includes('rate')) {
-        analysisType = 'Rate Analysis';
-    }
+    // Add analysis type based on detected data
+    let analysisType = 'Spot Market Analysis';
     
     content += `<div><span class="text-neutral-600">Type:</span> <span class="font-medium">${analysisType}</span></div>`;
     content += `<div><span class="text-neutral-600">Status:</span> <span class="font-medium text-green-600">Ready for API Call</span></div>`;
     
     content += `
+                    </div>
+                    <div class="border-t border-green-200 pt-3">
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Expected Ship Date</label>
+                        <div class="flex space-x-2">
+                            <input type="date" id="spot-ship-date-start" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                            <span class="flex items-center text-sm text-neutral-500">to</span>
+                            <input type="date" id="spot-ship-date-end" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                        </div>
+                        <p class="text-xs text-neutral-500 mt-1">Select single date or date range for market analysis</p>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white border border-green-200 rounded-lg p-4">
-                <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
-                    <i class="fas fa-search text-green-500 mr-2"></i>
-                    Query Analysis
-                </h5>
-                <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
+    `;
+    
+    // // Query Analysis Section
+    // content += `
+    //         <div class="bg-white border border-green-200 rounded-lg p-4">
+    //             <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
+    //                 <i class="fas fa-quote-left text-green-500 mr-2"></i>
+    //                 Original Query
+    //             </h5>
+    //             <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
+    //         </div>
+    // `;
+    
+    // // API Integration Status
+    // content += `
+    //         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+    //             <h5 class="font-medium text-purple-800 mb-2 flex items-center">
+    //                 <i class="fas fa-plug text-purple-600 mr-2"></i>
+    //                 Spot API Integration
+    //             </h5>
+    //             <p class="text-sm text-purple-700">Ready to query Spot API for ${analysisType.toLowerCase()} data with parsed parameters and selected ship dates.</p>
+    //         </div>
+    // `;
+    
+    // Perform Spot Analysis Button Card
+    content += `
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="font-medium mb-1">Perform Spot Analysis</h5>
+                        <p class="text-green-100 text-sm">Get market analysis using parsed parameters</p>
+                    </div>
+                    <button onclick="performSpotAnalysis()" class="bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-50 transition-colors flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Analyze
+                    </button>
+                </div>
             </div>
-            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <h5 class="font-medium text-purple-800 mb-2 flex items-center">
-                    <i class="fas fa-chart-line text-purple-600 mr-2"></i>
-                    API Integration
-                </h5>
-                <p class="text-sm text-purple-700">Ready to query Spot API for ${analysisType.toLowerCase()} data.</p>
-            </div>
-        </div>
     `;
     
     contentElement.innerHTML = content;
 }
+
+// Global functions for API button actions
+window.retrieveRateInquiry = function() {
+    // Get the date values
+    const startDate = document.getElementById('riq-ship-date-start')?.value;
+    const endDate = document.getElementById('riq-ship-date-end')?.value;
+    
+    // Here you would collect all the parsed parameters and make the actual RIQ API call
+    console.log('Retrieving rate inquiry with dates:', { startDate, endDate });
+    
+    // Show loading state or success message
+    showNotification('Rate inquiry submitted! (Integration pending)', 'info');
+    
+    // TODO: Implement actual RIQ API integration
+    // This would typically involve:
+    // 1. Collecting all parsed parameters from the card
+    // 2. Making API call to RIQ endpoint
+    // 3. Displaying results or updating UI
+};
+
+window.performSpotAnalysis = function() {
+    // Get the date values
+    const startDate = document.getElementById('spot-ship-date-start')?.value;
+    const endDate = document.getElementById('spot-ship-date-end')?.value;
+    
+    // Here you would collect all the parsed parameters and make the actual Spot API call
+    console.log('Performing spot analysis with dates:', { startDate, endDate });
+    
+    // Show loading state or success message
+    showNotification('Spot analysis started! (Integration pending)', 'info');
+    
+    // TODO: Implement actual Spot API integration
+    // This would typically involve:
+    // 1. Collecting all parsed parameters from the card
+    // 2. Making API call to Spot API endpoint
+    // 3. Displaying results or updating UI
+};

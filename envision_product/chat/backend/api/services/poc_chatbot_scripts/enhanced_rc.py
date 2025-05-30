@@ -108,13 +108,30 @@ INSTRUCTIONS:
   * ALWAYS identify the carrier associated with the highest performance metric
   * Format performance details as: "The best predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN] to [DESTINATION] lane"
   * If multiple carriers exist, clearly state which carrier achieved the highest performance
+  * After the best performance, provide a section about the WORST performance metric found
+  * Use format: "### Worst Performance Analysis"
+  * ALWAYS identify the carrier associated with the lowest performance metric
+  * Format performance details as: "The worst predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN] to [DESTINATION] lane"
+  * This helps identify carriers that might be cheapest but have poor performance
   * DO NOT repeat the confidence header - use it only once at the beginning
-  * Focus on the highest/best performance value found in the data and its associated carrier
+  * Focus on the highest/best performance value found in the data and its associated carrier, followed by the lowest/worst performance
+  * CRITICAL: Always end your response with a structured data section in this exact format:
+  
+  ---STRUCTURED_DATA---
+  LANE: [Source City] to [Destination City]
+  BEST_CARRIER: [Carrier Name]
+  BEST_PERFORMANCE: [XX.XX%]
+  WORST_CARRIER: [Carrier Name]
+  WORST_PERFORMANCE: [XX.XX%]
+  ORDER_WEIGHT: [Weight with unit, e.g. "1000 lbs" or "N/A"]
+  ORDER_VOLUME: [Volume with unit, e.g. "15 cuft" or "N/A"]
+  ---END_STRUCTURED_DATA---
+  
 - Be specific and detailed when information is available
 - If information is incomplete, acknowledge what you know and what's missing
 - Structure your response clearly with main points
 - Use examples and quotes from the context when relevant
-- When discussing performance metrics, always highlight the best performance first with its carrier, then provide context about variations
+- When discussing performance metrics, always highlight the best performance first with its carrier, then the worst performance with its carrier, then provide context about variations
 - If no relevant information exists, clearly state "I cannot find information about this topic in the provided documents"
 
 ADDITIONAL CONSTRAINTS:
@@ -123,6 +140,7 @@ ADDITIONAL CONSTRAINTS:
 - Focus your answer on the exact lane or topic mentioned in the question
 - If data for the requested lane is not available, say so directly rather than discussing other lanes
 - Stick to facts from the provided context - do not infer or extrapolate beyond what is explicitly stated
+- ALWAYS include the structured data section at the end, even if some fields are "N/A"
 
 CONTEXT:
 {context}
@@ -130,7 +148,7 @@ CONTEXT:
 QUESTION: {question}
 
 DETAILED ANALYSIS:
-Let me examine the relevant information from the documents to provide you with a comprehensive answer, starting with the best available performance data and its associated carrier:
+Let me examine the relevant information from the documents to provide you with a comprehensive answer, starting with the best available performance data and its associated carrier, followed by the worst performance data:
 
 ANSWER:"""
         
@@ -194,6 +212,7 @@ ANSWER:"""
         # Extract performance metrics from sources for transportation data
         performance_metrics = self.extract_performance_metrics(sources)
         best_performance = self.find_best_performance(performance_metrics)
+        worst_performance = self.find_worst_performance(performance_metrics)
         
         # Analyze source diversity
         source_files = set()
@@ -219,7 +238,7 @@ ANSWER:"""
         confidence_score = self.calculate_confidence(answer, sources)
         
         # Enhance answer format if it doesn't start with best performance and we have performance data
-        enhanced_answer = self.enhance_answer_with_performance(answer, best_performance, confidence_score)
+        enhanced_answer = self.enhance_answer_with_performance(answer, best_performance, worst_performance, confidence_score)
         
         return {
             'result': enhanced_answer,  # Keep original key for compatibility
@@ -233,6 +252,7 @@ ANSWER:"""
             'confidence_score': confidence_score,
             'performance_metrics': performance_metrics,
             'best_performance': best_performance,
+            'worst_performance': worst_performance,
             'metadata': {
                 'total_sources_found': len(sources),
                 'processing_notes': self.get_processing_notes(answer, sources)
@@ -369,8 +389,26 @@ ANSWER:"""
         # If no specific performance metrics, use the highest percentage
         return max(metrics, key=lambda x: x['value']) if metrics else None
     
-    def enhance_answer_with_performance(self, answer: str, best_performance: Optional[Dict[str, Any]], confidence: float) -> str:
-        """Enhance answer to lead with best performance if not already formatted properly"""
+    def find_worst_performance(self, metrics: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Find the worst performance metric from the list"""
+        if not metrics:
+            return None
+        
+        # Filter for actual performance metrics (not just any percentage)
+        performance_metrics = [
+            m for m in metrics 
+            if m['type'] in ['predicted_ontime_performance', 'on_time_performance', 'ontime_performance', 
+                           'delivery_performance', 'performance_score', 'reliability', "predicted_tender_performance", "predicted_tender_performance_percentage", "tender_performance", "tender_performance_percentage"]
+        ]
+        
+        if performance_metrics:
+            return min(performance_metrics, key=lambda x: x['value'])
+        
+        # If no specific performance metrics, use the lowest percentage
+        return min(metrics, key=lambda x: x['value']) if metrics else None
+    
+    def enhance_answer_with_performance(self, answer: str, best_performance: Optional[Dict[str, Any]], worst_performance: Optional[Dict[str, Any]], confidence: float) -> str:
+        """Enhance answer to lead with best and worst performance if not already formatted properly"""
         
         # Check if answer already starts with the target format - if so, return as-is
         if answer.startswith('🎯 **Answer**'):
@@ -381,13 +419,22 @@ ANSWER:"""
             return answer
         
         # If we have performance data and the answer doesn't lead with it, enhance it
-        if best_performance and not any(indicator in answer[:200].lower() for indicator in ['best', 'highest', 'maximum']):
+        if (best_performance or worst_performance) and not any(indicator in answer[:200].lower() for indicator in ['best', 'highest', 'maximum', 'worst', 'lowest']):
             performance_intro = f"🎯 **Answer** (Confidence: {confidence:.1%})\n"
             
-            if best_performance['carrier'] and best_performance['lane']:
-                performance_intro += f"### Best Performance: {best_performance['value']:.2f}% for {best_performance['carrier']} on {best_performance['lane']}\n\n"
-            else:
-                performance_intro += f"### Best Predicted Performance: {best_performance['value']:.2f}%\n\n"
+            # Add best performance section
+            if best_performance:
+                if best_performance['carrier'] and best_performance['lane']:
+                    performance_intro += f"### Best Performance: {best_performance['value']:.2f}% for {best_performance['carrier']} on {best_performance['lane']}\n\n"
+                else:
+                    performance_intro += f"### Best Predicted Performance: {best_performance['value']:.2f}%\n\n"
+            
+            # Add worst performance section
+            if worst_performance:
+                if worst_performance['carrier'] and worst_performance['lane']:
+                    performance_intro += f"### Worst Performance: {worst_performance['value']:.2f}% for {worst_performance['carrier']} on {worst_performance['lane']}\n\n"
+                else:
+                    performance_intro += f"### Worst Predicted Performance: {worst_performance['value']:.2f}%\n\n"
             
             return performance_intro + answer
         
