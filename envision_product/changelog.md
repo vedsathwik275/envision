@@ -1,5 +1,53 @@
 # Changelog
 
+## [Unreleased] - 2025-06-02
+### Added
+- **Enhanced Tender Performance Model Geographic Information**: Major improvements to tender performance prediction model
+  - **Complete Geographic Data Support**: Enhanced model to consistently include `source_state`, `source_country`, `dest_state`, and `dest_country` in all prediction outputs
+  - **API Geographic Enhancement**: Updated all tender performance API endpoints to include geographic information in simplified format
+    - Modified main predictions endpoint (`/api/predictions/tender-performance/{model_id}`) to include state/country data
+    - Enhanced by-lane filtering endpoint to maintain geographic information consistency
+    - Updated download functionality to include geographic fields in simplified CSV exports
+  - **Consistent Prediction Structure**: Ensured geographic information is always present in predictions regardless of data format
+    - Legacy format predictions now include geographic fields with `null` values for consistency
+    - New format predictions populate all geographic fields with actual state/country data
+    - API responses maintain uniform structure across both legacy and new data formats
+  - **Enhanced Model Persistence**: Improved model saving/loading to support full training data predictions
+    - Modified `save_model()` to save complete training data (`training_data.csv`) instead of just sample data
+    - Updated `load_model()` to prioritize full training data for comprehensive predictions
+    - Maintains backward compatibility with existing models through fallback to sample data
+  - **Fixed Prediction Count Issues**: Resolved limitation where only 10 predictions were generated instead of full dataset
+    - Root cause: Model was loading only sample data (10 rows) instead of complete training data
+    - Solution: Enhanced model persistence to save and load full training datasets
+    - Result: Predictions now generate for all 400+ lanes in training data
+
+### Changed
+- **Simplified Format Enhancement**: Updated simplified prediction format across all components
+  - **API Response Structure**: Standardized field order with geographic information positioned between location and performance data
+  - **File Converter Updates**: Modified `convert_tender_performance_simplified()` function to use consistent field naming
+  - **CSV Export Format**: Enhanced CSV exports to include complete geographic information for better analysis capabilities
+- **Improved Model Training Data Management**: Enhanced data handling for better prediction capabilities
+  - **Full Dataset Preservation**: Models now preserve complete training datasets for comprehensive prediction generation
+  - **Sample Data Backup**: Maintains sample data files for quick reference and legacy compatibility
+  - **Metadata Enhancement**: Added comprehensive model metadata including training data shape and feature counts
+
+### Fixed
+- **Geographic Information Missing in API Responses**: Resolved issue where simplified API responses were missing state/country fields
+  - Fixed hardcoded simplified format in main predictions endpoint
+  - Updated by-lane endpoint to include geographic information
+  - Corrected download functionality to export complete geographic data
+- **Prediction Count Limitation**: Fixed critical issue where only 10 predictions were generated instead of full dataset
+  - Problem: `predict_on_training_data()` was using sample data (10 rows) instead of complete training data
+  - Solution: Enhanced model saving to preserve full training data and loading to prioritize complete datasets
+  - Impact: Users now get predictions for all training data lanes (400+ predictions vs previous 10)
+- **Inconsistent Field Naming**: Standardized prediction field names across all components
+  - Fixed `convert_tender_performance_simplified()` to use `predicted_performance` instead of `predicted_ontime_performance`
+  - Ensured consistent field naming between API responses, CSV exports, and JSON outputs
+- **"Using OTHER" Warnings**: Clarified model behavior when destination cities aren't found in training data
+  - These warnings are expected behavior when predicting on cities not seen during training
+  - Model appropriately falls back to "OTHER" category for unknown destinations
+  - No action required - this is proper handling of out-of-vocabulary destinations
+
 ## [Unreleased] - 2025-05-30
 ### Added
 - **Enhanced RIQ and Spot API Integration Cards**: Added dedicated API parameter cards for both Rate Inquiry (RIQ) and Spot API workflows
@@ -773,4 +821,4 @@
 
 
 
-Timestamp: 2025-05-28 12:005:00
+Timestamp: 2025-06-02 09:12:00

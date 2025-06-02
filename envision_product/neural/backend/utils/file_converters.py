@@ -333,7 +333,8 @@ def convert_tender_performance_simplified(prediction_dir: Union[str, Path]) -> O
             row = {
                 'carrier': pred.get('carrier', ''),
                 'source_city': pred.get('source_city', ''),
-                'dest_city': pred.get('dest_city', '')
+                'dest_city': pred.get('dest_city', ''),
+                'predicted_performance': pred.get('predicted_performance', 0)
             }
             
             # Include state and country information if available (for new format)
@@ -345,9 +346,6 @@ def convert_tender_performance_simplified(prediction_dir: Union[str, Path]) -> O
                 row['dest_state'] = pred.get('dest_state', '')
             if 'dest_country' in pred:
                 row['dest_country'] = pred.get('dest_country', '')
-            
-            # Add predicted performance as the final field
-            row['predicted_ontime_performance'] = pred.get('predicted_performance', 0)
             
             simplified_data.append(row)
         
@@ -450,7 +448,7 @@ def convert_carrier_performance_simplified(prediction_dir: Union[str, Path]) -> 
                 'carrier': pred.get('carrier', ''),
                 'source_city': pred.get('source_city', ''),
                 'dest_city': pred.get('dest_city', ''),
-                'predicted_ontime_performance': pred.get('predicted_performance', 0)
+                'predicted_performance': pred.get('predicted_performance', 0)
             }
             
             # Include state and country information if available (for new format)

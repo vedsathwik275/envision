@@ -16,6 +16,7 @@ from datetime import datetime
 import pickle
 import logging
 import json
+from typing import Dict, Optional, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,14 @@ np.random.seed(42)
 tf.random.set_seed(42)
 
 class TenderPerformanceModel:
-    def __init__(self, data_path=None, model_path=None):
+    """
+    Tender Performance Neural Network Model for predicting tender performance.
+    
+    This model handles both legacy city-only data and new data with expanded 
+    geographic features including state and country information.
+    """
+    
+    def __init__(self, data_path: Optional[str] = None, model_path: Optional[str] = None) -> None:
         """Initialize the Tender Performance prediction model.
         
         Args:
@@ -35,14 +43,20 @@ class TenderPerformanceModel:
         self.model_path = model_path
         self.model = None
         self.carrier_encoder = None
-        self.source_encoder = None
-        self.dest_encoder = None
+        self.source_city_encoder = None
+        self.source_state_encoder = None
+        self.source_country_encoder = None
+        self.dest_city_encoder = None
+        self.dest_state_encoder = None
+        self.dest_country_encoder = None
         self.scaler = None
         self.preprocessed_data = None
         self.X_train = None
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.feature_columns = None
+        self.data_format = None  # 'legacy' or 'new'
         
         # If data path is provided, load and preprocess the data
         if data_path:
@@ -52,21 +66,51 @@ class TenderPerformanceModel:
         if model_path and os.path.exists(model_path):
             self.load_model(model_path)
     
-    def load_data(self):
+    def _detect_data_format(self, data: pd.DataFrame) -> str:
+        """Detect whether the data is in legacy or new format.
+        
+        Args:
+            data: The loaded DataFrame
+            
+        Returns:
+            'legacy' for city-only data, 'new' for data with state/country information
+        """
+        # Check for new format indicators
+        has_state_columns = 'SOURCE_STATE' in data.columns and 'DEST_STATE' in data.columns
+        has_country_columns = 'SOURCE_COUNTRY' in data.columns and 'DEST_COUNTRY' in data.columns
+        
+        # Check for legacy format indicator (could be either column name)
+        has_legacy_target = 'TENDER_PERF_PERCENTAGE' in data.columns
+        has_new_target = 'TENDER_PERFORMANCE' in data.columns
+        
+        if has_state_columns and has_country_columns and (has_new_target or has_legacy_target):
+            return 'new'
+        elif (has_legacy_target or has_new_target):
+            return 'legacy'
+        else:
+            # Default to legacy if ambiguous
+            logger.warning("Data format ambiguous, defaulting to legacy format")
+            return 'legacy'
+    
+    def load_data(self) -> pd.DataFrame:
         """Load and perform initial preprocessing of the data."""
         logger.info(f"Loading data from {self.data_path}...")
         self.raw_data = pd.read_csv(self.data_path)
+        
+        # Detect data format
+        self.data_format = self._detect_data_format(self.raw_data)
+        logger.info(f"Detected data format: {self.data_format}")
         
         # Check data integrity
         if self.raw_data.isnull().sum().sum() > 0:
             logger.warning("Data contains missing values. Filling with appropriate values.")
             self.raw_data.fillna(0, inplace=True)
         
-        logger.info(f"Data loaded successfully. Shape: {self.raw_data.shape}")
-        
-        # Ensure column names are standardized
+        # Standardize target column name
         if 'TENDER_PERF_PERCENTAGE' in self.raw_data.columns:
             self.target_column = 'TENDER_PERF_PERCENTAGE'
+        elif 'TENDER_PERFORMANCE' in self.raw_data.columns:
+            self.target_column = 'TENDER_PERFORMANCE'
         else:
             # Try to identify the performance column
             potential_columns = [col for col in self.raw_data.columns if 'perf' in col.lower() or 'rate' in col.lower()]
@@ -76,20 +120,111 @@ class TenderPerformanceModel:
             else:
                 raise ValueError("Could not identify the tender performance column in the data")
         
+        logger.info(f"Data loaded successfully. Shape: {self.raw_data.shape}")
         return self.raw_data
     
-    def preprocess_data(self):
+    def preprocess_data(self) -> pd.DataFrame:
         """Preprocess the data for training the neural network."""
         logger.info("Preprocessing data...")
         
         # Create a copy of the raw data
         data = self.raw_data.copy()
         
+        if self.data_format == 'new':
+            return self._preprocess_new_format(data)
+        else:
+            return self._preprocess_legacy_format(data)
+    
+    def _preprocess_new_format(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess data in the new format with expanded location data."""
+        logger.info("Preprocessing new format data with expanded location features...")
+        
+        # Create comprehensive lane identifier
+        data['LANE_ID'] = (data['SOURCE_CITY'] + '_' + data['SOURCE_STATE'] + '_' + 
+                          data['SOURCE_COUNTRY'] + '_TO_' + data['DEST_CITY'] + '_' + 
+                          data['DEST_STATE'] + '_' + data['DEST_COUNTRY'])
+        
+        # One-hot encoding for categorical variables
+        logger.info("Encoding categorical variables for new format...")
+        
+        # Carrier encoding
+        self.carrier_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        carrier_encoded = self.carrier_encoder.fit_transform(data[['CARRIER']])
+        carrier_columns = [f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])]
+        carrier_df = pd.DataFrame(carrier_encoded, columns=carrier_columns)
+        
+        # Source location encoding
+        self.source_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_city_encoded = self.source_city_encoder.fit_transform(data[['SOURCE_CITY']])
+        source_city_columns = [f'SOURCE_CITY_{i}' for i in range(source_city_encoded.shape[1])]
+        source_city_df = pd.DataFrame(source_city_encoded, columns=source_city_columns)
+        
+        self.source_state_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_state_encoded = self.source_state_encoder.fit_transform(data[['SOURCE_STATE']])
+        source_state_columns = [f'SOURCE_STATE_{i}' for i in range(source_state_encoded.shape[1])]
+        source_state_df = pd.DataFrame(source_state_encoded, columns=source_state_columns)
+        
+        self.source_country_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_country_encoded = self.source_country_encoder.fit_transform(data[['SOURCE_COUNTRY']])
+        source_country_columns = [f'SOURCE_COUNTRY_{i}' for i in range(source_country_encoded.shape[1])]
+        source_country_df = pd.DataFrame(source_country_encoded, columns=source_country_columns)
+        
+        # Destination location encoding - handle high cardinality for cities
+        dest_city_counts = data['DEST_CITY'].value_counts()
+        top_dest_cities = dest_city_counts.nlargest(50).index.tolist()  # Use top 50 destination cities
+        data['DEST_CITY_GROUPED'] = data['DEST_CITY'].apply(lambda x: x if x in top_dest_cities else 'OTHER')
+        
+        self.dest_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_city_encoded = self.dest_city_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
+        dest_city_columns = [f'DEST_CITY_{i}' for i in range(dest_city_encoded.shape[1])]
+        dest_city_df = pd.DataFrame(dest_city_encoded, columns=dest_city_columns)
+        
+        self.dest_state_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_state_encoded = self.dest_state_encoder.fit_transform(data[['DEST_STATE']])
+        dest_state_columns = [f'DEST_STATE_{i}' for i in range(dest_state_encoded.shape[1])]
+        dest_state_df = pd.DataFrame(dest_state_encoded, columns=dest_state_columns)
+        
+        self.dest_country_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_country_encoded = self.dest_country_encoder.fit_transform(data[['DEST_COUNTRY']])
+        dest_country_columns = [f'DEST_COUNTRY_{i}' for i in range(dest_country_encoded.shape[1])]
+        dest_country_df = pd.DataFrame(dest_country_encoded, columns=dest_country_columns)
+        
+        # Reset indices to ensure proper concatenation
+        data.reset_index(drop=True, inplace=True)
+        carrier_df.reset_index(drop=True, inplace=True)
+        source_city_df.reset_index(drop=True, inplace=True)
+        source_state_df.reset_index(drop=True, inplace=True)
+        source_country_df.reset_index(drop=True, inplace=True)
+        dest_city_df.reset_index(drop=True, inplace=True)
+        dest_state_df.reset_index(drop=True, inplace=True)
+        dest_country_df.reset_index(drop=True, inplace=True)
+        
+        # Create the final processed dataset
+        processed_data = pd.concat([
+            data[[self.target_column]],
+            carrier_df,
+            source_city_df,
+            source_state_df,
+            source_country_df,
+            dest_city_df,
+            dest_state_df,
+            dest_country_df
+        ], axis=1)
+        
+        logger.info(f"New format data preprocessing complete. Processed shape: {processed_data.shape}")
+        self.preprocessed_data = processed_data
+        
+        return processed_data
+    
+    def _preprocess_legacy_format(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Preprocess data in the legacy format with city-only location data."""
+        logger.info("Preprocessing legacy format data with city-only location features...")
+        
         # Create lane identifier (combination of source and destination)
         data['LANE_ID'] = data['SOURCE_CITY'] + '_' + data['DEST_CITY']
         
         # One-hot encoding for categorical variables
-        logger.info("Encoding categorical variables...")
+        logger.info("Encoding categorical variables for legacy format...")
         
         # Carrier encoding
         self.carrier_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
@@ -98,8 +233,8 @@ class TenderPerformanceModel:
         carrier_df = pd.DataFrame(carrier_encoded, columns=carrier_columns)
         
         # Source city encoding
-        self.source_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        source_encoded = self.source_encoder.fit_transform(data[['SOURCE_CITY']])
+        self.source_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        source_encoded = self.source_city_encoder.fit_transform(data[['SOURCE_CITY']])
         source_columns = [f'SOURCE_{i}' for i in range(source_encoded.shape[1])]
         source_df = pd.DataFrame(source_encoded, columns=source_columns)
         
@@ -112,8 +247,8 @@ class TenderPerformanceModel:
         data['DEST_CITY_GROUPED'] = data['DEST_CITY'].apply(lambda x: x if x in top_dests else 'OTHER')
         
         # One-hot encode the grouped destinations
-        self.dest_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
-        dest_encoded = self.dest_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
+        self.dest_city_encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        dest_encoded = self.dest_city_encoder.fit_transform(data[['DEST_CITY_GROUPED']])
         dest_columns = [f'DEST_{i}' for i in range(dest_encoded.shape[1])]
         dest_df = pd.DataFrame(dest_encoded, columns=dest_columns)
         
@@ -131,12 +266,12 @@ class TenderPerformanceModel:
             dest_df
         ], axis=1)
         
-        logger.info(f"Data preprocessing complete. Processed shape: {processed_data.shape}")
+        logger.info(f"Legacy format data preprocessing complete. Processed shape: {processed_data.shape}")
         self.preprocessed_data = processed_data
         
         return processed_data
     
-    def prepare_train_test_split(self, test_size=0.2):
+    def prepare_train_test_split(self, test_size: float = 0.2) -> None:
         """Split the preprocessed data into training and testing sets."""
         logger.info(f"Splitting data with test_size={test_size}...")
         
@@ -146,6 +281,9 @@ class TenderPerformanceModel:
         # Separate features and target
         X = self.preprocessed_data.drop(self.target_column, axis=1)
         y = self.preprocessed_data[self.target_column]
+        
+        # Store feature columns for prediction compatibility
+        self.feature_columns = list(X.columns)
         
         # Normalize the target value to [0, 1] range
         y = y / 100.0
@@ -157,6 +295,7 @@ class TenderPerformanceModel:
         
         logger.info(f"Train set: {self.X_train.shape[0]} samples")
         logger.info(f"Test set: {self.X_test.shape[0]} samples")
+        logger.info(f"Feature columns stored: {len(self.feature_columns)} features")
     
     def build_model(self):
         """Build the neural network model architecture."""
@@ -264,49 +403,155 @@ class TenderPerformanceModel:
             "r2": r2
         }
     
-    def predict(self, carrier, source_city, dest_city):
-        """Predict tender performance for a specific carrier and lane."""
-        logger.info(f"Predicting performance for {carrier} from {source_city} to {dest_city}...")
+    def predict(self, carrier: str, source_city: str, dest_city: str, 
+                source_state: Optional[str] = None, source_country: Optional[str] = None,
+                dest_state: Optional[str] = None, dest_country: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Predict tender performance for a specific carrier and lane.
+        
+        This method supports both legacy (city-only) and new (state/country) formats.
+        The format is automatically detected based on available parameters and model training.
+        
+        Args:
+            carrier: Carrier code
+            source_city: Source city name
+            dest_city: Destination city name
+            source_state: Source state (optional, for new format)
+            source_country: Source country (optional, for new format)
+            dest_state: Destination state (optional, for new format)
+            dest_country: Destination country (optional, for new format)
+            
+        Returns:
+            Dictionary with prediction results or None if prediction fails
+        """
+        # Determine which format to use
+        has_location_params = all([source_state, source_country, dest_state, dest_country])
+        
+        if self.data_format == 'new' or has_location_params:
+            return self._predict_new_format(
+                carrier, source_city, dest_city, 
+                source_state, source_country, dest_state, dest_country
+            )
+        else:
+            return self._predict_legacy_format(carrier, source_city, dest_city)
+    
+    def _predict_new_format(self, carrier: str, source_city: str, dest_city: str,
+                           source_state: str, source_country: str, dest_state: str, 
+                           dest_country: str) -> Optional[Dict[str, Any]]:
+        """Predict tender performance using the new format with state/country information."""
+        logger.info(f"Predicting performance (new format) for {carrier} from {source_city}, {source_state}, {source_country} to {dest_city}, {dest_state}, {dest_country}...")
         
         if self.model is None:
             logger.error("Model not loaded or trained. Cannot make predictions.")
             return None
             
-        # Ensure X_train is loaded - this is what's causing the error
-        if self.X_train is None:
-            logger.info("X_train not initialized. Loading and preprocessing data...")
-            # Check if we need to load the raw data first
-            if not hasattr(self, 'raw_data') or self.raw_data is None:
-                # Try to load sample data if available
-                sample_data_path = os.path.join(os.path.dirname(self.model_path), "sample_data.csv")
-                if os.path.exists(sample_data_path):
-                    logger.info(f"Loading sample data from {sample_data_path}")
-                    self.raw_data = pd.read_csv(sample_data_path)
-                else:
-                    logger.error("No raw data available for feature extraction")
-                    return None
+        # Ensure required encoders are available
+        required_encoders = [
+            self.carrier_encoder, self.source_city_encoder, self.source_state_encoder,
+            self.source_country_encoder, self.dest_city_encoder, self.dest_state_encoder,
+            self.dest_country_encoder
+        ]
+        
+        if any(encoder is None for encoder in required_encoders):
+            logger.error("One or more required encoders not initialized for new format")
+            return None
+        
+        try:
+            # Create a sample dataframe
+            sample = pd.DataFrame({
+                'CARRIER': [carrier],
+                'SOURCE_CITY': [source_city],
+                'SOURCE_STATE': [source_state],
+                'SOURCE_COUNTRY': [source_country],
+                'DEST_CITY': [dest_city],
+                'DEST_STATE': [dest_state],
+                'DEST_COUNTRY': [dest_country]
+            })
             
-            # Process the data
-            self.preprocess_data()
-            # Create a dummy split to initialize X_train
-            self.prepare_train_test_split(test_size=0.2)
+            # Handle destination cities not in the training data
+            dest_city_categories = self.dest_city_encoder.categories_[0]
+            if dest_city not in dest_city_categories:
+                logger.warning(f"Destination city {dest_city} not found in training data. Using 'OTHER'.")
+                sample['DEST_CITY_GROUPED'] = ['OTHER']
+            else:
+                sample['DEST_CITY_GROUPED'] = [dest_city]
+            
+            # Transform all categorical features
+            carrier_encoded = self.carrier_encoder.transform(sample[['CARRIER']])
+            source_city_encoded = self.source_city_encoder.transform(sample[['SOURCE_CITY']])
+            source_state_encoded = self.source_state_encoder.transform(sample[['SOURCE_STATE']])
+            source_country_encoded = self.source_country_encoder.transform(sample[['SOURCE_COUNTRY']])
+            dest_city_encoded = self.dest_city_encoder.transform(sample[['DEST_CITY_GROUPED']])
+            dest_state_encoded = self.dest_state_encoder.transform(sample[['DEST_STATE']])
+            dest_country_encoded = self.dest_country_encoder.transform(sample[['DEST_COUNTRY']])
+            
+            # Create feature dataframes
+            carrier_df = pd.DataFrame(carrier_encoded, columns=[f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])])
+            source_city_df = pd.DataFrame(source_city_encoded, columns=[f'SOURCE_CITY_{i}' for i in range(source_city_encoded.shape[1])])
+            source_state_df = pd.DataFrame(source_state_encoded, columns=[f'SOURCE_STATE_{i}' for i in range(source_state_encoded.shape[1])])
+            source_country_df = pd.DataFrame(source_country_encoded, columns=[f'SOURCE_COUNTRY_{i}' for i in range(source_country_encoded.shape[1])])
+            dest_city_df = pd.DataFrame(dest_city_encoded, columns=[f'DEST_CITY_{i}' for i in range(dest_city_encoded.shape[1])])
+            dest_state_df = pd.DataFrame(dest_state_encoded, columns=[f'DEST_STATE_{i}' for i in range(dest_state_encoded.shape[1])])
+            dest_country_df = pd.DataFrame(dest_country_encoded, columns=[f'DEST_COUNTRY_{i}' for i in range(dest_country_encoded.shape[1])])
+            
+            # Combine all features
+            features = pd.concat([
+                carrier_df, source_city_df, source_state_df, source_country_df,
+                dest_city_df, dest_state_df, dest_country_df
+            ], axis=1)
+            
+            # Ensure feature order matches training data
+            if hasattr(self, 'feature_columns') and self.feature_columns is not None:
+                features = features.reindex(columns=self.feature_columns, fill_value=0)
+            
+            # Make prediction
+            prediction = self.model.predict(features, verbose=0)[0][0]
+            
+            # Scale prediction back to percentage
+            prediction_percent = prediction * 100.0
+            
+            logger.info(f"Predicted tender performance: {prediction_percent:.2f}%")
+            
+            result = {
+                "carrier": carrier,
+                "source_city": source_city,
+                "source_state": source_state,
+                "source_country": source_country,
+                "dest_city": dest_city,
+                "dest_state": dest_state,
+                "dest_country": dest_country,
+                "predicted_performance": float(prediction_percent)
+            }
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error predicting tender performance (new format): {str(e)}")
+            return None
+    
+    def _predict_legacy_format(self, carrier: str, source_city: str, dest_city: str) -> Optional[Dict[str, Any]]:
+        """Predict tender performance using the legacy format with city-only information."""
+        logger.info(f"Predicting performance (legacy format) for {carrier} from {source_city} to {dest_city}...")
         
-        # Create a sample dataframe
-        sample = pd.DataFrame({
-            'CARRIER': [carrier],
-            'SOURCE_CITY': [source_city],
-            'DEST_CITY': [dest_city]
-        })
-        
-        # Handle destination cities not in the training data
-        if self.dest_encoder is None:
-            logger.error("Destination encoder not initialized")
+        if self.model is None:
+            logger.error("Model not loaded or trained. Cannot make predictions.")
             return None
             
+        # Ensure required encoders are available
+        if any(encoder is None for encoder in [self.carrier_encoder, self.source_city_encoder, self.dest_city_encoder]):
+            logger.error("One or more required encoders not initialized for legacy format")
+            return None
+        
         try:
-            # Check if destination city is in the encoder's categories
-            dest_categories = self.dest_encoder.categories_[0]
-            if dest_city not in dest_categories:
+            # Create a sample dataframe
+            sample = pd.DataFrame({
+                'CARRIER': [carrier],
+                'SOURCE_CITY': [source_city],
+                'DEST_CITY': [dest_city]
+            })
+            
+            # Handle destination cities not in the training data
+            dest_city_categories = self.dest_city_encoder.categories_[0]
+            if dest_city not in dest_city_categories:
                 logger.warning(f"Destination city {dest_city} not found in training data. Using 'OTHER'.")
                 sample['DEST_CITY_GROUPED'] = ['OTHER']
             else:
@@ -314,35 +559,23 @@ class TenderPerformanceModel:
             
             # Transform the categorical features
             carrier_encoded = self.carrier_encoder.transform(sample[['CARRIER']])
-            source_encoded = self.source_encoder.transform(sample[['SOURCE_CITY']])
-            dest_encoded = self.dest_encoder.transform(sample[['DEST_CITY_GROUPED']])
-            
-            # Create column names
-            carrier_cols = [f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])]
-            source_cols = [f'SOURCE_{i}' for i in range(source_encoded.shape[1])]
-            dest_cols = [f'DEST_{i}' for i in range(dest_encoded.shape[1])]
+            source_encoded = self.source_city_encoder.transform(sample[['SOURCE_CITY']])
+            dest_encoded = self.dest_city_encoder.transform(sample[['DEST_CITY_GROUPED']])
             
             # Create feature dataframes
-            carrier_df = pd.DataFrame(carrier_encoded, columns=carrier_cols)
-            source_df = pd.DataFrame(source_encoded, columns=source_cols)
-            dest_df = pd.DataFrame(dest_encoded, columns=dest_cols)
+            carrier_df = pd.DataFrame(carrier_encoded, columns=[f'CARRIER_{i}' for i in range(carrier_encoded.shape[1])])
+            source_df = pd.DataFrame(source_encoded, columns=[f'SOURCE_{i}' for i in range(source_encoded.shape[1])])
+            dest_df = pd.DataFrame(dest_encoded, columns=[f'DEST_{i}' for i in range(dest_encoded.shape[1])])
             
             # Combine features
             features = pd.concat([carrier_df, source_df, dest_df], axis=1)
             
-            # Ensure all expected features are present (fill missing with zeros)
-            expected_features = set(self.X_train.columns)
-            actual_features = set(features.columns)
-            
-            missing_features = expected_features - actual_features
-            for feature in missing_features:
-                features[feature] = 0
-                
-            # Ensure features are in the same order as during training
-            features = features[self.X_train.columns]
+            # Ensure feature order matches training data
+            if hasattr(self, 'feature_columns') and self.feature_columns is not None:
+                features = features.reindex(columns=self.feature_columns, fill_value=0)
             
             # Make prediction
-            prediction = self.model.predict(features)[0][0]
+            prediction = self.model.predict(features, verbose=0)[0][0]
             
             # Scale prediction back to percentage
             prediction_percent = prediction * 100.0
@@ -359,22 +592,54 @@ class TenderPerformanceModel:
             return result
             
         except Exception as e:
-            logger.error(f"Error predicting tender performance: {str(e)}")
+            logger.error(f"Error predicting tender performance (legacy format): {str(e)}")
             return None
     
-    def predict_batch(self, carriers, source_cities, dest_cities):
-        """Predict tender performance for multiple combinations."""
+    def predict_batch(self, carriers: List[str], source_cities: List[str], dest_cities: List[str],
+                     source_states: Optional[List[str]] = None, source_countries: Optional[List[str]] = None,
+                     dest_states: Optional[List[str]] = None, dest_countries: Optional[List[str]] = None) -> List[Optional[Dict[str, Any]]]:
+        """Predict tender performance for multiple combinations.
+        
+        Args:
+            carriers: List of carrier codes
+            source_cities: List of source city names
+            dest_cities: List of destination city names
+            source_states: List of source states (optional, for new format)
+            source_countries: List of source countries (optional, for new format)
+            dest_states: List of destination states (optional, for new format)
+            dest_countries: List of destination countries (optional, for new format)
+            
+        Returns:
+            List of prediction results
+        """
         if len(carriers) != len(source_cities) or len(carriers) != len(dest_cities):
             raise ValueError("Input lists must have the same length")
         
+        # Check if we have location parameters
+        has_location_params = all([
+            source_states is not None, source_countries is not None,
+            dest_states is not None, dest_countries is not None
+        ])
+        
+        if has_location_params:
+            if (len(carriers) != len(source_states) or len(carriers) != len(source_countries) or
+                len(carriers) != len(dest_states) or len(carriers) != len(dest_countries)):
+                raise ValueError("All input lists must have the same length when using location parameters")
+        
         results = []
         for i in range(len(carriers)):
-            prediction = self.predict(carriers[i], source_cities[i], dest_cities[i])
+            if has_location_params:
+                prediction = self.predict(
+                    carriers[i], source_cities[i], dest_cities[i],
+                    source_states[i], source_countries[i], dest_states[i], dest_countries[i]
+                )
+            else:
+                prediction = self.predict(carriers[i], source_cities[i], dest_cities[i])
             results.append(prediction)
         
         return results
     
-    def predict_on_training_data(self, output_dir=None):
+    def predict_on_training_data(self, output_dir: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Predict tender performance on the training data.
         
         This method uses the trained model to make predictions on the same data
@@ -398,244 +663,308 @@ class TenderPerformanceModel:
             return None
         
         try:
-            # Create output directory if not provided
-            if output_dir is None and self.model_path:
-                output_dir = os.path.join(self.model_path, "training_predictions")
-            elif output_dir is None:
-                output_dir = "training_predictions"
+            # Make predictions for each row in the raw data
+            predictions = []
+            actual_values = []
+            
+            for index, row in self.raw_data.iterrows():
+                # Extract parameters based on data format
+                carrier = row['CARRIER']
+                source_city = row['SOURCE_CITY']
+                dest_city = row['DEST_CITY']
+                actual_performance = row[self.target_column]
+                
+                # Initialize location variables with default values
+                source_state = None
+                source_country = None
+                dest_state = None
+                dest_country = None
+                
+                if self.data_format == 'new':
+                    # Use new format with state/country information
+                    source_state = row['SOURCE_STATE']
+                    source_country = row['SOURCE_COUNTRY']
+                    dest_state = row['DEST_STATE']
+                    dest_country = row['DEST_COUNTRY']
+                    
+                    prediction_result = self.predict(
+                        carrier, source_city, dest_city,
+                        source_state, source_country, dest_state, dest_country
+                    )
+                else:
+                    # Use legacy format
+                    prediction_result = self.predict(carrier, source_city, dest_city)
+                
+                if prediction_result:
+                    predicted_performance = prediction_result['predicted_performance']
+                    
+                    # Calculate errors
+                    absolute_error = abs(actual_performance - predicted_performance)
+                    percent_error = (absolute_error / actual_performance) * 100 if actual_performance != 0 else 0
+                    
+                    # Create detailed prediction record with consistent structure
+                    prediction_record = {
+                        'carrier': carrier,
+                        'source_city': source_city,
+                        'source_state': source_state,  # Always include, even if None for legacy
+                        'source_country': source_country,  # Always include, even if None for legacy
+                        'dest_city': dest_city,
+                        'dest_state': dest_state,  # Always include, even if None for legacy
+                        'dest_country': dest_country,  # Always include, even if None for legacy
+                        'actual_performance': actual_performance,
+                        'predicted_performance': predicted_performance,
+                        'absolute_error': absolute_error,
+                        'percent_error': percent_error
+                    }
+                    
+                    predictions.append(prediction_record)
+                    actual_values.append(actual_performance)
+                else:
+                    logger.warning(f"Failed to predict for row {index}")
+            
+            if not predictions:
+                logger.error("No predictions were generated successfully")
+                return None
+            
+            # Calculate overall metrics
+            predicted_values = [p['predicted_performance'] for p in predictions]
+            mae = np.mean([p['absolute_error'] for p in predictions])
+            mape = np.mean([p['percent_error'] for p in predictions])
+            
+            logger.info(f"Generated {len(predictions)} predictions")
+            logger.info(f"Overall MAE: {mae:.2f}")
+            logger.info(f"Overall MAPE: {mape:.2f}%")
+            
+            # Create output directory if needed
+            if output_dir is None:
+                if self.model_path:
+                    base_dir = os.path.dirname(self.model_path)
+                else:
+                    base_dir = "."
+                output_dir = os.path.join(base_dir, "training_predictions")
             
             os.makedirs(output_dir, exist_ok=True)
             
-            # Get the relevant columns for prediction
-            carrier_col = 'CARRIER'
-            source_col = 'SOURCE_CITY'
-            dest_col = 'DEST_CITY'
+            # Save predictions to JSON
+            result = {
+                "model_info": {
+                    "data_format": self.data_format,
+                    "target_column": self.target_column,
+                    "prediction_count": len(predictions)
+                },
+                "metrics": {
+                    "mae": float(mae),
+                    "mape": float(mape),
+                    "count": len(predictions)
+                },
+                "predictions": predictions
+            }
             
-            # Ensure we have the necessary columns
-            if not all(col in self.raw_data.columns for col in [carrier_col, source_col, dest_col, self.target_column]):
-                logger.error("Training data missing required columns for prediction.")
-                return None
+            # Save to JSON file
+            json_path = os.path.join(output_dir, "prediction_data.json")
+            with open(json_path, 'w') as f:
+                json.dump(result, f, indent=2)
             
-            # Get unique combinations to predict on
-            predictions = []
-            total_rows = len(self.raw_data)
+            logger.info(f"Predictions saved to {json_path}")
             
-            logger.info(f"Processing {total_rows} training data rows for prediction")
+            # Save to CSV file with consistent column structure
+            csv_path = os.path.join(output_dir, "prediction_data.csv")
+            predictions_df = pd.DataFrame(predictions)
             
-            # Iterate through each row in the training data
-            for index, row in self.raw_data.iterrows():
-                try:
-                    carrier = row[carrier_col]
-                    source_city = row[source_col]
-                    dest_city = row[dest_col]
-                    actual_performance = row[self.target_column]
-                    
-                    # Make the prediction
-                    prediction = self.predict(carrier, source_city, dest_city)
-                    
-                    if prediction:
-                        # Add the actual performance value for comparison
-                        prediction['actual_performance'] = float(actual_performance)
-                        
-                        # Calculate error metrics
-                        predicted = prediction['predicted_performance']
-                        actual = prediction['actual_performance']
-                        prediction['absolute_error'] = abs(predicted - actual)
-                        prediction['percent_error'] = (abs(predicted - actual) / max(1, actual)) * 100
-                        
-                        predictions.append(prediction)
-                    
-                    # Log progress for large datasets
-                    if (index + 1) % 100 == 0 or (index + 1) == total_rows:
-                        logger.info(f"Processed {index + 1}/{total_rows} training data rows")
-                    
-                except Exception as e:
-                    logger.warning(f"Error predicting row {index}: {str(e)}")
-                    continue
-            
-            # Calculate summary metrics
-            if predictions:
-                mae = sum(p['absolute_error'] for p in predictions) / len(predictions)
-                mape = sum(p['percent_error'] for p in predictions) / len(predictions)
-                
-                # Create the prediction result
-                result = {
-                    "prediction_time": datetime.now().isoformat(),
-                    "predictions": predictions,
-                    "metrics": {
-                        "count": len(predictions),
-                        "mae": float(mae),
-                        "mape": float(mape)
-                    }
-                }
-                
-                # Save as JSON
-                json_path = os.path.join(output_dir, "prediction_data.json")
-                with open(json_path, "w") as f:
-                    json.dump(result, f, indent=2)
-                logger.info(f"Training predictions saved to {json_path}")
-                
-                # Save as CSV
-                csv_path = os.path.join(output_dir, "prediction_data.csv")
-                
-                # Convert to DataFrame for CSV export
-                df = pd.DataFrame(predictions)
-                df.to_csv(csv_path, index=False)
-                logger.info(f"Training predictions saved to {csv_path}")
-                
-                return result
+            # Ensure consistent column order regardless of data format
+            if self.data_format == 'new':
+                # New format CSV columns
+                csv_columns = ['carrier', 'source_city', 'source_state', 'source_country', 
+                              'dest_city', 'dest_state', 'dest_country', 'actual_performance', 
+                              'predicted_performance', 'absolute_error', 'percent_error']
             else:
-                logger.warning("No valid predictions generated from training data")
-                return {
-                    "prediction_time": datetime.now().isoformat(),
-                    "predictions": [],
-                    "warning": "No valid predictions could be generated from training data."
-                }
-        
+                # Legacy format CSV columns (still include state/country columns but they'll be None/empty)
+                csv_columns = ['carrier', 'source_city', 'source_state', 'source_country', 
+                              'dest_city', 'dest_state', 'dest_country', 'actual_performance', 
+                              'predicted_performance', 'absolute_error', 'percent_error']
+            
+            # Reorder columns and save
+            predictions_df = predictions_df.reindex(columns=csv_columns)
+            predictions_df.to_csv(csv_path, index=False)
+            
+            logger.info(f"Predictions also saved to {csv_path}")
+            
+            return result
+            
         except Exception as e:
             logger.error(f"Error generating predictions on training data: {str(e)}")
             return None
     
-    def save_model(self, path="tender_performance_model"):
-        """Save the model, encoders, and preprocessing info."""
+    def save_model(self, path: str = "tender_performance_model") -> bool:
+        """Save the trained model and associated encoders.
+        
+        Args:
+            path: Base path for saving the model files
+            
+        Returns:
+            True if successful, False otherwise
+        """
         logger.info(f"Saving model to {path}...")
         
-        if self.model is None:
-            logger.error("No model to save. Train a model first.")
-            return False
-        
         try:
-            # Create directory if it doesn't exist
-            os.makedirs(path, exist_ok=True)
-            
-            # Save the Keras model
-            model_path = os.path.join(path, "model.keras")
-            self.model.save(model_path)
-            logger.info(f"Model saved to {model_path}")
-            
-            # Ensure all encoders are available
-            if self.carrier_encoder is None or self.source_encoder is None or self.dest_encoder is None:
-                logger.error("One or more encoders are not initialized. Cannot save model.")
+            if self.model is None:
+                logger.error("No model to save. Train a model first.")
                 return False
             
-            # Save encoders and preprocessing info
+            # Create the directory if it doesn't exist
+            os.makedirs(path, exist_ok=True)
+            
+            # Save the neural network model
+            model_file = os.path.join(path, "model.keras")
+            self.model.save(model_file)
+            logger.info(f"Model saved to {model_file}")
+            
+            # Ensure all required encoders are available based on data format
+            if self.data_format == 'new':
+                required_encoders = [
+                    self.carrier_encoder, self.source_city_encoder, self.source_state_encoder,
+                    self.source_country_encoder, self.dest_city_encoder, self.dest_state_encoder,
+                    self.dest_country_encoder
+                ]
+                if any(encoder is None for encoder in required_encoders):
+                    logger.error("One or more encoders are not initialized for new format. Cannot save model.")
+                    return False
+            else:
+                # Legacy format
+                if any(encoder is None for encoder in [self.carrier_encoder, self.source_city_encoder, self.dest_city_encoder]):
+                    logger.error("One or more encoders are not initialized for legacy format. Cannot save model.")
+                    return False
+            
+            # Save encoders based on data format
+            encoders_file = os.path.join(path, "encoders.pkl")
             encoders = {
                 "carrier_encoder": self.carrier_encoder,
-                "source_encoder": self.source_encoder,
-                "dest_encoder": self.dest_encoder,
-                "target_column": self.target_column
+                "source_city_encoder": self.source_city_encoder,
+                "dest_city_encoder": self.dest_city_encoder,
+                "target_column": self.target_column,
+                "data_format": self.data_format,
+                "feature_columns": getattr(self, 'feature_columns', None)
             }
             
-            encoders_path = os.path.join(path, "encoders.pkl")
-            with open(encoders_path, "wb") as f:
+            # Add new format encoders if available
+            if self.data_format == 'new':
+                encoders.update({
+                    "source_state_encoder": self.source_state_encoder,
+                    "source_country_encoder": self.source_country_encoder,
+                    "dest_state_encoder": self.dest_state_encoder,
+                    "dest_country_encoder": self.dest_country_encoder
+                })
+            
+            with open(encoders_file, "wb") as f:
                 pickle.dump(encoders, f)
-            logger.info(f"Encoders saved to {encoders_path}")
+            logger.info(f"Encoders saved to {encoders_file}")
             
-            # Ensure raw_data is available and save a sample
-            if hasattr(self, 'raw_data') and self.raw_data is not None:
-                sample_data = self.raw_data.head(100)  # Save first 100 records
-                sample_data_path = os.path.join(path, "sample_data.csv")
-                sample_data.to_csv(sample_data_path, index=False)
-                logger.info(f"Sample data saved to {sample_data_path}")
-            else:
-                logger.warning("No raw data available. Predictions may fail without sample data.")
+            # Save model metadata
+            metadata = {
+                "model_type": "tender_performance",
+                "data_format": self.data_format,
+                "target_column": self.target_column,
+                "feature_count": len(self.feature_columns) if self.feature_columns else None,
+                "save_time": datetime.now().isoformat(),
+                "training_data_shape": self.raw_data.shape if self.raw_data is not None else None
+            }
             
-            # Save feature column information
-            if self.X_train is not None:
-                feature_info = {
-                    "columns": list(self.X_train.columns)
-                }
-                feature_info_path = os.path.join(path, "feature_info.json")
-                with open(feature_info_path, "w") as f:
-                    json.dump(feature_info, f)
-                logger.info(f"Feature information saved to {feature_info_path}")
-            else:
-                logger.warning("X_train not available. Feature column information couldn't be saved.")
+            metadata_file = os.path.join(path, "model_metadata.json")
+            with open(metadata_file, "w") as f:
+                json.dump(metadata, f, indent=2)
+            logger.info(f"Model metadata saved to {metadata_file}")
             
-            logger.info(f"Model and preprocessing artifacts saved to {path}")
+            # Save the full training data for feature extraction and training data prediction
+            if self.raw_data is not None:
+                training_data_file = os.path.join(path, "training_data.csv")
+                self.raw_data.to_csv(training_data_file, index=False)
+                logger.info(f"Full training data saved to {training_data_file}")
+                
+                # Also save a sample for quick reference
+                sample_data_file = os.path.join(path, "sample_data.csv")
+                sample_size = min(10, len(self.raw_data))
+                self.raw_data.head(sample_size).to_csv(sample_data_file, index=False)
+                logger.info(f"Sample training data saved to {sample_data_file}")
+            
+            logger.info("Model saved successfully!")
             return True
             
         except Exception as e:
             logger.error(f"Error saving model: {str(e)}")
             return False
     
-    def load_model(self, path):
-        """Load the model, encoders, and preprocessing info."""
-        logger.info(f"Loading model from {path}...")
-        self.model_path = path
+    def load_model(self, path: str) -> bool:
+        """Load a pre-trained model and its encoders.
         
-        if not os.path.exists(path):
-            logger.error(f"Model path {path} does not exist")
-            return False
+        Args:
+            path: Path to the model directory
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        logger.info(f"Loading model from {path}...")
         
         try:
-            # Load the Keras model
-            model_path = os.path.join(path, "model.keras")
-            if os.path.exists(model_path):
-                self.model = tf.keras.models.load_model(model_path)
-                logger.info(f"Keras model loaded from {model_path}")
-            else:
-                logger.error(f"Model file not found at {model_path}")
+            # Load the neural network model
+            model_file = os.path.join(path, "model.keras")
+            if not os.path.exists(model_file):
+                logger.error(f"Model file not found: {model_file}")
                 return False
             
-            # Load encoders and preprocessing info
-            encoders_path = os.path.join(path, "encoders.pkl")
-            if os.path.exists(encoders_path):
-                with open(encoders_path, "rb") as f:
+            self.model = tf.keras.models.load_model(model_file)
+            logger.info("Model loaded successfully")
+            
+            # Load encoders
+            encoders_file = os.path.join(path, "encoders.pkl")
+            if os.path.exists(encoders_file):
+                with open(encoders_file, "rb") as f:
                     encoders = pickle.load(f)
-                    
+                
                 self.carrier_encoder = encoders.get("carrier_encoder")
-                self.source_encoder = encoders.get("source_encoder")
-                self.dest_encoder = encoders.get("dest_encoder")
+                self.source_city_encoder = encoders.get("source_city_encoder")
+                self.dest_city_encoder = encoders.get("dest_city_encoder")
                 self.target_column = encoders.get("target_column", "TENDER_PERF_PERCENTAGE")
-                logger.info("Encoders loaded successfully")
+                self.data_format = encoders.get("data_format", "legacy")
+                self.feature_columns = encoders.get("feature_columns", None)
+                
+                # Load new format encoders if available
+                if self.data_format == 'new':
+                    self.source_state_encoder = encoders.get("source_state_encoder")
+                    self.source_country_encoder = encoders.get("source_country_encoder")
+                    self.dest_state_encoder = encoders.get("dest_state_encoder")
+                    self.dest_country_encoder = encoders.get("dest_country_encoder")
+                
+                logger.info(f"Encoders loaded successfully for {self.data_format} format")
             else:
-                logger.error(f"Encoders file not found at {encoders_path}")
+                logger.warning(f"Encoders file not found: {encoders_file}")
                 return False
             
-            # Load feature information if available
-            feature_info_path = os.path.join(path, "feature_info.json")
-            feature_columns = None
-            if os.path.exists(feature_info_path):
-                try:
-                    with open(feature_info_path, "r") as f:
-                        feature_info = json.load(f)
-                        feature_columns = feature_info.get("columns")
-                        logger.info(f"Feature columns loaded from feature_info.json: {len(feature_columns)} columns")
-                except Exception as e:
-                    logger.warning(f"Error loading feature info: {str(e)}")
+            # Load model metadata if available
+            metadata_file = os.path.join(path, "model_metadata.json")
+            if os.path.exists(metadata_file):
+                with open(metadata_file, "r") as f:
+                    metadata = json.load(f)
+                logger.info(f"Model metadata loaded: {metadata.get('model_type', 'unknown')} model")
+                logger.info(f"Data format: {metadata.get('data_format', 'unknown')}")
+                logger.info(f"Feature count: {metadata.get('feature_count', 'unknown')}")
             
-            # Load sample data
-            sample_data_path = os.path.join(path, "sample_data.csv")
-            if os.path.exists(sample_data_path):
-                self.raw_data = pd.read_csv(sample_data_path)
-                logger.info(f"Sample data loaded: {len(self.raw_data)} rows, {len(self.raw_data.columns)} columns")
-                
-                # Initialize the preprocessing pipeline to ensure prediction works
-                self.preprocess_data()
-                self.prepare_train_test_split(test_size=0.2)
-                
-                # If we have feature columns and X_train doesn't match, recreate it
-                if feature_columns and set(self.X_train.columns) != set(feature_columns):
-                    logger.warning("X_train columns don't match saved feature columns. Adjusting...")
-                    
-                    # Create a dummy X_train with the correct columns
-                    dummy_data = {col: [0] for col in feature_columns}
-                    self.X_train = pd.DataFrame(dummy_data)
-                
-                logger.info("Data preprocessing initialized from sample data")
+            # Try to load full training data for training data predictions
+            training_data_file = os.path.join(path, "training_data.csv")
+            if os.path.exists(training_data_file):
+                self.raw_data = pd.read_csv(training_data_file)
+                logger.info(f"Full training data loaded for training data prediction: {len(self.raw_data)} rows")
             else:
-                logger.warning(f"Sample data file not found at {sample_data_path}. Some model features may be missing.")
-                
-                # If we have feature columns but no sample data, create a dummy X_train
-                if feature_columns:
-                    logger.info("Creating dummy X_train from feature information")
-                    dummy_data = {col: [0] for col in feature_columns}
-                    self.X_train = pd.DataFrame(dummy_data)
+                # Fallback to sample data for feature compatibility
+                sample_data_file = os.path.join(path, "sample_data.csv")
+                if os.path.exists(sample_data_file):
+                    self.raw_data = pd.read_csv(sample_data_file)
+                    logger.warning("Only sample training data available - predictions will be limited to sample data")
+                else:
+                    logger.warning("No training data available - predict_on_training_data will not work")
             
-            logger.info(f"Model successfully loaded from {path}")
+            logger.info("Model loading completed successfully!")
             return True
             
         except Exception as e:
-            logger.error(f"Error loading model from {path}: {str(e)}")
+            logger.error(f"Error loading model: {str(e)}")
             return False 
