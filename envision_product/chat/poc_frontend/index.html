@@ -136,7 +136,7 @@
     <!-- Main Content -->
     <main class="pt-20 ml-64 transition-all duration-300 ease-in-out min-h-screen flex flex-col" id="main-content">
         <div class="flex-1">
-            <div class="max-w-7xl mx-auto px-6 py-8">
+            <div class="px-6 py-8">
                 <!-- Dashboard Section -->
                 <section id="dashboard" class="block">
                     <div class="mb-8">
@@ -251,9 +251,9 @@
                     </div>
 
                     <!-- Chat Interface Container -->
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6" style="height: 600px;">
+                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-6" style="height: 480px;">
                         <!-- Knowledge Base Selector -->
-                        <div class="lg:col-span-1">
+                        <div class="xl:col-span-1">
                             <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full">
                                 <div class="p-4 border-b border-neutral-100">
                                     <h3 class="font-semibold text-neutral-900">Select Knowledge Base</h3>
@@ -276,7 +276,7 @@
                         </div>
 
                         <!-- Chat Interface -->
-                        <div class="lg:col-span-3">
+                        <div class="xl:col-span-4">
                             <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
                                 <!-- Chat Header -->
                                 <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
@@ -296,7 +296,7 @@
                                 </div>
 
                                 <!-- Chat Messages -->
-                                <div id="chat-messages" class="overflow-y-auto p-4 space-y-4" style="height: 460px;">
+                                <div id="chat-messages" class="overflow-y-auto p-4 space-y-4" style="height: 340px;">
                                     <div class="flex items-start space-x-3">
                                         <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                                             <i class="fas fa-robot text-white text-sm"></i>
@@ -338,9 +338,9 @@
                     <!-- Lane Information Cards Section -->
                     <div class="space-y-6 mt-8">
                         <!-- Top Row: RIQ and SPOT Cards -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Rate Inquiry Card -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
+                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                            <!-- Rate Inquiry Card (25% width) -->
+                            <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-neutral-200">
                                 <div class="p-6 border-b border-neutral-100">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
@@ -363,8 +363,8 @@
                                 </div>
                             </div>
 
-                            <!-- Spot API Card -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
+                            <!-- Spot API Card (75% width) -->
+                            <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-neutral-200">
                                 <div class="p-6 border-b border-neutral-100">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">

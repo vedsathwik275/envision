@@ -1255,20 +1255,19 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
     statusElement.textContent = 'Ready for API Call';
     
-    // Build content with parsed data ready for RIQ API
+    // Build content with analysis parameters
     let content = `
         <div class="space-y-4">
     `;
     
-    // Combined API Parameters Card for RIQ
+    // Combined RIQ Parameters Section
     content += `
             <div class="bg-blue-50 rounded-lg p-4">
                 <h4 class="font-medium text-blue-900 mb-3 flex items-center">
-                    <i class="fas fa-cog text-blue-600 mr-2"></i>
-                    RIQ API Parameters
+                    <i class="fas fa-shipping-fast text-blue-600 mr-2"></i>
+                    Rate Inquiry Parameters
                 </h4>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="grid grid-cols-2 gap-3 text-sm">
     `;
     
     if (laneInfo.sourceCity) {
@@ -1280,11 +1279,14 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
     if (laneInfo.laneName) {
         content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
     }
-    if (laneInfo.bestCarrier) {
-        content += `<div><span class="text-neutral-600">Preferred Carrier:</span> <span class="font-medium text-green-600">${laneInfo.bestCarrier}</span></div>`;
+    if (laneInfo.equipmentType) {
+        content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
     }
-    if (laneInfo.worstCarrier) {
-        content += `<div><span class="text-neutral-600">Avoid Carrier:</span> <span class="font-medium text-red-600">${laneInfo.worstCarrier}</span></div>`;
+    if (laneInfo.serviceType) {
+        content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
+    }
+    if (laneInfo.carrierName) {
+        content += `<div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${laneInfo.carrierName}</span></div>`;
     }
     if (laneInfo.weight) {
         content += `<div><span class="text-neutral-600">Order Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
@@ -1292,27 +1294,11 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
     if (laneInfo.volume) {
         content += `<div><span class="text-neutral-600">Order Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
     }
-    if (laneInfo.equipmentType) {
-        content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
-    }
-    if (laneInfo.serviceType) {
-        content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
-    }
     
     content += `<div><span class="text-neutral-600">Type:</span> <span class="font-medium">Rate Inquiry</span></div>`;
     content += `<div><span class="text-neutral-600">Status:</span> <span class="font-medium text-blue-600">Ready for API Call</span></div>`;
     
     content += `
-                    </div>
-                    <div class="border-t border-blue-200 pt-3">
-                        <label class="block text-sm font-medium text-neutral-700 mb-2">Expected Ship Date</label>
-                        <div class="flex space-x-2">
-                            <input type="date" id="riq-ship-date-start" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                            <span class="flex items-center text-sm text-neutral-500">to</span>
-                            <input type="date" id="riq-ship-date-end" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                        </div>
-                        <p class="text-xs text-neutral-500 mt-1">Select single date or date range for shipment</p>
-                    </div>
                 </div>
             </div>
     `;
@@ -1391,13 +1377,11 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     content += `
                     </div>
                     <div class="border-t border-green-200 pt-3">
-                        <label class="block text-sm font-medium text-neutral-700 mb-2">Expected Ship Date</label>
+                        <label class="block text-sm font-medium text-neutral-700 mb-2">Shipment Date</label>
                         <div class="flex space-x-2">
-                            <input type="date" id="spot-ship-date-start" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
-                            <span class="flex items-center text-sm text-neutral-500">to</span>
-                            <input type="date" id="spot-ship-date-end" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                            <input type="date" id="spot-ship-date" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
                         </div>
-                        <p class="text-xs text-neutral-500 mt-1">Select single date or date range for market analysis</p>
+                        <p class="text-xs text-neutral-500 mt-1">Select shipment date for market analysis</p>
                     </div>
                 </div>
             </div>
@@ -1956,10 +1940,6 @@ function displayRateResults(results, laneInfo) {
 
 // Global functions for API button actions
 window.retrieveRateInquiry = async function() {
-    // Get the date values (for future use)
-    const startDate = document.getElementById('riq-ship-date-start')?.value;
-    const endDate = document.getElementById('riq-ship-date-end')?.value;
-    
     const statusElement = document.getElementById('rate-inquiry-status');
     const contentElement = document.getElementById('rate-inquiry-content');
     
@@ -2024,22 +2004,321 @@ window.retrieveRateInquiry = async function() {
 };
 
 window.performSpotAnalysis = function() {
-    // Get the date values
-    const startDate = document.getElementById('spot-ship-date-start')?.value;
-    const endDate = document.getElementById('spot-ship-date-end')?.value;
+    // Get the date value
+    const shipmentDate = document.getElementById('spot-ship-date')?.value;
     
-    // Here you would collect all the parsed parameters and make the actual Spot API call
-    console.log('Performing spot analysis with dates:', { startDate, endDate });
+    if (!shipmentDate) {
+        showNotification('Please select a shipment date', 'warning');
+        return;
+    }
     
-    // Show loading state or success message
-    showNotification('Spot analysis started! (Integration pending)', 'info');
+    // Use the globally stored lane info
+    const laneInfo = window.currentLaneInfo;
     
-    // TODO: Implement actual Spot API integration
-    // This would typically involve:
-    // 1. Collecting all parsed parameters from the card
-    // 2. Making API call to Spot API endpoint
-    // 3. Displaying results or updating UI
+    if (!laneInfo || !laneInfo.sourceCity || !laneInfo.destinationCity) {
+        showNotification('Lane information is incomplete. Please provide source and destination cities.', 'warning');
+        return;
+    }
+    
+    console.log('Performing spot analysis with:', {
+        laneInfo,
+        shipmentDate
+    });
+    
+    // Update the card to show loading state
+    updateSpotAnalysisLoadingState();
+    
+    // Call the spot rate matrix API
+    fetchSpotRateMatrix(laneInfo, shipmentDate);
 };
+
+async function fetchSpotRateMatrix(laneInfo, shipmentDate) {
+    try {
+        // Parse location information similar to historical data
+        let sourceLocationParsed = null;
+        if (laneInfo.sourceCity) {
+            sourceLocationParsed = parseLocationFromCity(laneInfo.sourceCity);
+        }
+
+        let destLocationParsed = null;
+        if (laneInfo.destinationCity) {
+            destLocationParsed = parseLocationFromCity(laneInfo.destinationCity);
+        }
+
+        // Build the request payload
+        const requestPayload = {
+            source_city: sourceLocationParsed ? sourceLocationParsed.city : laneInfo.sourceCity,
+            source_state: sourceLocationParsed ? sourceLocationParsed.province_code : laneInfo.sourceState,
+            source_country: sourceLocationParsed ? sourceLocationParsed.country_code : laneInfo.sourceCountry,
+            dest_city: destLocationParsed ? destLocationParsed.city : laneInfo.destinationCity,
+            dest_state: destLocationParsed ? destLocationParsed.province_code : laneInfo.destinationState,
+            dest_country: destLocationParsed ? destLocationParsed.country_code : laneInfo.destinationCountry,
+            shipment_date: shipmentDate
+        };
+
+        // Remove null/undefined keys from payload
+        Object.keys(requestPayload).forEach(key => {
+            if (requestPayload[key] === null || requestPayload[key] === undefined) {
+                delete requestPayload[key];
+            }
+        });
+
+        console.log("Fetching spot rate matrix with payload:", requestPayload);
+
+        const response = await fetch(`${API_BASE_URL}/spot-rate/matrix`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestPayload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: `HTTP ${response.status}: ${response.statusText}` }));
+            throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const spotRateData = await response.json();
+        displaySpotRateMatrix(spotRateData);
+        showNotification('Spot rate matrix loaded successfully!', 'success');
+
+    } catch (error) {
+        console.error('Failed to fetch spot rate matrix:', error);
+        updateSpotAnalysisErrorState(error.message);
+        showNotification(`Failed to fetch spot rate matrix: ${error.message}`, 'error');
+    }
+}
+
+function updateSpotAnalysisLoadingState() {
+    const statusElement = document.getElementById('spot-api-status');
+    const contentElement = document.getElementById('spot-api-content');
+    
+    statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+    statusElement.textContent = 'Loading...';
+    
+    contentElement.innerHTML = `
+        <div class="text-center py-8 text-neutral-500">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p>Loading spot rate matrix...</p>
+        </div>
+    `;
+}
+
+function updateSpotAnalysisErrorState(errorMessage) {
+    const statusElement = document.getElementById('spot-api-status');
+    const contentElement = document.getElementById('spot-api-content');
+    
+    statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+    statusElement.textContent = 'Error';
+    
+    contentElement.innerHTML = `
+        <div class="text-center py-8 text-red-500">
+            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+            <p>Failed to load spot rate matrix</p>
+            <p class="text-sm mt-2">${escapeHtml(errorMessage)}</p>
+            <button onclick="performSpotAnalysis()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                <i class="fas fa-redo mr-2"></i>Retry
+            </button>
+        </div>
+    `;
+}
+
+function displaySpotRateMatrix(data) {
+    const statusElement = document.getElementById('spot-api-status');
+    const contentElement = document.getElementById('spot-api-content');
+    
+    if (!data || !data.spot_costs) {
+        updateSpotAnalysisErrorState('Invalid data received from server');
+        return;
+    }
+
+    const { origin_city, origin_state, destination_city, destination_state, shipment_date, spot_costs } = data;
+    
+    // Update status
+    statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+    statusElement.textContent = `${spot_costs.length} Carriers`;
+
+    let content = `
+        <div class="space-y-4">
+            <!-- Lane Summary -->
+            <div class="bg-green-50 rounded-lg p-4">
+                <h4 class="font-medium text-green-900 mb-3 flex items-center">
+                    <i class="fas fa-route text-green-600 mr-2"></i>
+                    Spot Rate Matrix: ${escapeHtml(origin_city)}, ${escapeHtml(origin_state)} → ${escapeHtml(destination_city)}, ${escapeHtml(destination_state)}
+                </h4>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-neutral-600">Shipment Date:</span> <span class="font-medium">${escapeHtml(shipment_date)}</span></div>
+                    <div><span class="text-neutral-600">Carriers Found:</span> <span class="font-medium">${spot_costs.length}</span></div>
+                </div>
+            </div>
+    `;
+
+    if (spot_costs.length > 0) {
+        // Get all unique dates from all carriers to ensure consistent columns
+        const allDates = [...new Set(spot_costs.flatMap(carrier => 
+            carrier.cost_details.map(detail => detail.ship_date)
+        ))].sort();
+
+        // Collect all rates to find min and max for highlighting
+        const allRates = spot_costs.flatMap(carrier => 
+            carrier.cost_details.map(detail => ({
+                cost: parseFloat(detail.total_spot_cost),
+                carrier: carrier.carrier,
+                mode: detail.transport_mode,
+                date: detail.ship_date
+            }))
+        );
+        
+        const minRate = Math.min(...allRates.map(r => r.cost));
+        const maxRate = Math.max(...allRates.map(r => r.cost));
+
+        content += `
+            <!-- Rate Matrix -->
+            <div class="bg-neutral-50 rounded-lg p-4">
+                <h4 class="font-medium text-neutral-900 mb-3">7-Day Spot Rate Matrix</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border border-neutral-200 rounded-lg">
+                        <thead class="bg-neutral-100">
+                            <tr>
+                                <th class="text-left py-3 px-4 font-semibold border-b border-neutral-200 sticky left-0 bg-neutral-100 z-10">Carrier / Transport Mode</th>
+        `;
+
+        // Add date headers
+        allDates.forEach((date, index) => {
+            const isBaseDate = index === 0; // First date is the base date
+            const headerClass = isBaseDate ? 'bg-green-100 text-green-800' : 'bg-neutral-100';
+            content += `<th class="text-center py-3 px-3 font-semibold border-b border-neutral-200 ${headerClass}">${escapeHtml(date)}</th>`;
+        });
+
+        content += `
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-100">
+        `;
+
+        // Add carrier rows
+        spot_costs.forEach((carrierData, carrierIndex) => {
+            const { carrier, cost_details } = carrierData;
+            
+            // Group cost details by transport mode
+            const modeGroups = {};
+            cost_details.forEach(detail => {
+                if (!modeGroups[detail.transport_mode]) {
+                    modeGroups[detail.transport_mode] = [];
+                }
+                modeGroups[detail.transport_mode].push(detail);
+            });
+
+            // Create a row for each transport mode
+            Object.entries(modeGroups).forEach(([mode, details], modeIndex) => {
+                const rowClass = carrierIndex % 2 === 0 ? 'bg-white' : 'bg-neutral-25';
+                
+                content += `
+                    <tr class="${rowClass}">
+                        <td class="py-3 px-4 font-medium border-r border-neutral-200 sticky left-0 ${rowClass} z-10">
+                            <div class="flex items-center">
+                                <i class="fas fa-truck text-green-600 mr-2"></i>
+                                <div>
+                                    <div class="font-medium text-neutral-900">${escapeHtml(carrier)}</div>
+                                    <div class="text-xs text-neutral-600">${escapeHtml(mode)}</div>
+                                </div>
+                            </div>
+                        </td>
+                `;
+
+                // Create a map of dates to costs for this mode
+                const dateToCost = {};
+                details.forEach(detail => {
+                    dateToCost[detail.ship_date] = parseFloat(detail.total_spot_cost);
+                });
+
+                // Add cost cells for each date
+                allDates.forEach((date, dateIndex) => {
+                    const cost = dateToCost[date];
+                    const isBaseDate = dateIndex === 0;
+                    
+                    if (cost !== undefined) {
+                        let cellClass = isBaseDate ? 'bg-green-50 font-medium' : '';
+                        
+                        // Add highlighting for min/max rates
+                        if (cost === minRate) {
+                            cellClass += ' bg-green-100 text-green-800 font-bold border-2 border-green-300';
+                        } else if (cost === maxRate) {
+                            cellClass += ' bg-red-100 text-red-800 font-bold border-2 border-red-300';
+                        }
+                        
+                        content += `<td class="py-3 px-3 text-center border-r border-neutral-100 ${cellClass}">$${cost.toFixed(2)}</td>`;
+                    } else {
+                        content += `<td class="py-3 px-3 text-center border-r border-neutral-100 text-neutral-400">-</td>`;
+                    }
+                });
+
+                content += `</tr>`;
+            });
+        });
+
+        content += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 text-xs text-neutral-600 flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-green-50 border border-green-200 rounded mr-2"></div>
+                        <span>Base date</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-green-100 border-2 border-green-300 rounded mr-2"></div>
+                        <span>Lowest rate ($${minRate.toFixed(2)})</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-red-100 border-2 border-red-300 rounded mr-2"></div>
+                        <span>Highest rate ($${maxRate.toFixed(2)})</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add summary statistics
+        const allRatesValues = spot_costs.flatMap(carrier => 
+            carrier.cost_details.map(detail => parseFloat(detail.total_spot_cost))
+        );
+        const avgRate = allRatesValues.reduce((sum, rate) => sum + rate, 0) / allRatesValues.length;
+
+        content += `
+            <!-- Summary Statistics -->
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                    Rate Statistics
+                </h4>
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                    <div class="text-center">
+                        <div class="text-neutral-600">Average Rate</div>
+                        <div class="font-medium text-lg">$${avgRate.toFixed(2)}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-neutral-600">Lowest Rate</div>
+                        <div class="font-medium text-lg text-green-600">$${minRate.toFixed(2)}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-neutral-600">Highest Rate</div>
+                        <div class="font-medium text-lg text-red-600">$${maxRate.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        content += `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-info-circle text-4xl mb-4 text-neutral-300"></i>
+                <p>No carriers found for this lane and date combination.</p>
+            </div>
+        `;
+    }
+
+    content += `</div>`;
+    contentElement.innerHTML = content;
+}
 
 // Historical Data Card Functions (NEW)
 async function updateHistoricalDataCard(laneInfo, userMessage, response) {

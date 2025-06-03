@@ -2,6 +2,39 @@
 
 ## [Unreleased] - 2025-06-03
 ### Added
+- **Spot Rate Matrix API Backend**: Complete implementation of spot rate matrix functionality
+  - New backend service (`SpotRateService`) for generating 7-day spot rate projections using actual data
+  - Spot rate API endpoints (`/spot-rate/matrix` and `/spot-rate/health`)
+  - Pydantic models for spot rate requests and responses (`SpotRateRequest`, `CostDetail`, `CarrierSpotCost`, `SpotRateMatrixResponse`)
+  - CSV data processing from SPOT_RATE_V1.csv with lane filtering by source/destination cities and states
+  - 7-day rate projection algorithm using actual day-1 data with ±5% variance for days 2-7 using numpy uniform distribution
+  - Carrier and transport mode grouping with proper data normalization and rounding to 2 decimal places
+  - Support for filtering by lane parameters (source/destination city, state, country) with flexible matching
+
+- **Enhanced Frontend Spot Rate Matrix Integration**: Complete frontend implementation for spot rate analysis
+  - Updated `performSpotAnalysis()` function with validation for shipment date and lane information
+  - Added `fetchSpotRateMatrix()` function to call the new `/spot-rate/matrix` API endpoint
+  - Comprehensive matrix display in proper tabular format with carriers as rows and dates as columns
+  - Real-time loading states (`updateSpotAnalysisLoadingState()`) and error handling (`updateSpotAnalysisErrorState()`)
+  - Interactive date picker for shipment date selection in Spot API card
+  - Automatic API payload construction from parsed lane information with null/undefined field removal
+
+- **Matrix Display with Advanced Highlighting**: Professional spot rate matrix visualization
+  - **Matrix Format**: Carriers as rows, dates as columns, with spot rates as cell values
+  - **Rate Highlighting**: Cheapest rates highlighted in light green with bold text and green borders
+  - **Expensive Rate Highlighting**: Most expensive rates highlighted in light red with bold text and red borders
+  - **Base Date Highlighting**: First date (actual data) highlighted in green background to distinguish from projections
+  - **Enhanced Legend**: Visual indicators showing base date explanation, lowest rate value, and highest rate value
+  - **Sticky Columns**: Carrier/transport mode column stays visible during horizontal scrolling
+  - **Summary Statistics**: Average, minimum, and maximum rate calculations with color-coded display
+
+- **Responsive Layout Improvements**: Major frontend layout enhancements for better data visualization
+  - **Removed Width Constraints**: Eliminated `max-w-7xl mx-auto` wrapper to allow full-width utilization
+  - **Improved Chat Interface**: Changed chat grid from `lg:grid-cols-4` to `xl:grid-cols-5` for better proportions
+  - **Reduced Chat Height**: Decreased chat container from 600px to 480px and messages area from 460px to 340px
+  - **Optimized Card Layout**: Changed from 50/50 split to 25% Rate Inquiry / 75% Spot API layout using `lg:grid-cols-4`
+  - **Enhanced Responsiveness**: Cards now properly flex with sidebar state (expanded/collapsed) and use full available width
+
 - **Historical Data Card Feature**: Complete implementation of Historical Lane Analysis functionality
   - New backend service (`HistoricalDataService`) for querying transportation historical data from CSV
   - Historical data API endpoints (`/historical-data/query` and `/historical-data/health`)
@@ -14,24 +47,60 @@
   - Support for querying by source/destination cities, states, and countries
 
 ### Changed
-- **Frontend Layout Restructuring**: Reorganized lane information cards layout
-  - Moved Historical Lane Analysis card to full-width position below RIQ and SPOT cards
-  - Changed from 3-column grid to 2-column top row + full-width bottom row layout
-  - Improved visual hierarchy and data table display space
-- **Lane Information Parsing**: Enhanced chat response parsing to support historical data card updates
-  - Updated `parseAndUpdateLaneInfo()` function to trigger historical data card updates
+- **Enhanced Spot API Card Functionality**: Improved user experience and data handling
+  - **Intelligent Lane Parsing**: Enhanced `parseLocationFromCity()` function to handle various city/state/country formats
+  - **API Integration**: Streamlined spot rate matrix API calls with proper error handling and response processing
+  - **Visual Feedback**: Added comprehensive loading states and success/error indicators
+  - **Data Validation**: Added shipment date validation and lane information completeness checks
+
+- **Frontend Layout Restructuring**: Reorganized interface for optimal data visualization
+  - **Full-Width Utilization**: Removed artificial width constraints to maximize available space for tables and matrices
+  - **Improved Proportions**: Rate Inquiry card (25%) now focuses on essential parameters while Spot API card (75%) provides ample space for complex matrix data
+  - **Better Sidebar Integration**: Layout now properly responds to sidebar expand/collapse with smooth transitions
+  - **Enhanced Card Responsiveness**: Cards stack on smaller screens and use optimized proportions on larger displays
+
+- **Matrix Data Processing**: Enhanced spot rate data handling and display
+  - **Carrier Grouping**: Group by both carrier and transport mode for granular analysis
+  - **Date Standardization**: Ensure consistent date columns across all carriers with sorted display
+  - **Rate Variance Algorithm**: Generate realistic ±5% variance for projection days using numpy uniform distribution
+  - **Data Normalization**: Proper handling of missing data with fallback mechanisms
+
+- **Improved API Response Structure**: Enhanced spot rate API responses
+  - **Structured Output**: Consistent response format with origin/destination details, shipment date, and carrier costs
+  - **Error Handling**: Comprehensive error responses for missing data, invalid parameters, and API failures
+  - **Flexible Filtering**: Support for partial lane information with intelligent matching
+
+- **Enhanced Lane Information Parsing**: Updated chat response parsing to support all new cards
+  - Updated `parseAndUpdateLaneInfo()` function to trigger historical data card updates and spot rate matrix updates
   - Fixed field name mapping to handle Pydantic model serialization with aliases
-  - Improved location parsing with `parseLocationFromCity()` function integration
+  - Improved location parsing with `parseLocationFromCity()` function integration for multiple card types
 
 ### Fixed
+- **Spot Rate Matrix Display Issues**: Resolved various UI and data handling problems
+  - **Matrix Layout**: Fixed table structure to properly display carriers vs. dates with sticky columns
+  - **Rate Highlighting**: Implemented accurate min/max rate detection across all carriers and dates
+  - **Data Processing**: Fixed CSV loading and lane filtering with proper error handling for missing carriers
+  - **API Integration**: Resolved payload construction and response handling issues
+
+- **Frontend Layout Problems**: Fixed responsive design and width utilization issues
+  - **Width Constraints**: Removed limiting max-width that was causing table cramping
+  - **Card Proportions**: Fixed 50/50 layout to better 25/75 split for optimal space utilization
+  - **Sidebar Responsiveness**: Ensured proper layout flex with sidebar state changes
+  - **Chat Interface**: Optimized chat height to provide more space for data visualization
+
 - **Historical Data Display Issues**: Resolved field mapping problems between backend and frontend
   - Fixed JavaScript field access to use correct API response field names (TMODE, COST_PER_LB, etc.)
   - Corrected Pydantic model alias handling for proper data serialization
   - Fixed empty table display issue where all values showed as "N/A"
+
 - **Data Processing**: Improved CSV data loading and error handling
   - Enhanced file path resolution for cross-platform compatibility
   - Added robust data validation and type conversion
   - Implemented proper error handling for missing or invalid data records
+
+- **Legend Simplification**: Updated base date legend text
+  - Changed from verbose "Base date (actual data) - subsequent dates show ±5% variance projections" to simple "Base date"
+  - Maintained clear visual indicators for rate highlighting with color-coded legends
 
 ## [Unreleased] - 2025-06-02
 ### Added
@@ -774,7 +843,7 @@
 - Enhanced test suite to gracefully handle both CSV and JSON responses
 - Modified file handling to attempt on-demand CSV generation when files are missing
 - Added more robust error handling for file conversions
-- Changed Tender Performance predictions to use the training data approach as the primary prediction method
+- Changed Tender Performance predictions to use the training data approach for more accurate results
 - Enhanced file naming for filtered prediction downloads to indicate when filters are applied
 - Updated test scripts to match the new API structure and provide better testing coverage
 - Improved documentation of API endpoints to clarify their purpose and relationship to industry standards
@@ -853,4 +922,4 @@
 - Created `order_volume_model.py`
 
 
-Timestamp: 2025-06-03 10:06:00
+Timestamp: 2025-06-03 12:27:00

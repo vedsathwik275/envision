@@ -100,4 +100,40 @@ class HistoricalDataResponse(BaseModel):
     total_count: int = Field(..., description="Total number of matching records found (before limit).")
     lane_summary: Dict[str, Any] = Field(..., description="Summary statistics for the queried lane.")
     cost_statistics: Dict[str, Optional[float]] = Field(..., description="Overall cost statistics for the queried lane.")
-    query_parameters: HistoricalDataRequest = Field(..., description="The parameters used for this query.") 
+    query_parameters: HistoricalDataRequest = Field(..., description="The parameters used for this query.")
+
+# Spot Rate Models
+class SpotRateRequest(BaseModel):
+    """Request model for querying spot rate matrix data."""
+    source_city: Optional[str] = Field(None, description="Source city for the lane.")
+    source_state: Optional[str] = Field(None, description="Source state for the lane.")
+    source_country: Optional[str] = Field("US", description="Source country for the lane.")
+    dest_city: Optional[str] = Field(None, description="Destination city for the lane.")
+    dest_state: Optional[str] = Field(None, description="Destination state for the lane.")
+    dest_country: Optional[str] = Field("US", description="Destination country for the lane.")
+    shipment_date: str = Field(..., description="Base shipment date in YYYY-MM-DD format for 7-day projection.")
+
+class CostDetail(BaseModel):
+    """Represents cost details for a specific shipment date."""
+    ship_date: str = Field(..., description="Shipment date in MM/DD/YYYY format.")
+    total_spot_cost: str = Field(..., description="Total spot cost as string.")
+    cost_currency: str = Field("USD", description="Currency code.")
+    line_haul: str = Field(..., description="Line haul cost as string.")
+    fuel: str = Field("0", description="Fuel cost as string.")
+    quote_id: str = Field("AUTO_GENERATED", description="Quote identifier.")
+    transport_mode: str = Field(..., description="Transport mode (e.g., TL, LTL).")
+
+class CarrierSpotCost(BaseModel):
+    """Represents spot costs for a single carrier across multiple dates."""
+    carrier: str = Field(..., description="Carrier code/name.")
+    cost_details: List[CostDetail] = Field(..., description="List of cost details for each shipment date.")
+
+class SpotRateMatrixResponse(BaseModel):
+    """Response model for spot rate matrix queries."""
+    origin_city: str = Field(..., description="Origin city name.")
+    origin_state: str = Field(..., description="Origin state code.")
+    destination_city: str = Field(..., description="Destination city name.")
+    destination_state: str = Field(..., description="Destination state code.")
+    shipment_date: str = Field(..., description="Base shipment date in MM/DD/YYYY format.")
+    spot_costs: List[CarrierSpotCost] = Field(..., description="List of carriers with their cost details.")
+    query_parameters: SpotRateRequest = Field(..., description="The parameters used for this query.") 
