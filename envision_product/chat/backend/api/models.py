@@ -62,4 +62,42 @@ class ErrorResponse(BaseModel):
     """Standard error response model."""
     error: str = Field(..., description="The type of error that occurred.")
     message: str = Field(..., description="A human-readable message describing the error.")
-    details: Optional[Any] = Field(None, description="Optional details about the error, can be a dict or list.") 
+    details: Optional[Any] = Field(None, description="Optional details about the error, can be a dict or list.")
+
+# Historical Data Models
+class HistoricalDataRequest(BaseModel):
+    """Request model for querying historical transportation data."""
+    source_city: Optional[str] = Field(None, description="Source city for the lane.")
+    source_state: Optional[str] = Field(None, description="Source state for the lane.")
+    source_country: Optional[str] = Field("US", description="Source country for the lane.")
+    dest_city: Optional[str] = Field(None, description="Destination city for the lane.")
+    dest_state: Optional[str] = Field(None, description="Destination state for the lane.")
+    dest_country: Optional[str] = Field("US", description="Destination country for the lane.")
+    transport_mode: Optional[str] = Field(None, description="Transport mode (e.g., LTL, TL).")
+    limit: int = Field(50, description="Maximum number of records to return.", ge=1, le=1000)
+
+class HistoricalRecord(BaseModel):
+    """Represents a single historical transportation record."""
+    source_city: str
+    source_state: str
+    source_country: str
+    dest_city: str
+    dest_state: str
+    dest_country: str
+    transport_mode: str = Field(..., alias="TMODE")
+    cost_per_lb: Optional[float] = Field(None, alias="COST_PER_LB")
+    cost_per_mile: Optional[float] = Field(None, alias="COST_PER_MILE")
+    cost_per_cuft: Optional[float] = Field(None, alias="COST_PER_CUFT")
+    shipment_count: Optional[int] = Field(None, alias="SHP_COUNT")
+    mode_preference: Optional[str] = Field(None, alias="MODE_PREFERENCE")
+
+    class Config:
+        populate_by_name = True # Allows using alias for field names
+
+class HistoricalDataResponse(BaseModel):
+    """Response model for historical data queries."""
+    records: List[HistoricalRecord] = Field(..., description="List of matching historical records.")
+    total_count: int = Field(..., description="Total number of matching records found (before limit).")
+    lane_summary: Dict[str, Any] = Field(..., description="Summary statistics for the queried lane.")
+    cost_statistics: Dict[str, Optional[float]] = Field(..., description="Overall cost statistics for the queried lane.")
+    query_parameters: HistoricalDataRequest = Field(..., description="The parameters used for this query.") 

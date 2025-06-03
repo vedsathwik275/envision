@@ -23,6 +23,7 @@ from .core.exceptions import (
 )
 from .routes import knowledge_bases as kb_routes
 from .routes import chat as chat_routes
+from .routes import historical_data as historical_routes
 from .services.kb_service import KBService
 from .services.chat_service import ChatService
 from .models import HealthCheckResponse, ErrorResponse
@@ -88,6 +89,7 @@ app.add_exception_handler(Exception, generic_exception_handler) # Generic fallba
 # Include routers
 app.include_router(kb_routes.router, prefix=settings.api_v1_prefix)
 app.include_router(chat_routes.router, prefix=settings.api_v1_prefix) # chat routes are already prefixed with /knowledge_bases/{kb_id}
+app.include_router(historical_routes.router, prefix=settings.api_v1_prefix)
 
 
 @app.get(

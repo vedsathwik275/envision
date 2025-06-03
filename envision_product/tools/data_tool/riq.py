@@ -19,7 +19,7 @@ class RIQClient:
         self.auth_token = auth_token
         self.endpoint = "/logisticsRestApi/resources-int/v2/custom-actions/riqRateAndRoute"
     
-    def create_location(self, city: str, province_code: str, postal_code: str, country_code: str = "US") -> Dict[str, str]:
+    def create_location(self, city: str, province_code: str, postal_code: str = "00000", country_code: str = "US") -> Dict[str, str]:
         """
         Create a location object for RIQ request.
         
@@ -77,7 +77,7 @@ class RIQClient:
         }
     
     def create_rate_request(self, source_location: Dict[str, str], destination_location: Dict[str, str],
-                           items: list, servprov_gid: str = "BSL.RYGB",
+                           items: list, servprov_gid: Optional[str] = "BSL.RYGB",
                            request_type: str = "AllOptions", perspective: str = "B",
                            max_primary_options: str = "99", 
                            primary_option_definition: str = "BY_ITINERARY") -> Dict[str, Any]:
@@ -88,7 +88,7 @@ class RIQClient:
             source_location: Source location dictionary
             destination_location: Destination location dictionary
             items: List of items to ship
-            servprov_gid: Service provider GID (default: "BSL.RYGB")
+            servprov_gid: Service provider GID (optional, default: "BSL.RYGB")
             request_type: Type of request (default: "AllOptions")
             perspective: Request perspective (default: "B")
             max_primary_options: Maximum primary options (default: "99")
@@ -97,19 +97,24 @@ class RIQClient:
         Returns:
             Dictionary containing complete rate request payload
         """
+        order_releases = {
+            "sourceLocation": source_location,
+            "destinationLocation": destination_location,
+            "lines": {
+                "items": items
+            }
+        }
+        
+        # Only include servprov_gid if it's provided (not None)
+        if servprov_gid is not None:
+            order_releases["servprovGid"] = servprov_gid
+        
         return {
             "requestType": request_type,
             "perspective": perspective,
             "maxPrimaryOptions": max_primary_options,
             "primaryOptionDefinition": primary_option_definition,
-            "orderReleases": {
-                "sourceLocation": source_location,
-                "destinationLocation": destination_location,
-                "servprovGid": servprov_gid,
-                "lines": {
-                    "items": items
-                }
-            }
+            "orderReleases": order_releases
         }
     
     def get_rate_quote(self, request_payload: Dict[str, Any]) -> Dict[str, Any]:

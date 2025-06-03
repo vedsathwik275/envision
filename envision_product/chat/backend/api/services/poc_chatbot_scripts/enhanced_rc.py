@@ -106,19 +106,19 @@ INSTRUCTIONS:
   * Then immediately provide a section about the BEST performance metric found
   * Use format: "### Best Performance Analysis"
   * ALWAYS identify the carrier associated with the highest performance metric
-  * Format performance details as: "The best predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN] to [DESTINATION] lane"
+  * Format performance details as: "The best predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN], [ORIGIN_STATE], [ORIGIN_COUNTRY] to [DESTINATION], [DESTINATION_STATE], [DESTINATION_COUNTRY] lane"
   * If multiple carriers exist, clearly state which carrier achieved the highest performance
   * After the best performance, provide a section about the WORST performance metric found
   * Use format: "### Worst Performance Analysis"
   * ALWAYS identify the carrier associated with the lowest performance metric
-  * Format performance details as: "The worst predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN] to [DESTINATION] lane"
+  * Format performance details as: "The worst predicted performance is [XX.XX%] for carrier [CARRIER_NAME] on the [ORIGIN], [ORIGIN_STATE], [ORIGIN_COUNTRY] to [DESTINATION], [DESTINATION_STATE], [DESTINATION_COUNTRY] lane"
   * This helps identify carriers that might be cheapest but have poor performance
   * DO NOT repeat the confidence header - use it only once at the beginning
   * Focus on the highest/best performance value found in the data and its associated carrier, followed by the lowest/worst performance
   * CRITICAL: Always end your response with a structured data section in this exact format:
   
   ---STRUCTURED_DATA---
-  LANE: [Source City] to [Destination City]
+  LANE: [Source City, Source State, Source Country] to [Destination City, Destination State, Destination Country]
   BEST_CARRIER: [Carrier Name]
   BEST_PERFORMANCE: [XX.XX%]
   WORST_CARRIER: [Carrier Name]

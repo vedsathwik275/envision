@@ -447,6 +447,14 @@
       "size": 17347,
       "upload_time": "2025-06-02T08:33:38.120362",
       "path": "data\\uploads\\2284b200-5cd4-41f8-a30a-5c3af06cd4c3"
+    },
+    "fadcd89b-1ca5-4ed9-8e11-f945e07503c9": {
+      "file_id": "fadcd89b-1ca5-4ed9-8e11-f945e07503c9",
+      "filename": "carrier_performance_bymonth_v2.csv",
+      "content_type": "text/csv",
+      "size": 104954,
+      "upload_time": "2025-06-03T08:15:57.858964",
+      "path": "data\\uploads\\fadcd89b-1ca5-4ed9-8e11-f945e07503c9"
     }
   }
 }

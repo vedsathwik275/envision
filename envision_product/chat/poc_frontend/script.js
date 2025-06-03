@@ -1,5 +1,6 @@
 // Configuration
 const API_BASE_URL = 'http://localhost:8004/api/v1';
+const RIQ_API_BASE_URL = 'http://localhost:8006';
 let currentView = 'dashboard';
 let knowledgeBases = [];
 let currentKBId = null;
@@ -831,7 +832,7 @@ function clearChat() {
 
 // Function to clear lane information cards
 function clearLaneInfoCards() {
-    // Reset Rate Inquiry Card
+    // Clear Rate Inquiry Card
     const rateInquiryStatus = document.getElementById('rate-inquiry-status');
     const rateInquiryContent = document.getElementById('rate-inquiry-content');
     
@@ -846,7 +847,7 @@ function clearLaneInfoCards() {
         </div>
     `;
     
-    // Reset Spot API Card
+    // Clear Spot API Card
     const spotAPIStatus = document.getElementById('spot-api-status');
     const spotAPIContent = document.getElementById('spot-api-content');
     
@@ -860,6 +861,25 @@ function clearLaneInfoCards() {
             <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
         </div>
     `;
+    
+    // Clear Historical Data Card (NEW)
+    const historicalDataStatus = document.getElementById('historical-data-status');
+    const historicalDataContent = document.getElementById('historical-data-content');
+    
+    if (historicalDataStatus) {
+        historicalDataStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+        historicalDataStatus.textContent = 'No data';
+    }
+    
+    if (historicalDataContent) {
+        historicalDataContent.innerHTML = `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
+                <p>Ask about transportation routes to see historical data</p>
+                <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
+            </div>
+        `;
+    }
 }
 
 // Dashboard Functions
@@ -921,14 +941,21 @@ function showNotification(message, type = 'info') {
 function parseAndUpdateLaneInfo(userMessage, response) {
     const laneInfo = parseLaneInformationFromResponse(response.answer);
     
-    // Check if we have performance analysis data
-    const hasPerformanceAnalysis = laneInfo.bestCarrier || laneInfo.worstCarrier || 
-                                 laneInfo.sourceCity || laneInfo.destinationCity;
+    // Store lane info globally for RIQ API access
+    window.currentLaneInfo = laneInfo; // Potentially use this for historical data too
     
-    if (hasPerformanceAnalysis) {
+    // Check if we have performance analysis data or basic lane info
+    const hasSufficientLaneInfo = laneInfo.sourceCity && laneInfo.destinationCity;
+    
+    if (hasSufficientLaneInfo) { // Changed condition to be more general for all cards
         // Update cards with parsed performance data
         updateRateInquiryCard(laneInfo, userMessage, response);
         updateSpotAPICard(laneInfo, userMessage, response);
+        updateHistoricalDataCard(laneInfo, userMessage, response); // NEW: Call historical data card update
+    } else {
+        console.warn("Insufficient lane information to update contextual cards.", laneInfo);
+        // Optionally, clear cards or show a generic message if not enough info
+        // clearLaneInfoCards(); // Or a more specific clearing if needed
     }
 }
 
@@ -1290,28 +1317,6 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
             </div>
     `;
     
-    // // Query Analysis Section
-    // content += `
-    //         <div class="bg-white border border-blue-200 rounded-lg p-4">
-    //             <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
-    //                 <i class="fas fa-quote-left text-blue-500 mr-2"></i>
-    //                 Original Query
-    //             </h5>
-    //             <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
-    //         </div>
-    // `;
-    
-    // // API Integration Status
-    // content += `
-    //         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    //             <h5 class="font-medium text-blue-800 mb-2 flex items-center">
-    //                 <i class="fas fa-plug text-blue-600 mr-2"></i>
-    //                 RIQ API Integration
-    //             </h5>
-    //             <p class="text-sm text-blue-700">Ready to query RIQ API for rate quotes with parsed parameters and selected ship dates.</p>
-    //         </div>
-    // `;
-    
     // Retrieve Rate Inquiry Details Button Card
     content += `
             <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
@@ -1364,12 +1369,6 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     if (laneInfo.laneName) {
         content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
     }
-    // if (laneInfo.bestCarrier) {
-    //     content += `<div><span class="text-neutral-600">Best Performer:</span> <span class="font-medium text-green-600">${laneInfo.bestCarrier}</span></div>`;
-    // }
-    // if (laneInfo.worstCarrier) {
-    //     content += `<div><span class="text-neutral-600">Worst Performer:</span> <span class="font-medium text-red-600">${laneInfo.worstCarrier}</span></div>`;
-    // }
     if (laneInfo.equipmentType) {
         content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
     }
@@ -1404,28 +1403,6 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
             </div>
     `;
     
-    // // Query Analysis Section
-    // content += `
-    //         <div class="bg-white border border-green-200 rounded-lg p-4">
-    //             <h5 class="font-medium text-neutral-900 mb-2 flex items-center">
-    //                 <i class="fas fa-quote-left text-green-500 mr-2"></i>
-    //                 Original Query
-    //             </h5>
-    //             <p class="text-sm text-neutral-600 bg-neutral-50 rounded-lg p-3">${escapeHtml(userMessage)}</p>
-    //         </div>
-    // `;
-    
-    // // API Integration Status
-    // content += `
-    //         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-    //             <h5 class="font-medium text-purple-800 mb-2 flex items-center">
-    //                 <i class="fas fa-plug text-purple-600 mr-2"></i>
-    //                 Spot API Integration
-    //             </h5>
-    //             <p class="text-sm text-purple-700">Ready to query Spot API for ${analysisType.toLowerCase()} data with parsed parameters and selected ship dates.</p>
-    //         </div>
-    // `;
-    
     // Perform Spot Analysis Button Card
     content += `
             <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4 text-white">
@@ -1445,23 +1422,605 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     contentElement.innerHTML = content;
 }
 
+// RIQ API Helper Functions
+function cleanServiceProviderGid(servprovGid) {
+    /**
+     * Clean service provider GID by removing BSL. prefix
+     * Example: "BSL.ODFL" -> "ODFL"
+     */
+    if (!servprovGid) return 'N/A';
+    
+    // Remove BSL. prefix if present
+    if (servprovGid.startsWith('BSL.')) {
+        return servprovGid.substring(4); // Remove "BSL."
+    }
+    
+    return servprovGid;
+}
+
+function capitalizeLocation(locationString) {
+    /**
+     * Capitalize each word in a location string
+     * Example: "elwood" -> "Elwood", "los angeles" -> "Los Angeles"
+     */
+    if (!locationString) return '';
+    
+    return locationString
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function parseLocationFromCity(cityString) {
+    /**
+     * Parse city string to extract city, state, and country
+     * Supports formats like "Elwood, IL, US" or "Elwood, IL" or "Elwood"
+     * Also handles formats like "Elwood IL US" (space-separated)
+     */
+    if (!cityString) return null;
+    
+    // Try comma-separated format first
+    let parts = cityString.split(',').map(part => part.trim());
+    
+    // If no commas, try space-separated format
+    if (parts.length === 1) {
+        parts = cityString.split(/\s+/);
+        
+        // For space-separated, we expect at least City + State
+        if (parts.length >= 2) {
+            // Reconstruct city name (all parts except last 1-2)
+            let city, state, country;
+            
+            if (parts.length >= 3 && parts[parts.length - 1].length <= 3) {
+                // Likely format: "City Name State Country"
+                country = parts[parts.length - 1];
+                state = parts[parts.length - 2];
+                city = parts.slice(0, -2).join(' ');
+            } else if (parts.length >= 2) {
+                // Likely format: "City Name State"
+                state = parts[parts.length - 1];
+                city = parts.slice(0, -1).join(' ');
+                country = 'US';
+            }
+            
+            if (city && state) {
+                return {
+                    city: city,
+                    province_code: state,
+                    country_code: country || 'US'
+                };
+            }
+        }
+        
+        // If still only one part, we can't make a valid API call
+        console.warn(`Insufficient location data: ${cityString}`);
+        return null;
+    }
+    
+    // Handle comma-separated format
+    if (parts.length >= 2) {
+        return {
+            city: parts[0],
+            province_code: parts[1],
+            country_code: parts[2] || 'US'
+        };
+    }
+    
+    return null;
+}
+
+function parseWeightAndVolume(weightStr, volumeStr) {
+    /**
+     * Parse weight and volume strings to extract numeric values and units
+     */
+    const result = {
+        weight_value: 1000, // Default
+        weight_unit: 'LB',
+        volume_value: 50,   // Default
+        volume_unit: 'CUFT'
+    };
+    
+    if (weightStr) {
+        const weightMatch = weightStr.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(lbs?|pounds?|kg|#)?/i);
+        if (weightMatch) {
+            result.weight_value = parseFloat(weightMatch[1].replace(/,/g, ''));
+            if (weightMatch[2]) {
+                const unit = weightMatch[2].toLowerCase();
+                result.weight_unit = (unit === '#' || unit.includes('lb') || unit.includes('pound')) ? 'LB' : 'KG';
+            }
+        }
+    }
+    
+    if (volumeStr) {
+        const volumeMatch = volumeStr.match(/(\d+(?:,\d{3})*(?:\.\d+)?)\s*(cuft|cubic\s*feet?|cbm|cubic\s*meters?|ft3|m3)?/i);
+        if (volumeMatch) {
+            result.volume_value = parseFloat(volumeMatch[1].replace(/,/g, ''));
+            if (volumeMatch[2]) {
+                const unit = volumeMatch[2].toLowerCase();
+                result.volume_unit = (unit.includes('cbm') || unit.includes('m3') || unit.includes('cubic m')) ? 'CBM' : 'CUFT';
+            }
+        }
+    }
+    
+    return result;
+}
+
+function buildLocationObject(city, state, country = 'US') {
+    /**
+     * Build location object for RIQ API request
+     */
+    return {
+        city: city,
+        province_code: state,
+        country_code: country
+        // postal_code is optional and not included
+    };
+}
+
+function buildItemObject(weightValue, weightUnit, volumeValue, volumeUnit) {
+    /**
+     * Build item object for RIQ API request
+     */
+    return {
+        weight_value: weightValue || 1000,
+        weight_unit: weightUnit || 'LB',
+        volume_value: volumeValue || 50,
+        volume_unit: volumeUnit || 'CUFT',
+        declared_value: 0,
+        currency: 'USD',
+        package_count: 1,
+        packaged_item_gid: 'DEFAULT'
+    };
+}
+
+function mapCarrierToServprovGid(carrierName) {
+    /**
+     * Map carrier name to service provider GID
+     * Uses BSL. prefix and carrier name - no hardcoded mapping
+     */
+    if (!carrierName) {
+        console.log('No carrier name provided, using default BSL.RYGB');
+        return 'BSL.RYGB'; // Default fallback
+    }
+    
+    // Clean carrier name - remove extra spaces, special characters, and convert to uppercase
+    let cleanName = carrierName.trim().toUpperCase();
+    
+    // Remove common words and punctuation
+    cleanName = cleanName
+        .replace(/\(.*?\)/g, '') // Remove parentheses and content
+        .replace(/[.,&-]/g, '') // Remove punctuation
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/^_+|_+$/g, ''); // Remove leading/trailing underscores
+    
+    // Handle common carrier name variations
+    if (cleanName.includes('OLD_DOMINION') || cleanName === 'ODFL') {
+        cleanName = 'ODFL';
+    }
+    
+    const servprovGid = `BSL.${cleanName}`;
+    console.log(`Mapping carrier "${carrierName}" to servprov_gid: "${servprovGid}"`);
+    
+    return servprovGid;
+}
+
+async function callRiqAPI(endpoint, payload) {
+    /**
+     * Make API call to RIQ endpoint
+     */
+    try {
+        console.log(`Making RIQ API call to ${endpoint}:`, payload);
+        
+        const response = await fetch(`${RIQ_API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        console.log(`RIQ API response status: ${response.status}`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`RIQ API error response:`, errorText);
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log(`RIQ API response:`, result);
+        
+        if (!result.success) {
+            throw new Error(result.error || 'API request failed');
+        }
+        
+        // Check if the API returned a 500 status in the data (carrier not available)
+        if (result.data && result.data.status === 500) {
+            throw new Error('The rate for the best carrier is not available currently');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('RIQ API call failed:', error);
+        throw error;
+    }
+}
+
+async function getCheapestCarrierRate(sourceLocation, destLocation, items) {
+    /**
+     * Get cheapest carrier rate using /cheap-rate-quote endpoint
+     */
+    const payload = {
+        source_location: sourceLocation,
+        destination_location: destLocation,
+        items: items,
+        request_type: 'AllOptions',
+        perspective: 'B',
+        max_primary_options: '99',
+        primary_option_definition: 'BY_ITINERARY'
+    };
+    
+    return await callRiqAPI('/cheap-rate-quote', payload);
+}
+
+async function getBestCarrierRate(sourceLocation, destLocation, items, carrierName) {
+    /**
+     * Get rate for specific carrier using /rate-quote endpoint
+     */
+    const servprovGid = mapCarrierToServprovGid(carrierName);
+    
+    const payload = {
+        source_location: sourceLocation,
+        destination_location: destLocation,
+        items: items,
+        servprov_gid: servprovGid,
+        request_type: 'AllOptions',
+        perspective: 'B',
+        max_primary_options: '99',
+        primary_option_definition: 'BY_ITINERARY'
+    };
+    
+    return await callRiqAPI('/rate-quote', payload);
+}
+
+async function executeDualRateQuery(laneInfo) {
+    /**
+     * Execute both cheapest and best carrier rate queries
+     */
+    // Parse source and destination
+    const sourceLocation = parseLocationFromCity(laneInfo.sourceCity);
+    const destLocation = parseLocationFromCity(laneInfo.destinationCity);
+    
+    if (!sourceLocation || !destLocation) {
+        throw new Error('Invalid source or destination location data');
+    }
+    
+    console.log('Parsed locations:', { sourceLocation, destLocation });
+    
+    // Parse weight and volume
+    const { weight_value, weight_unit, volume_value, volume_unit } = parseWeightAndVolume(
+        laneInfo.weight, 
+        laneInfo.volume
+    );
+    
+    console.log('Parsed weight/volume:', { weight_value, weight_unit, volume_value, volume_unit });
+    
+    // Build items array
+    const items = [buildItemObject(weight_value, weight_unit, volume_value, volume_unit)];
+    
+    console.log('Built items array:', items);
+    
+    const results = {
+        cheapest: null,
+        bestCarrier: null,
+        error: null
+    };
+    
+    try {
+        // Execute both API calls in parallel
+        const promises = [
+            getCheapestCarrierRate(sourceLocation, destLocation, items)
+        ];
+        
+        if (laneInfo.bestCarrier) {
+            console.log(`Adding best carrier query for: ${laneInfo.bestCarrier}`);
+            promises.push(getBestCarrierRate(sourceLocation, destLocation, items, laneInfo.bestCarrier));
+        } else {
+            console.log('No best carrier specified, skipping best carrier query');
+            promises.push(Promise.resolve(null));
+        }
+        
+        const [cheapestResult, bestCarrierResult] = await Promise.allSettled(promises);
+        
+        if (cheapestResult.status === 'fulfilled') {
+            results.cheapest = cheapestResult.value;
+            console.log('Cheapest rate query succeeded');
+        } else {
+            console.error('Cheapest rate query failed:', cheapestResult.reason);
+            results.error = `Cheapest rate query failed: ${cheapestResult.reason.message}`;
+        }
+        
+        if (bestCarrierResult.status === 'fulfilled' && bestCarrierResult.value) {
+            results.bestCarrier = bestCarrierResult.value;
+            console.log('Best carrier rate query succeeded');
+        } else if (laneInfo.bestCarrier) {
+            console.error('Best carrier rate query failed:', bestCarrierResult.reason);
+            if (!results.error) {
+                results.error = `Best carrier rate query failed: ${bestCarrierResult.reason.message}`;
+            } else {
+                results.error += ` | Best carrier rate query failed: ${bestCarrierResult.reason.message}`;
+            }
+        }
+        
+        return results;
+    } catch (error) {
+        console.error('Dual rate query failed:', error);
+        results.error = error.message;
+        return results;
+    }
+}
+
+function displayRateResults(results, laneInfo) {
+    /**
+     * Display rate results in the RIQ card
+     */
+    const statusElement = document.getElementById('rate-inquiry-status');
+    const contentElement = document.getElementById('rate-inquiry-content');
+    
+    if (results.error && !results.cheapest && !results.bestCarrier) {
+        // Complete failure
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+        statusElement.textContent = 'Error';
+        
+        contentElement.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h5 class="font-medium text-red-800 mb-2 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Rate Query Failed
+                </h5>
+                <p class="text-sm text-red-700">${results.error}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Update status to success
+    statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+    statusElement.textContent = 'Rates Retrieved';
+    
+    let content = '<div class="space-y-4">';
+    
+    // Display cheapest rate
+    if (results.cheapest?.data?.rateAndRouteResponse?.length > 0) {
+        const rateOptions = results.cheapest.data.rateAndRouteResponse;
+        
+        // Find the cheapest rate based on totalActualCost
+        const cheapestRate = rateOptions.reduce((min, rate) => {
+            const currentCost = parseFloat(rate.totalActualCost?.value || rate.primaryTotalCost?.value || 0);
+            const minCost = parseFloat(min.totalActualCost?.value || min.primaryTotalCost?.value || Infinity);
+            return currentCost < minCost ? rate : min;
+        });
+        
+        // Extract key information
+        const totalCost = cheapestRate.totalActualCost?.value || cheapestRate.primaryTotalCost?.value || 'N/A';
+        const currency = cheapestRate.totalActualCost?.currency || cheapestRate.primaryTotalCost?.currency || 'USD';
+        const costPerUnit = cheapestRate.costPerUnit?.value || 'N/A';
+        const transportMode = cheapestRate.transportMode?.transportModeGid || 'N/A';
+        const serviceProviderGid = cheapestRate.serviceProvider?.servprovGid || 'N/A';
+        const cleanCarrierName = cleanServiceProviderGid(serviceProviderGid);
+        const transitTime = cheapestRate.transitTime?.amount || 'N/A';
+        const transitTimeType = cheapestRate.transitTime?.type || '';
+        const shipmentDistance = cheapestRate.toShipments?.[0]?.distance ? 
+            `${cheapestRate.toShipments[0].distance.amount} ${cheapestRate.toShipments[0].distance.type}` : 'N/A';
+        
+        // Calculate average cost per distance unit
+        let averageCost = 'N/A';
+        if (cheapestRate.toShipments?.[0]?.distance && totalCost !== 'N/A') {
+            const distance = cheapestRate.toShipments[0].distance.amount;
+            const distanceUnit = cheapestRate.toShipments[0].distance.type;
+            const cost = parseFloat(totalCost);
+            if (distance > 0) {
+                averageCost = `${currency} ${(cost / distance).toFixed(2)}/${distanceUnit}`;
+            }
+        }
+        
+        // Format lane name with capitalized locations
+        const formattedLaneName = laneInfo.laneName ? 
+            laneInfo.laneName.split(' to ').map(city => capitalizeLocation(city)).join(' to ') : 'N/A';
+        
+        content += `
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h5 class="font-medium text-green-800 mb-3 flex items-center">
+                    <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
+                    Cheapest Carrier Option
+                </h5>
+                ${formattedLaneName !== 'N/A' ? `<p class="text-sm text-green-700 mb-3 font-medium">${formattedLaneName}</p>` : ''}
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-neutral-600">Total Cost:</span> <span class="font-medium text-green-700">${currency} ${parseFloat(totalCost).toLocaleString()}</span></div>
+                    <div><span class="text-neutral-600">Average Cost:</span> <span class="font-medium">${averageCost}</span></div>
+                    <div><span class="text-neutral-600">Cost Per Unit:</span> <span class="font-medium">${costPerUnit}</span></div>
+                    <div><span class="text-neutral-600">Transport Mode:</span> <span class="font-medium">${transportMode}</span></div>
+                    <div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${cleanCarrierName}</span></div>
+                    <div><span class="text-neutral-600">Transit Time:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
+                    <div><span class="text-neutral-600">Distance:</span> <span class="font-medium">${shipmentDistance}</span></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Display best carrier rate (if available)
+    if (results.bestCarrier?.data?.rateAndRouteResponse?.length > 0 && laneInfo.bestCarrier) {
+        const bestCarrierRates = results.bestCarrier.data.rateAndRouteResponse;
+        const bestRate = bestCarrierRates[0]; // Take first rate from best carrier
+        
+        // Extract key information
+        const totalCost = bestRate.totalActualCost?.value || bestRate.primaryTotalCost?.value || 'N/A';
+        const currency = bestRate.totalActualCost?.currency || bestRate.primaryTotalCost?.currency || 'USD';
+        const costPerUnit = bestRate.costPerUnit?.value || 'N/A';
+        const transportMode = bestRate.transportMode?.transportModeGid || 'N/A';
+        const serviceProviderGid = bestRate.serviceProvider?.servprovGid || 'N/A';
+        const cleanCarrierName = cleanServiceProviderGid(serviceProviderGid);
+        const transitTime = bestRate.transitTime?.amount || 'N/A';
+        const transitTimeType = bestRate.transitTime?.type || '';
+        const shipmentDistance = bestRate.toShipments?.[0]?.distance ? 
+            `${bestRate.toShipments[0].distance.amount} ${bestRate.toShipments[0].distance.type}` : 'N/A';
+        
+        // Calculate average cost per distance unit
+        let averageCost = 'N/A';
+        if (bestRate.toShipments?.[0]?.distance && totalCost !== 'N/A') {
+            const distance = bestRate.toShipments[0].distance.amount;
+            const distanceUnit = bestRate.toShipments[0].distance.type;
+            const cost = parseFloat(totalCost);
+            if (distance > 0) {
+                averageCost = `${currency} ${(cost / distance).toFixed(2)}/${distanceUnit}`;
+            }
+        }
+        
+        // Format lane name with capitalized locations
+        const formattedLaneName = laneInfo.laneName ? 
+            laneInfo.laneName.split(' to ').map(city => capitalizeLocation(city)).join(' to ') : 'N/A';
+        
+        content += `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h5 class="font-medium text-blue-800 mb-3 flex items-center">
+                    <i class="fas fa-star text-blue-600 mr-2"></i>
+                    Best Performing Carrier (${laneInfo.bestCarrier})
+                </h5>
+                ${formattedLaneName !== 'N/A' ? `<p class="text-sm text-blue-700 mb-3 font-medium">${formattedLaneName}</p>` : ''}
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-neutral-600">Total Cost:</span> <span class="font-medium text-blue-700">${currency} ${parseFloat(totalCost).toLocaleString()}</span></div>
+                    <div><span class="text-neutral-600">Average Cost:</span> <span class="font-medium">${averageCost}</span></div>
+                    <div><span class="text-neutral-600">Cost Per Unit:</span> <span class="font-medium">${costPerUnit}</span></div>
+                    <div><span class="text-neutral-600">Transport Mode:</span> <span class="font-medium">${transportMode}</span></div>
+                    <div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${cleanCarrierName}</span></div>
+                    <div><span class="text-neutral-600">Transit Time:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
+                    <div><span class="text-neutral-600">Distance:</span> <span class="font-medium">${shipmentDistance}</span></div>
+                </div>
+            </div>
+        `;
+        
+        // Add comparison if both rates available
+        if (results.cheapest?.data?.rateAndRouteResponse?.length > 0) {
+            const cheapestRateData = results.cheapest.data.rateAndRouteResponse.reduce((min, rate) => {
+                const currentCost = parseFloat(rate.totalActualCost?.value || rate.primaryTotalCost?.value || 0);
+                const minCost = parseFloat(min.totalActualCost?.value || min.primaryTotalCost?.value || Infinity);
+                return currentCost < minCost ? rate : min;
+            });
+            
+            const cheapestCost = parseFloat(cheapestRateData.totalActualCost?.value || cheapestRateData.primaryTotalCost?.value || 0);
+            const bestCost = parseFloat(totalCost || 0);
+            const difference = bestCost - cheapestCost;
+            const percentDiff = cheapestCost > 0 ? ((difference / cheapestCost) * 100).toFixed(1) : 0;
+            
+            content += `
+                <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                    <h5 class="font-medium text-neutral-800 mb-2 flex items-center">
+                        <i class="fas fa-balance-scale text-neutral-600 mr-2"></i>
+                        Rate Comparison
+                    </h5>
+                    <p class="text-sm text-neutral-700">
+                        ${difference >= 0 
+                            ? `Best performer costs ${currency} ${Math.abs(difference).toLocaleString()} more (+${percentDiff}%) than cheapest option` 
+                            : `Best performer costs ${currency} ${Math.abs(difference).toLocaleString()} less (-${Math.abs(percentDiff)}%) than cheapest option`
+                        }
+                    </p>
+                </div>
+            `;
+        }
+    }
+    
+    // Show any partial errors or best carrier unavailable message
+    if (results.error && (results.cheapest || results.bestCarrier)) {
+        const isCarrierUnavailable = results.error.includes('best carrier is not available currently');
+        const bgColor = isCarrierUnavailable ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200';
+        const textColor = isCarrierUnavailable ? 'text-blue-800' : 'text-yellow-800';
+        const iconColor = isCarrierUnavailable ? 'text-blue-600' : 'text-yellow-600';
+        const icon = isCarrierUnavailable ? 'fa-info-circle' : 'fa-exclamation-triangle';
+        
+        content += `
+            <div class="${bgColor} rounded-lg p-4">
+                <h5 class="font-medium ${textColor} mb-2 flex items-center">
+                    <i class="fas ${icon} ${iconColor} mr-2"></i>
+                    ${isCarrierUnavailable ? 'Best Carrier Rate Unavailable' : 'Partial Results'}
+                </h5>
+                <p class="text-sm ${textColor.replace('800', '700')}">${results.error}</p>
+            </div>
+        `;
+    }
+    
+    content += '</div>';
+    contentElement.innerHTML = content;
+}
+
 // Global functions for API button actions
-window.retrieveRateInquiry = function() {
-    // Get the date values
+window.retrieveRateInquiry = async function() {
+    // Get the date values (for future use)
     const startDate = document.getElementById('riq-ship-date-start')?.value;
     const endDate = document.getElementById('riq-ship-date-end')?.value;
     
-    // Here you would collect all the parsed parameters and make the actual RIQ API call
-    console.log('Retrieving rate inquiry with dates:', { startDate, endDate });
+    const statusElement = document.getElementById('rate-inquiry-status');
+    const contentElement = document.getElementById('rate-inquiry-content');
     
-    // Show loading state or success message
-    showNotification('Rate inquiry submitted! (Integration pending)', 'info');
-    
-    // TODO: Implement actual RIQ API integration
-    // This would typically involve:
-    // 1. Collecting all parsed parameters from the card
-    // 2. Making API call to RIQ endpoint
-    // 3. Displaying results or updating UI
+    try {
+        // Show loading state
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+        statusElement.textContent = 'Loading...';
+        
+        contentElement.innerHTML = `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+                    <p class="text-sm text-blue-700">Retrieving rate quotes from RIQ API...</p>
+                </div>
+            </div>
+        `;
+        
+        // Extract lane information from the currently displayed RIQ card
+        // We need to get the laneInfo from the last parsed response
+        // This is stored in the global scope from parseAndUpdateLaneInfo
+        if (!window.currentLaneInfo) {
+            throw new Error('No lane information available. Please ensure the chat has parsed location and carrier data.');
+        }
+        
+        const laneInfo = window.currentLaneInfo;
+        
+        // Validate required data
+        if (!laneInfo.sourceCity || !laneInfo.destinationCity) {
+            throw new Error('Missing required location data. Please ensure both origin and destination cities are specified.');
+        }
+        
+        console.log('Executing dual rate query with data:', laneInfo);
+        
+        // Execute the dual rate query
+        const results = await executeDualRateQuery(laneInfo);
+        
+        console.log('Rate query results:', results);
+        
+        // Display the results
+        displayRateResults(results, laneInfo);
+        
+    } catch (error) {
+        console.error('Rate inquiry failed:', error);
+        
+        // Show error state
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+        statusElement.textContent = 'Error';
+        
+        contentElement.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h5 class="font-medium text-red-800 mb-2 flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Rate Query Failed
+                </h5>
+                <p class="text-sm text-red-700">${error.message}</p>
+                <button onclick="retrieveRateInquiry()" class="mt-3 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
+                    Try Again
+                </button>
+            </div>
+        `;
+    }
 };
 
 window.performSpotAnalysis = function() {
@@ -1481,3 +2040,226 @@ window.performSpotAnalysis = function() {
     // 2. Making API call to Spot API endpoint
     // 3. Displaying results or updating UI
 };
+
+// Historical Data Card Functions (NEW)
+async function updateHistoricalDataCard(laneInfo, userMessage, response) {
+    const statusElement = document.getElementById('historical-data-status');
+    const contentElement = document.getElementById('historical-data-content');
+
+    if (!laneInfo || !laneInfo.sourceCity || !laneInfo.destinationCity) {
+        console.warn("HistoricalDataCard: Insufficient lane info (source/dest city) to fetch data.", laneInfo);
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+        statusElement.textContent = 'Needs Lane';
+        contentElement.innerHTML = `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-info-circle text-4xl mb-4 text-neutral-300"></i>
+                <p>Please provide a full lane (e.g., city to city) to see historical data.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+    statusElement.textContent = 'Loading...';
+    contentElement.innerHTML = `
+        <div class="text-center py-8 text-neutral-500">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-4"></div>
+            <p>Loading historical data...</p>
+        </div>
+    `;
+    
+    try {
+        const historicalData = await fetchHistoricalData(laneInfo);
+        displayHistoricalData(historicalData, contentElement, laneInfo);
+        
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800';
+        statusElement.textContent = `${historicalData.total_count} Records`;
+        
+    } catch (error) {
+        console.error('Failed to fetch or display historical data:', error);
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+        statusElement.textContent = 'Data Error';
+        contentElement.innerHTML = `
+            <div class="text-center py-8 text-red-500">
+                <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                <p>Failed to load historical data</p>
+                <p class="text-sm mt-2">${escapeHtml(error.message)}</p>
+            </div>
+        `;
+    }
+}
+
+async function fetchHistoricalData(laneInfo) {
+    let sourceLocationParsed = null;
+    if (laneInfo.sourceCity) {
+        sourceLocationParsed = parseLocationFromCity(laneInfo.sourceCity);
+    }
+
+    let destLocationParsed = null;
+    if (laneInfo.destinationCity) {
+        destLocationParsed = parseLocationFromCity(laneInfo.destinationCity);
+    }
+
+    // Fallback if parsing fails but we still have the original strings, though backend might not match well
+    const source_city = sourceLocationParsed ? sourceLocationParsed.city : laneInfo.sourceCity;
+    const source_state = sourceLocationParsed ? sourceLocationParsed.province_code : laneInfo.sourceState; // laneInfo.sourceState might be from a different parsing logic
+    const source_country = sourceLocationParsed ? sourceLocationParsed.country_code : laneInfo.sourceCountry;
+
+    const dest_city = destLocationParsed ? destLocationParsed.city : laneInfo.destinationCity;
+    const dest_state = destLocationParsed ? destLocationParsed.province_code : laneInfo.destinationState;
+    const dest_country = destLocationParsed ? destLocationParsed.country_code : laneInfo.destinationCountry;
+
+    const requestPayload = {
+        source_city: source_city,
+        source_state: source_state,
+        source_country: source_country,
+        dest_city: dest_city,
+        dest_state: dest_state,
+        dest_country: dest_country,
+        // transport_mode: laneInfo.equipmentType, // REMOVED as per user request
+        limit: 50 
+    };
+    
+    // Remove null/undefined keys from payload to send cleaner requests
+    Object.keys(requestPayload).forEach(key => {
+        if (requestPayload[key] === null || requestPayload[key] === undefined) {
+            delete requestPayload[key];
+        }
+    });
+
+    console.log("Fetching historical data with payload:", requestPayload);
+    const response = await fetch(`${API_BASE_URL}/historical-data/query`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestPayload)
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: `HTTP ${response.status}: ${response.statusText}` }));
+        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return await response.json();
+}
+
+function displayHistoricalData(data, contentElement, laneInfo) {
+    if (!data || !data.records) {
+        console.error("Invalid historical data received:", data);
+        contentElement.innerHTML = `<p class="text-red-500 text-center">Error: Invalid data received from server.</p>`;
+        return;
+    }
+
+    const { records, total_count, lane_summary, cost_statistics, query_parameters } = data;
+    const queryRoute = `${query_parameters.source_city || 'Any'} to ${query_parameters.dest_city || 'Any'}`;
+
+    let content = `
+        <div class="space-y-4">
+            <!-- Lane Summary -->
+            <div class="bg-purple-50 rounded-lg p-4">
+                <h4 class="font-medium text-purple-900 mb-3 flex items-center">
+                    <i class="fas fa-route text-purple-600 mr-2"></i>
+                    Lane Summary: ${escapeHtml(lane_summary.route || queryRoute)}
+                </h4>
+                <div class="grid grid-cols-2 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div><span class="text-neutral-600">Total Matches:</span> <span class="font-medium">${total_count}</span></div>
+                    <div><span class="text-neutral-600">Avg Cost/Mile:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_mile === 'number' ? '$'+cost_statistics.avg_cost_per_mile.toFixed(2) : 'N/A'}</span></div>
+                    <div><span class="text-neutral-600">Common Mode:</span> <span class="font-medium">${escapeHtml(lane_summary.most_common_mode || 'N/A')}</span></div>
+                    <div><span class="text-neutral-600">Avg Cost/Lb:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_lb === 'number' ? '$'+cost_statistics.avg_cost_per_lb.toFixed(2) : 'N/A'}</span></div>
+                    <div><span class="text-neutral-600">Avg Cost/CUFT:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_cuft === 'number' ? '$'+cost_statistics.avg_cost_per_cuft.toFixed(2) : 'N/A'}</span></div>
+                    <div><span class="text-neutral-600">Total Shpts (Data):</span> <span class="font-medium">${lane_summary.total_shipments_in_data || 'N/A'}</span></div>
+                </div>
+            </div>`;
+
+    if (records.length > 0) {
+        content += `
+            <!-- Historical Records Table -->
+            <div class="bg-neutral-50 rounded-lg p-4">
+                <h4 class="font-medium text-neutral-900 mb-3">Recent Historical Records (up to ${records.length})</h4>
+                <div class="overflow-x-auto text-xs">
+                    <table class="min-w-full">
+                        <thead class="bg-neutral-100">
+                            <tr class="border-b border-neutral-200">
+                                <th class="text-left py-2 px-3 font-semibold">Lane</th>
+                                <th class="text-left py-2 px-3 font-semibold">Mode</th>
+                                <th class="text-right py-2 px-3 font-semibold">Cost/Mile</th>
+                                <th class="text-right py-2 px-3 font-semibold">Cost/Lb</th>
+                                <th class="text-right py-2 px-3 font-semibold">Cost/CUFT</th>
+                                <th class="text-right py-2 px-3 font-semibold">Shp Count</th>
+                                <th class="text-left py-2 px-3 font-semibold">Preference</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-100">
+        `;
+        
+        records.forEach(record => {
+            const preferenceColor = record.MODE_PREFERENCE === 'Preferred Mode' ? 'text-green-600' 
+                                : record.MODE_PREFERENCE === 'Least Preferred Mode' ? 'text-red-600' 
+                                : 'text-neutral-600';
+            content += `
+                <tr>
+                    <td class="py-2 px-3 whitespace-nowrap">${escapeHtml(record.source_city)} <span class="text-neutral-400">(${escapeHtml(record.source_state)})</span> → ${escapeHtml(record.dest_city)} <span class="text-neutral-400">(${escapeHtml(record.dest_state)})</span></td>
+                    <td class="py-2 px-3">${escapeHtml(record.TMODE)}</td>
+                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_MILE === 'number' ? '$'+record.COST_PER_MILE.toFixed(2) : 'N/A'}</td>
+                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_LB === 'number' ? '$'+record.COST_PER_LB.toFixed(2) : 'N/A'}</td>
+                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_CUFT === 'number' ? '$'+record.COST_PER_CUFT.toFixed(2) : 'N/A'}</td>
+                    <td class="py-2 px-3 text-right">${typeof record.SHP_COUNT === 'number' ? record.SHP_COUNT : 'N/A'}</td>
+                    <td class="py-2 px-3 ${preferenceColor} font-medium">${escapeHtml(record.MODE_PREFERENCE || 'N/A')}</td>
+                </tr>
+            `;
+        });
+        
+        content += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } else {
+        content += `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-search-minus text-4xl mb-4 text-neutral-300"></i>
+                <p>No specific historical records found matching your exact criteria.</p>
+                <p class="text-sm mt-1">Total matches for the broader lane (if applicable): ${total_count}</p>
+            </div>
+        `;
+    }
+    
+    content += `
+            <!-- View All Data Button (Placeholder) -->
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white mt-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h5 class="font-medium mb-1">Detailed Historical Analysis</h5>
+                        <p class="text-purple-100 text-sm">View complete historical data and trends (Feature Coming Soon)</p>
+                    </div>
+                    <button onclick="viewDetailedHistoricalData()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center">
+                        <i class="fas fa-chart-area mr-2"></i>
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    contentElement.innerHTML = content;
+}
+
+function viewDetailedHistoricalData() {
+    // Future implementation for detailed view/modal or navigating to a new page
+    showNotification('Detailed historical analysis and interactive charts are planned for a future update!', 'info', 5000);
+}
+
+// Make sure escapeHtml function is available, if not, define a simple one:
+if (typeof escapeHtml !== 'function') {
+    function escapeHtml(unsafe) {
+        if (unsafe === null || typeof unsafe === 'undefined') return '';
+        return String(unsafe)
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+}

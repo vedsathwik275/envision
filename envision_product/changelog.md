@@ -1,5 +1,38 @@
 # Changelog
 
+## [Unreleased] - 2025-06-03
+### Added
+- **Historical Data Card Feature**: Complete implementation of Historical Lane Analysis functionality
+  - New backend service (`HistoricalDataService`) for querying transportation historical data from CSV
+  - Historical data API endpoints (`/historical-data/query` and `/historical-data/health`)
+  - Pydantic models for historical data requests and responses (`HistoricalDataRequest`, `HistoricalRecord`, `HistoricalDataResponse`)
+  - Frontend Historical Data Card with real-time data fetching and display
+  - Comprehensive data table showing lane details, transport modes, costs, and shipment counts
+  - Lane summary statistics with average costs and common transport modes
+  - Integration with existing lane information parsing from chat responses
+  - CSV data processing with normalization and filtering capabilities
+  - Support for querying by source/destination cities, states, and countries
+
+### Changed
+- **Frontend Layout Restructuring**: Reorganized lane information cards layout
+  - Moved Historical Lane Analysis card to full-width position below RIQ and SPOT cards
+  - Changed from 3-column grid to 2-column top row + full-width bottom row layout
+  - Improved visual hierarchy and data table display space
+- **Lane Information Parsing**: Enhanced chat response parsing to support historical data card updates
+  - Updated `parseAndUpdateLaneInfo()` function to trigger historical data card updates
+  - Fixed field name mapping to handle Pydantic model serialization with aliases
+  - Improved location parsing with `parseLocationFromCity()` function integration
+
+### Fixed
+- **Historical Data Display Issues**: Resolved field mapping problems between backend and frontend
+  - Fixed JavaScript field access to use correct API response field names (TMODE, COST_PER_LB, etc.)
+  - Corrected Pydantic model alias handling for proper data serialization
+  - Fixed empty table display issue where all values showed as "N/A"
+- **Data Processing**: Improved CSV data loading and error handling
+  - Enhanced file path resolution for cross-platform compatibility
+  - Added robust data validation and type conversion
+  - Implemented proper error handling for missing or invalid data records
+
 ## [Unreleased] - 2025-06-02
 ### Added
 - **Enhanced Tender Performance Model Geographic Information**: Major improvements to tender performance prediction model
@@ -820,5 +853,4 @@
 - Created `order_volume_model.py`
 
 
-
-Timestamp: 2025-06-02 09:12:00
+Timestamp: 2025-06-03 10:06:00

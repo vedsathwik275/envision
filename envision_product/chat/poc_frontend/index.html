@@ -336,50 +336,77 @@
                     </div>
 
                     <!-- Lane Information Cards Section -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Rate Inquiry Card -->
-                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
-                            <div class="p-6 border-b border-neutral-100">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-calculator text-blue-500 mr-3 text-xl"></i>
-                                        <h3 class="text-lg font-semibold text-neutral-900">Rate Inquiry Details</h3>
+                    <div class="space-y-6 mt-8">
+                        <!-- Top Row: RIQ and SPOT Cards -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Rate Inquiry Card -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
+                                <div class="p-6 border-b border-neutral-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calculator text-blue-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Rate Inquiry Details</h3>
+                                        </div>
+                                        <span id="rate-inquiry-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                            No data
+                                        </span>
                                     </div>
-                                    <span id="rate-inquiry-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                        No data
-                                    </span>
+                                </div>
+                                <div class="p-6">
+                                    <div id="rate-inquiry-content" class="space-y-4">
+                                        <div class="text-center py-8 text-neutral-500">
+                                            <i class="fas fa-search text-4xl mb-4 text-neutral-300"></i>
+                                            <p>Ask about lane rates to see parsed information here</p>
+                                            <p class="text-sm mt-2">Example: "What's the best rate from Los Angeles to Chicago?"</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="p-6">
-                                <div id="rate-inquiry-content" class="space-y-4">
-                                    <div class="text-center py-8 text-neutral-500">
-                                        <i class="fas fa-search text-4xl mb-4 text-neutral-300"></i>
-                                        <p>Ask about lane rates to see parsed information here</p>
-                                        <p class="text-sm mt-2">Example: "What's the best rate from Los Angeles to Chicago?"</p>
+
+                            <!-- Spot API Card -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
+                                <div class="p-6 border-b border-neutral-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
+                                        </div>
+                                        <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                            No data
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="p-6">
+                                    <div id="spot-api-content" class="space-y-4">
+                                        <div class="text-center py-8 text-neutral-500">
+                                            <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
+                                            <p>Ask about carrier performance or spot rates to see analysis here</p>
+                                            <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Spot API Card -->
+                        <!-- Bottom Row: Historical Lane Analysis Card (Full Width) -->
                         <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
                             <div class="p-6 border-b border-neutral-100">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
-                                        <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
+                                        <i class="fas fa-history text-purple-500 mr-3 text-xl"></i>
+                                        <h3 class="text-lg font-semibold text-neutral-900">Historical Lane Analysis</h3>
                                     </div>
-                                    <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                    <span id="historical-data-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                         No data
                                     </span>
                                 </div>
                             </div>
                             <div class="p-6">
-                                <div id="spot-api-content" class="space-y-4">
+                                <div id="historical-data-content" class="space-y-4">
                                     <div class="text-center py-8 text-neutral-500">
-                                        <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
-                                        <p>Ask about carrier performance or spot rates to see analysis here</p>
-                                        <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                                        <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
+                                        <p>Ask about transportation routes to see historical data</p>
+                                        <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
                                     </div>
                                 </div>
                             </div>
