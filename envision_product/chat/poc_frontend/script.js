@@ -601,19 +601,24 @@ function loadChatView() {
 
 function handleKBSelection() {
     const selectedKBId = chatKBSelect.value;
-    const selectedKBInfo = document.getElementById('selected-kb-info');
+    const kbStatusElement = document.getElementById('kb-selection-status');
     
     if (selectedKBId) {
         const kb = knowledgeBases.find(k => k.id === selectedKBId);
         if (kb) {
-            // Update the KB info in the integrated panel
-            document.getElementById('selected-kb-name').textContent = kb.name;
-            document.getElementById('selected-kb-description').textContent = kb.description || 'No description';
-            document.getElementById('selected-kb-status').textContent = kb.status;
-            document.getElementById('selected-kb-status').className = `inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(kb.status)}`;
+            // Update the inline status indicator next to KB selector
+            const statusDot = kbStatusElement.querySelector('.w-2');
+            const statusText = kbStatusElement.querySelector('span');
             
-            // Show the KB info panel
-            selectedKBInfo.classList.remove('hidden');
+            if (kb.status === 'ready') {
+                statusDot.className = 'w-2 h-2 bg-green-500 rounded-full mr-2';
+                statusText.textContent = 'Ready';
+                statusText.className = 'text-sm text-green-600';
+            } else {
+                statusDot.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
+                statusText.textContent = kb.status;
+                statusText.className = 'text-sm text-yellow-600';
+            }
             
             // Update the dropdown to show selected KB name (without the dropdown arrow text)
             const defaultKBId = getDefaultKB();
@@ -636,8 +641,14 @@ function handleKBSelection() {
             }
         }
     } else {
-        // Hide the KB info panel when no KB is selected
-        selectedKBInfo.classList.add('hidden');
+        // Reset status indicator when no KB is selected
+        const statusDot = kbStatusElement.querySelector('.w-2');
+        const statusText = kbStatusElement.querySelector('span');
+        
+        statusDot.className = 'w-2 h-2 bg-gray-400 rounded-full mr-2';
+        statusText.textContent = 'Ready';
+        statusText.className = 'text-sm text-neutral-500';
+        
         currentKBId = null;
         disableChat('Please select a knowledge base');
         updateChatConnectionStatus(false);
@@ -1863,9 +1874,9 @@ function displayRateResults(results, laneInfo) {
         return;
     }
     
-    // Update status to success
+    // Keep status as "Ready for API Call" - don't duplicate status information
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
-    statusElement.textContent = 'Rates Retrieved';
+    statusElement.textContent = 'Ready for API Call';
     
     let content = '<div class="space-y-3">';
     
@@ -2041,8 +2052,33 @@ window.handleGetRatesClick = async function() {
         
         // Error state
         getRatesBtn.innerHTML = 'Retry';
-        getRatesBtn.className = 'px-3 py-1 bg-red-600 text-white text-sm rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors';
+        getRatesBtn.className = 'px-3 py-1 bg-red-600 text-white text-sm rounded-lg font-medium hover:bg-red-700 transition-colors';
         getRatesBtn.disabled = false;
+        
+        // Update status
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
+        statusElement.textContent = 'Error';
+    }
+};
+
+// Function to toggle spot rate matrix visibility
+window.toggleSpotRateMatrix = function() {
+    const matrixTable = document.getElementById('spot-rate-matrix-table');
+    const toggleIcon = document.getElementById('matrix-toggle-icon');
+    const toggleText = document.getElementById('matrix-toggle-text');
+    
+    if (!matrixTable || !toggleIcon || !toggleText) return;
+    
+    if (matrixTable.classList.contains('hidden')) {
+        // Show matrix
+        matrixTable.classList.remove('hidden');
+        toggleIcon.className = 'fas fa-chevron-up mr-2';
+        toggleText.textContent = 'Hide Matrix';
+    } else {
+        // Hide matrix
+        matrixTable.classList.add('hidden');
+        toggleIcon.className = 'fas fa-chevron-down mr-2';
+        toggleText.textContent = 'Show Matrix';
     }
 };
 
@@ -2254,13 +2290,8 @@ function displaySpotRateMatrix(data) {
     `;
 
     if (spot_costs.length > 0) {
-        // Get all unique dates from all carriers to ensure consistent columns
-        const allDates = [...new Set(spot_costs.flatMap(carrier => 
-            carrier.cost_details.map(detail => detail.ship_date)
-        ))].sort();
-
-        // Collect all rates to find min and max for highlighting
-        const allRates = spot_costs.flatMap(carrier => 
+        // Collect all rates for statistics
+        const allRatesWithDetails = spot_costs.flatMap(carrier => 
             carrier.cost_details.map(detail => ({
                 cost: parseFloat(detail.total_spot_cost),
                 carrier: carrier.carrier,
@@ -2269,18 +2300,97 @@ function displaySpotRateMatrix(data) {
             }))
         );
         
-        const minRate = Math.min(...allRates.map(r => r.cost));
-        const maxRate = Math.max(...allRates.map(r => r.cost));
+        const minRateData = allRatesWithDetails.reduce((min, rate) => rate.cost < min.cost ? rate : min);
+        const maxRateData = allRatesWithDetails.reduce((max, rate) => rate.cost > max.cost ? rate : max);
+        
+        // Use the best carrier from chat parsing (laneInfo.bestCarrier) instead of calculating independently
+        let bestCarrierBestRate = null;
+        const laneInfo = window.currentLaneInfo;
+        
+        if (laneInfo && laneInfo.bestCarrier) {
+            // Find the best carrier from chat parsing in the spot rate data
+            const bestCarrierFromChat = laneInfo.bestCarrier;
+            const bestCarrierRates = allRatesWithDetails.filter(rate => 
+                rate.carrier.toLowerCase().includes(bestCarrierFromChat.toLowerCase()) ||
+                bestCarrierFromChat.toLowerCase().includes(rate.carrier.toLowerCase())
+            );
+            
+            if (bestCarrierRates.length > 0) {
+                bestCarrierBestRate = bestCarrierRates.reduce((min, rate) => rate.cost < min.cost ? rate : min);
+            }
+        }
 
+        // Rate Statistics Section (moved here, after lane summary, before matrix)
         content += `
-            <!-- Rate Matrix -->
+            <!-- Rate Statistics -->
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                    Rate Statistics
+                </h4>
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                    <div class="text-center">
+                        <div class="text-neutral-600">Lowest Rate</div>
+                        <div class="font-medium text-lg text-green-600">$${minRateData.cost.toFixed(2)}</div>
+                        <div class="text-xs text-neutral-500">${minRateData.carrier} - ${minRateData.date}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-neutral-600">Best Carrier Rate</div>`;
+        
+        if (bestCarrierBestRate) {
+            content += `
+                        <div class="font-medium text-lg text-blue-600">$${bestCarrierBestRate.cost.toFixed(2)}</div>
+                        <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier} - ${bestCarrierBestRate.date}</div>`;
+        } else if (laneInfo && laneInfo.bestCarrier) {
+            content += `
+                        <div class="font-medium text-lg text-gray-500">Not Available</div>
+                        <div class="text-xs text-neutral-500">${laneInfo.bestCarrier} - Not in spot data</div>`;
+        } else {
+            content += `
+                        <div class="font-medium text-lg text-gray-500">Not Identified</div>
+                        <div class="text-xs text-neutral-500">No best carrier from chat</div>`;
+        }
+        
+        content += `
+                    </div>
+                    <div class="text-center">
+                        <div class="text-neutral-600">Highest Rate</div>
+                        <div class="font-medium text-lg text-red-600">$${maxRateData.cost.toFixed(2)}</div>
+                        <div class="text-xs text-neutral-500">${maxRateData.carrier} - ${maxRateData.date}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Get all unique dates from all carriers to ensure consistent columns
+        const allDates = [...new Set(spot_costs.flatMap(carrier => 
+            carrier.cost_details.map(detail => detail.ship_date)
+        ))].sort();
+
+        const minRate = Math.min(...allRatesWithDetails.map(r => r.cost));
+        const maxRate = Math.max(...allRatesWithDetails.map(r => r.cost));
+
+        // Collapsible 7-Day Rate Matrix
+        content += `
+            <!-- Collapsible Rate Matrix -->
             <div class="bg-neutral-50 rounded-lg p-4">
-                <h4 class="font-medium text-neutral-900 mb-3">7-Day Spot Rate Matrix</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm border border-neutral-200 rounded-lg">
-                        <thead class="bg-neutral-100">
-                            <tr>
-                                <th class="text-left py-3 px-4 font-semibold border-b border-neutral-200 sticky left-0 bg-neutral-100 z-10">Carrier / Transport Mode</th>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-medium text-neutral-900">7-Day Spot Rate Matrix</h4>
+                    <button 
+                        id="toggle-matrix-btn" 
+                        onclick="toggleSpotRateMatrix()" 
+                        class="flex items-center px-3 py-1 text-sm text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded-lg hover:bg-white transition-colors"
+                    >
+                        <i class="fas fa-chevron-down mr-2" id="matrix-toggle-icon"></i>
+                        <span id="matrix-toggle-text">Show Matrix</span>
+                    </button>
+                </div>
+                <div id="spot-rate-matrix-table" class="hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm border border-neutral-200 rounded-lg">
+                            <thead class="bg-neutral-100">
+                                <tr>
+                                    <th class="text-left py-3 px-4 font-semibold border-b border-neutral-200 sticky left-0 bg-neutral-100 z-10">Carrier / Transport Mode</th>
         `;
 
         // Add date headers
@@ -2291,9 +2401,9 @@ function displaySpotRateMatrix(data) {
         });
 
         content += `
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-neutral-100">
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-neutral-100">
         `;
 
         // Add carrier rows
@@ -2358,51 +2468,22 @@ function displaySpotRateMatrix(data) {
         });
 
         content += `
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3 text-xs text-neutral-600 flex items-center space-x-4">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-green-50 border border-green-200 rounded mr-2"></div>
-                        <span>Base date</span>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-green-100 border-2 border-green-300 rounded mr-2"></div>
-                        <span>Lowest rate ($${minRate.toFixed(2)})</span>
-                    </div>
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 bg-red-100 border-2 border-red-300 rounded mr-2"></div>
-                        <span>Highest rate ($${maxRate.toFixed(2)})</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Add summary statistics
-        const allRatesValues = spot_costs.flatMap(carrier => 
-            carrier.cost_details.map(detail => parseFloat(detail.total_spot_cost))
-        );
-        const avgRate = allRatesValues.reduce((sum, rate) => sum + rate, 0) / allRatesValues.length;
-
-        content += `
-            <!-- Summary Statistics -->
-            <div class="bg-blue-50 rounded-lg p-4">
-                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
-                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
-                    Rate Statistics
-                </h4>
-                <div class="grid grid-cols-3 gap-3 text-sm">
-                    <div class="text-center">
-                        <div class="text-neutral-600">Average Rate</div>
-                        <div class="font-medium text-lg">$${avgRate.toFixed(2)}</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-neutral-600">Lowest Rate</div>
-                        <div class="font-medium text-lg text-green-600">$${minRate.toFixed(2)}</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-neutral-600">Highest Rate</div>
-                        <div class="font-medium text-lg text-red-600">$${maxRate.toFixed(2)}</div>
+                    <div class="mt-3 text-xs text-neutral-600 flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-50 border border-green-200 rounded mr-2"></div>
+                            <span>Base date</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-100 border-2 border-green-300 rounded mr-2"></div>
+                            <span>Lowest rate ($${minRate.toFixed(2)})</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-100 border-2 border-red-300 rounded mr-2"></div>
+                            <span>Highest rate ($${maxRate.toFixed(2)})</span>
+                        </div>
                     </div>
                 </div>
             </div>
