@@ -2,6 +2,7 @@
 const API_BASE_URL = 'http://localhost:8004/api/v1';
 const DATA_TOOLS_API_BASE_URL = 'http://localhost:8006'; // Consolidated Data Tools API (formerly RIQ API)
 const RIQ_API_BASE_URL = 'http://localhost:8006'; // Keep for backward compatibility with existing RIQ rate quote calls
+const SERVICE_PROVIDER = 'BSL'; // Service provider prefix for order release GIDs
 let currentView = 'dashboard';
 let knowledgeBases = [];
 let currentKBId = null;
@@ -572,27 +573,12 @@ window.startChatWithKB = function(kbId) {
 };
 
 window.handleDefaultKBChange = function(kbId, checkbox) {
-    // Uncheck all other default checkboxes
-    const allDefaultCheckboxes = document.querySelectorAll('.default-kb-checkbox');
-    allDefaultCheckboxes.forEach(cb => {
-        if (cb !== checkbox) {
-            cb.checked = false;
-        }
-    });
-    
     if (checkbox.checked) {
         setDefaultKB(kbId);
-        showNotification('Knowledge base set as default', 'success');
     } else {
         clearDefaultKB();
-        showNotification('Default knowledge base removed', 'info');
     }
-    
-    // Update chat dropdown if we're on the chat page
-    if (currentView === 'chat') {
-        populateKBSelects();
-    }
-};
+}
 
 // Chat Functions
 function loadChatView() {
@@ -957,43 +943,64 @@ function clearLaneInfoCards() {
     }
     
     rateInquiryContent.innerHTML = `
-        <div class="text-center py-6 text-neutral-500">
-            <i class="fas fa-search text-3xl mb-3 text-neutral-300"></i>
-            <p class="text-sm">Ask about lane rates to see parsed information here</p>
-            <p class="text-xs mt-2">Example: "What's the best rate from Los Angeles to Chicago?"</p>
-        </div>
-    `;
-    
-    // Clear Spot API Card
-    const spotAPIStatus = document.getElementById('spot-api-status');
-    const spotAPIContent = document.getElementById('spot-api-content');
-    
-    spotAPIStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
-    spotAPIStatus.textContent = 'No data';
-    
-    spotAPIContent.innerHTML = `
         <div class="text-center py-8 text-neutral-500">
-            <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
-            <p>Ask about carrier performance or spot rates to see analysis here</p>
-            <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+            <i class="fas fa-search text-4xl mb-4 text-neutral-300"></i>
+            <p class="text-sm mb-2">No Rate Analysis Available</p>
+            <p class="text-xs text-neutral-400">Ask about shipping rates between two cities to see rate analysis</p>
         </div>
     `;
+
+    // Clear Spot API Analysis Card
+    const spotAnalysisStatus = document.getElementById('spot-analysis-status');
+    const spotAnalysisContent = document.getElementById('spot-analysis-content');
     
-    // Clear Historical Data Card (NEW)
-    const historicalDataStatus = document.getElementById('historical-data-status');
-    const historicalDataContent = document.getElementById('historical-data-content');
+    spotAnalysisStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+    spotAnalysisStatus.textContent = 'No data';
     
-    if (historicalDataStatus) {
-        historicalDataStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
-        historicalDataStatus.textContent = 'No data';
+    spotAnalysisContent.innerHTML = `
+        <div class="text-center py-8 text-neutral-500">
+            <i class="fas fa-chart-line text-4xl mb-4 text-neutral-300"></i>
+            <p class="text-sm mb-2">No Spot Rate Data</p>
+            <p class="text-xs text-neutral-400">Ask about lane performance or spot rates to see market analysis</p>
+        </div>
+    `;
+
+    // Clear Historical Data Card
+    const historicalStatus = document.getElementById('historical-data-status');
+    const historicalContent = document.getElementById('historical-data-content');
+    
+    if (historicalStatus && historicalContent) {
+        historicalStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+        historicalStatus.textContent = 'No data';
+        
+        historicalContent.innerHTML = `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-history text-4xl mb-4 text-neutral-300"></i>
+                <p class="text-sm mb-2">No Historical Data</p>
+                <p class="text-xs text-neutral-400">Ask about historical transportation data to see trends</p>
+            </div>
+        `;
     }
     
-    if (historicalDataContent) {
-        historicalDataContent.innerHTML = `
-            <div class="text-center py-6 text-neutral-500">
-                <i class="fas fa-database text-3xl mb-3 text-neutral-300"></i>
-                <p class="text-sm">Ask about transportation routes to see historical data</p>
-                <p class="text-xs mt-2">Example: "Show me rates from Chicago to Miami"</p>
+    // Clear Order Release Card
+    const orderReleaseStatus = document.getElementById('order-release-status');
+    const orderReleaseContent = document.getElementById('order-release-content');
+    const getOrdersBtn = document.getElementById('get-orders-btn');
+    
+    if (orderReleaseStatus && orderReleaseContent) {
+        orderReleaseStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+        orderReleaseStatus.textContent = 'No data';
+        
+        // Hide the Get Orders button if it exists
+        if (getOrdersBtn) {
+            getOrdersBtn.classList.add('hidden');
+        }
+        
+        orderReleaseContent.innerHTML = `
+            <div class="text-center py-8 text-neutral-500">
+                <i class="fas fa-shipping-fast text-4xl mb-4 text-neutral-300"></i>
+                <p class="text-sm mb-2">No Order Data</p>
+                <p class="text-xs text-neutral-400">Ask about transportation lanes to see unplanned orders</p>
             </div>
         `;
     }
@@ -1069,6 +1076,7 @@ function parseAndUpdateLaneInfo(userMessage, response) {
         updateRateInquiryCard(laneInfo, userMessage, response);
         updateSpotAPICard(laneInfo, userMessage, response);
         updateHistoricalDataCard(laneInfo, userMessage, response); // NEW: Call historical data card update
+        updateOrderReleaseCard(laneInfo, userMessage, response); // NEW: Call order release card update
     } else {
         console.warn("Insufficient lane information to update contextual cards.", laneInfo);
         // Optionally, clear cards or show a generic message if not enough info
@@ -2706,24 +2714,868 @@ function clearDefaultKB() {
 }
 
 function handleDefaultKBChange(kbId, checkbox) {
-    // Uncheck all other default checkboxes
-    const allDefaultCheckboxes = document.querySelectorAll('.default-kb-checkbox');
-    allDefaultCheckboxes.forEach(cb => {
-        if (cb !== checkbox) {
-            cb.checked = false;
-        }
-    });
-    
     if (checkbox.checked) {
         setDefaultKB(kbId);
-        showNotification('Knowledge base set as default', 'success');
     } else {
         clearDefaultKB();
-        showNotification('Default knowledge base removed', 'info');
+    }
+}
+
+// =============================================================================
+// ORDER RELEASE FUNCTIONALITY
+// =============================================================================
+
+/**
+ * Updates the order release card with lane information and a button to fetch unplanned orders
+ */
+async function updateOrderReleaseCard(laneInfo, userMessage, response) {
+    const statusElement = document.getElementById('order-release-status');
+    const contentElement = document.getElementById('order-release-content');
+    
+    if (!statusElement || !contentElement) {
+        console.error('Order release card elements not found');
+        return;
+    }
+
+    try {
+        // Update status to show lane detected
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600';
+        statusElement.textContent = 'Lane detected';
+
+        // Build the lane display string
+        const sourceDisplay = laneInfo.sourceCity && laneInfo.sourceState ? 
+            `${laneInfo.sourceCity}, ${laneInfo.sourceState}` : 
+            (laneInfo.sourceCity || 'Unknown Origin');
+        const destDisplay = laneInfo.destinationCity && laneInfo.destinationState ? 
+            `${laneInfo.destinationCity}, ${laneInfo.destinationState}` : 
+            (laneInfo.destinationCity || 'Unknown Destination');
+        
+        const laneDisplay = `${sourceDisplay} → ${destDisplay}`;
+
+        // Display lane information with Get Orders button
+        contentElement.innerHTML = `
+            <div class="text-center py-4">
+                <div class="mb-4">
+                    <i class="fas fa-route text-3xl mb-3 text-orange-500"></i>
+                    <p class="text-sm font-medium text-neutral-700 mb-2">Lane Information Detected</p>
+                    <p class="text-sm text-neutral-600 mb-4">${escapeHtml(laneDisplay)}</p>
+                </div>
+                <button id="get-orders-btn" 
+                        class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                        onclick="handleGetOrdersClick()">
+                    <i class="fas fa-shipping-fast mr-2"></i>
+                    Get Unplanned Orders
+                </button>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error('Error updating order release card:', error);
+        
+        // Update status to show error
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-600';
+        statusElement.textContent = 'Error';
+        
+        contentElement.innerHTML = `
+            <div class="text-center py-4 text-red-600">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <p class="text-xs">Failed to process lane information</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Fetches unplanned orders from the API for the given lane
+ */
+async function fetchUnplannedOrders(laneInfo) {
+    console.log('=== DEBUG: fetchUnplannedOrders started ===');
+    console.log('DEBUG: Input laneInfo:', laneInfo);
+    
+    if (!laneInfo.sourceCity || !laneInfo.destinationCity) {
+        console.error('DEBUG: Insufficient lane information:', laneInfo);
+        throw new Error('Insufficient lane information');
+    }
+
+    // Parse city and state from the lane info
+    const sourceLocation = parseLocationFromCity(laneInfo.sourceCity);
+    const destLocation = parseLocationFromCity(laneInfo.destinationCity);
+
+    console.log('DEBUG: Parsed sourceLocation:', sourceLocation);
+    console.log('DEBUG: Parsed destLocation:', destLocation);
+
+    // Check if parsing was successful
+    if (!sourceLocation || !destLocation) {
+        console.error('DEBUG: Failed to parse location information');
+        console.error('DEBUG: sourceLocation:', sourceLocation);
+        console.error('DEBUG: destLocation:', destLocation);
+        throw new Error('Failed to parse location information');
+    }
+
+    // CAPITALIZE city names for API call (API is case-sensitive)
+    const payload = {
+        origin_city: sourceLocation.city.toUpperCase(),  // CAPITALIZE
+        origin_state: sourceLocation.province_code,  // Fixed: was sourceLocation.state
+        origin_country: sourceLocation.country_code || 'US',  // Fixed: was sourceLocation.country
+        destination_city: destLocation.city.toUpperCase(),  // CAPITALIZE
+        destination_state: destLocation.province_code,  // Fixed: was destLocation.state
+        destination_country: destLocation.country_code || 'US'  // Fixed: was destLocation.country
+    };
+
+    console.log('DEBUG: API payload (with capitalized cities):', payload);
+    console.log('DEBUG: API endpoint:', `${DATA_TOOLS_API_BASE_URL}/order-release/unplanned-orders`);
+
+    try {
+        const response = await fetch(`${DATA_TOOLS_API_BASE_URL}/order-release/unplanned-orders`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        console.log('DEBUG: Raw response status:', response.status);
+        console.log('DEBUG: Raw response statusText:', response.statusText);
+        console.log('DEBUG: Raw response headers:', [...response.headers.entries()]);
+
+        if (!response.ok) {
+            console.error('DEBUG: Response not OK:', response.status, response.statusText);
+            if (response.status === 404) {
+                throw new Error(`No unplanned orders found for ${payload.origin_city}, ${payload.origin_state} to ${payload.destination_city}, ${payload.destination_state}`);
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+
+        const result = await response.json();
+        console.log('DEBUG: Parsed JSON result:', result);
+        console.log('DEBUG: Result type:', typeof result);
+        console.log('DEBUG: Result keys:', Object.keys(result || {}));
+        
+        if (result.data && result.data.items) {
+            console.log('DEBUG: Found items array with length:', result.data.items.length);
+            console.log('DEBUG: First item sample:', result.data.items[0]);
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error('DEBUG: Error in fetchUnplannedOrders:', error);
+        console.error('DEBUG: Error type:', typeof error);
+        console.error('DEBUG: Error message:', error.message);
+        console.error('DEBUG: Error stack:', error.stack);
+        throw error;
+    } finally {
+        console.log('=== DEBUG: fetchUnplannedOrders completed ===');
+    }
+}
+
+/**
+ * Displays the list of unplanned orders in the card content
+ */
+function displayUnplannedOrders(orders, contentElement, laneInfo) {
+    console.log('=== DEBUG: displayUnplannedOrders started ===');
+    console.log('DEBUG: Input orders:', orders);
+    console.log('DEBUG: Orders type:', typeof orders);
+    console.log('DEBUG: Orders is array:', Array.isArray(orders));
+    console.log('DEBUG: Orders length:', orders?.length);
+    console.log('DEBUG: contentElement:', contentElement);
+    console.log('DEBUG: laneInfo:', laneInfo);
+    
+    if (!orders || orders.length === 0) {
+        console.log('DEBUG: No orders to display - showing empty state');
+        contentElement.innerHTML = `
+            <div class="text-center py-4 text-neutral-500">
+                <i class="fas fa-inbox text-2xl mb-2 text-neutral-300"></i>
+                <p class="text-xs">No orders found</p>
+            </div>
+        `;
+        return;
+    }
+
+    console.log('DEBUG: Processing', orders.length, 'orders');
+    
+    const ordersHtml = orders.map((order, index) => {
+        console.log(`DEBUG: Processing order ${index + 1}:`, order);
+        
+        // Extract basic order information
+        const orderReleaseId = order.orderReleaseXid || 'N/A';
+        const orderName = order.orderReleaseName || 'Unknown Order';
+        
+        console.log(`DEBUG: Order ${index + 1} - ID: ${orderReleaseId}, Name: ${orderName}`);
+        
+        // Extract date information (nested object)
+        let latePickupDate = 'N/A';
+        if (order.latePickupDate && order.latePickupDate.value) {
+            latePickupDate = order.latePickupDate.value;
+        }
+        console.log(`DEBUG: Order ${index + 1} - Late pickup date: ${latePickupDate}`);
+        
+        // Extract weight information (nested object)
+        let totalWeight = 'N/A';
+        if (order.totalWeight && order.totalWeight.value !== undefined) {
+            const unit = order.totalWeight.unit || 'LB';
+            totalWeight = `${order.totalWeight.value} ${unit}`;
+        }
+        console.log(`DEBUG: Order ${index + 1} - Total weight: ${totalWeight}`);
+        
+        // Extract volume information (nested object)
+        let totalVolume = 'N/A';
+        if (order.totalVolume && order.totalVolume.value !== undefined) {
+            const unit = order.totalVolume.unit || 'CUFT';
+            totalVolume = `${order.totalVolume.value} ${unit}`;
+        }
+        console.log(`DEBUG: Order ${index + 1} - Total volume: ${totalVolume}`);
+        
+        // Extract cost information (nested object)
+        let bestDirectCost = 'N/A';
+        if (order.bestDirectCostBuy && order.bestDirectCostBuy.value !== undefined) {
+            const currency = order.bestDirectCostBuy.currency || 'USD';
+            bestDirectCost = `$${order.bestDirectCostBuy.value} ${currency}`;
+        }
+        console.log(`DEBUG: Order ${index + 1} - Best direct cost: ${bestDirectCost}`);
+        
+        // Extract service provider information (from nested links or direct field)
+        let serviceProvider = 'N/A';
+        if (order.bestDirectRateofferGidBuy) {
+            // Extract service provider from rate offer GID (e.g., "BSL.TL_BNCH" -> "BNCH")
+            const parts = order.bestDirectRateofferGidBuy.split('.');
+            serviceProvider = parts.length > 1 ? parts[parts.length - 1].replace('TL_', '') : order.bestDirectRateofferGidBuy;
+        } else if (order.servprov && order.servprov.links) {
+            // Try to extract from servprov links if available
+            const canonical = order.servprov.links.find(link => link.rel === 'canonical');
+            if (canonical && canonical.href) {
+                const parts = canonical.href.split('/');
+                const gid = parts[parts.length - 1];
+                serviceProvider = gid.split('.').pop() || gid;
+            }
+        }
+        console.log(`DEBUG: Order ${index + 1} - Service provider: ${serviceProvider}`);
+
+        const orderHtml = `
+            <div class="border border-neutral-200 rounded-lg p-2 hover:bg-neutral-50 cursor-pointer transition-colors order-item" 
+                 data-order-gid="${escapeHtml(orderReleaseId)}" 
+                 onclick="selectOrder('${escapeHtml(orderReleaseId)}')">
+                <div class="flex justify-between items-start mb-1">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-medium text-neutral-900 truncate">${escapeHtml(orderName)}</h4>
+                        <p class="text-xs text-neutral-500">ID: ${escapeHtml(orderReleaseId)}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-2">
+                        <p class="text-xs font-medium text-green-600">${escapeHtml(bestDirectCost)}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-xs text-neutral-600">
+                    <div>
+                        <i class="fas fa-calendar text-neutral-400"></i>
+                        <span class="ml-1">${formatOrderDate(latePickupDate)}</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-weight text-neutral-400"></i>
+                        <span class="ml-1">${escapeHtml(totalWeight)}</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-cube text-neutral-400"></i>
+                        <span class="ml-1">${escapeHtml(totalVolume)}</span>
+                    </div>
+                    <div class="truncate">
+                        <i class="fas fa-truck text-neutral-400"></i>
+                        <span class="ml-1">${escapeHtml(serviceProvider)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        console.log(`DEBUG: Order ${index + 1} - Generated HTML length: ${orderHtml.length}`);
+        return orderHtml;
+    }).join('');
+
+    console.log('DEBUG: Final ordersHtml length:', ordersHtml.length);
+
+    const finalHtml = `
+        <div class="space-y-2">
+            <div class="text-xs text-neutral-600 mb-2">
+                <i class="fas fa-route text-orange-500"></i>
+                <span class="ml-1">${escapeHtml(laneInfo.laneName || 'Lane Orders')} (${orders.length} orders)</span>
+            </div>
+            ${ordersHtml}
+        </div>
+    `;
+
+    console.log('DEBUG: Final HTML being set:', finalHtml);
+    contentElement.innerHTML = finalHtml;
+    console.log('DEBUG: contentElement.innerHTML after setting:', contentElement.innerHTML);
+    console.log('=== DEBUG: displayUnplannedOrders completed ===');
+}
+
+/**
+ * Handles order selection and shows order details
+ */
+window.selectOrder = async function(orderGid) {
+    if (!orderGid || orderGid === 'N/A') {
+        console.warn('Invalid order GID:', orderGid);
+        return;
+    }
+
+    try {
+        // Show loading state
+        showLoading('Loading order details...');
+        
+        // Fetch order details
+        const orderDetails = await fetchOrderDetails(orderGid);
+        
+        if (orderDetails && orderDetails.success && orderDetails.data) {
+            displayOrderDetails(orderDetails.data, orderGid);
+        } else {
+            throw new Error('Failed to load order details');
+        }
+    } catch (error) {
+        console.error('Error loading order details:', error);
+        showNotification(`Failed to load order details: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
+};
+
+/**
+ * Fetches detailed order information from the API
+ */
+async function fetchOrderDetails(orderGid) {
+    try {
+        console.log('=== DEBUG: fetchOrderDetails started ===');
+        console.log('DEBUG: Input orderGid:', orderGid);
+        
+        // Format the order release GID with service provider prefix
+        const formattedOrderGid = orderGid.startsWith(`${SERVICE_PROVIDER}.`) ? 
+            orderGid : 
+            `${SERVICE_PROVIDER}.${orderGid}`;
+        
+        console.log('DEBUG: Formatted order GID for API:', formattedOrderGid);
+        
+        // Construct the order details endpoint URL
+        const endpoint = `${DATA_TOOLS_API_BASE_URL}/order-release/${encodeURIComponent(formattedOrderGid)}`;
+        
+        console.log('DEBUG: Order details API endpoint:', endpoint);
+        
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        console.log('DEBUG: Order details response status:', response.status);
+        console.log('DEBUG: Order details response statusText:', response.statusText);
+        console.log('DEBUG: Order details response headers:', [...response.headers.entries()]);
+
+        if (!response.ok) {
+            console.error('DEBUG: Response not OK:', response.status, response.statusText);
+            if (response.status === 404) {
+                throw new Error(`Order ${formattedOrderGid} not found`);
+            } else {
+                const responseText = await response.text();
+                console.error('DEBUG: Error response text:', responseText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText} - ${responseText}`);
+            }
+        }
+
+        const result = await response.json();
+        console.log('DEBUG: Raw JSON result:', result);
+        console.log('DEBUG: Result type:', typeof result);
+        console.log('DEBUG: Result keys:', Object.keys(result || {}));
+        console.log('DEBUG: result.success:', result.success);
+        console.log('DEBUG: result.success type:', typeof result.success);
+        console.log('DEBUG: result.data exists:', !!result.data);
+        console.log('DEBUG: result.error:', result.error);
+        
+        // The API response shows success: true, data: {...}, error: null
+        // Check for explicit false rather than falsy values
+        if (result.success === false) {
+            console.error('DEBUG: API returned success: false');
+            console.error('DEBUG: Error message from API:', result.error);
+            throw new Error(result.error || 'Failed to fetch order details');
+        }
+
+        if (!result.data) {
+            console.error('DEBUG: No data field in response');
+            console.error('DEBUG: Full result:', JSON.stringify(result, null, 2));
+            throw new Error('No order data returned from API');
+        }
+
+        console.log('DEBUG: Successfully parsed order details');
+        console.log('DEBUG: Order data keys:', Object.keys(result.data));
+        console.log('=== DEBUG: fetchOrderDetails completed successfully ===');
+        
+        return result.data;
+
+    } catch (error) {
+        console.error('=== DEBUG: Error in fetchOrderDetails ===');
+        console.error('DEBUG: Error type:', typeof error);
+        console.error('DEBUG: Error name:', error.name);
+        console.error('DEBUG: Error message:', error.message);
+        console.error('DEBUG: Error stack:', error.stack);
+        console.error('=== DEBUG: fetchOrderDetails failed ===');
+        throw error;
+    }
+}
+
+/**
+ * Displays detailed order information in a modal
+ */
+function displayOrderDetails(orderData, orderGid) {
+    console.log('=== DEBUG: displayOrderDetails started ===');
+    console.log('DEBUG: Input orderData:', orderData);
+    console.log('DEBUG: Input orderGid:', orderGid);
+    
+    const modal = document.getElementById('order-detail-modal');
+    const content = document.getElementById('order-detail-content');
+    
+    console.log('DEBUG: Modal element:', !!modal);
+    console.log('DEBUG: Content element:', !!content);
+    
+    if (!modal || !content) {
+        console.error('Order detail modal elements not found');
+        console.error('DEBUG: Modal found:', !!modal);
+        console.error('DEBUG: Content found:', !!content);
+        return;
+    }
+
+    try {
+        console.log('DEBUG: Starting to extract order information...');
+        
+        // Extract key information from order data (handling nested objects)
+        const order = orderData;
+        const orderReleaseId = order.orderReleaseXid || orderGid;
+        const orderName = order.orderReleaseName || 'Unknown Order';
+        
+        console.log('DEBUG: Basic info extracted - ID:', orderReleaseId, 'Name:', orderName);
+        
+        // Extract weight and volume with nested structure
+        let totalWeight = 'N/A';
+        if (order.totalWeight && order.totalWeight.value !== undefined) {
+            const unit = order.totalWeight.unit || 'LB';
+            totalWeight = `${order.totalWeight.value} ${unit}`;
+        }
+        
+        let totalVolume = 'N/A';
+        if (order.totalVolume && order.totalVolume.value !== undefined) {
+            const unit = order.totalVolume.unit || 'CUFT';
+            totalVolume = `${order.totalVolume.value} ${unit}`;
+        }
+        
+        console.log('DEBUG: Weight/Volume extracted - Weight:', totalWeight, 'Volume:', totalVolume);
+        
+        // Extract cost with nested structure
+        let bestDirectCost = 'N/A';
+        if (order.bestDirectCostBuy && order.bestDirectCostBuy.value !== undefined) {
+            const currency = order.bestDirectCostBuy.currency || 'USD';
+            bestDirectCost = `$${order.bestDirectCostBuy.value} ${currency}`;
+        }
+        
+        // Extract service provider
+        let serviceProvider = 'N/A';
+        if (order.bestDirectRateofferGidBuy) {
+            const parts = order.bestDirectRateofferGidBuy.split('.');
+            serviceProvider = parts.length > 1 ? parts[parts.length - 1].replace('TL_', '') : order.bestDirectRateofferGidBuy;
+        }
+        
+        console.log('DEBUG: Cost/Provider extracted - Cost:', bestDirectCost, 'Provider:', serviceProvider);
+        
+        // Extract dates with nested structure
+        let latePickupDate = 'N/A';
+        if (order.latePickupDate && order.latePickupDate.value) {
+            latePickupDate = order.latePickupDate.value;
+        }
+        
+        let shipDate = 'N/A';
+        if (order.attributeDate18 && order.attributeDate18.value) {
+            shipDate = order.attributeDate18.value;
+        }
+        
+        let deliveryDate = 'N/A';
+        // Note: This field might not be in the API response, keeping for future use
+        
+        console.log('DEBUG: Dates extracted - Pickup:', latePickupDate, 'Ship:', shipDate);
+        
+        // Extract location information (these are complex nested structures in the API)
+        // For now, we'll show placeholder data since location details require separate API calls
+        const sourceCity = 'Lancaster'; // From API context
+        const sourceState = 'TX';
+        const destCity = 'Dallas'; // From API context
+        const destState = 'TX';
+
+        // Extract equipment information
+        let equipmentType = 'N/A';
+        if (order.equipmentGroup && order.equipmentGroup.links) {
+            const canonical = order.equipmentGroup.links.find(link => link.rel === 'canonical');
+            if (canonical && canonical.href) {
+                const parts = canonical.href.split('/');
+                const gid = parts[parts.length - 1];
+                equipmentType = gid.split('.').pop() || gid;
+            }
+        }
+        
+        let equipmentLength = 'N/A';
+        if (order.shipUnitLength && order.shipUnitLength.value !== undefined) {
+            const unit = order.shipUnitLength.unit || 'FT';
+            equipmentLength = `${order.shipUnitLength.value} ${unit}`;
+        }
+
+        console.log('DEBUG: Equipment extracted - Type:', equipmentType, 'Length:', equipmentLength);
+        console.log('DEBUG: About to build HTML content...');
+
+        // Build the detail view HTML
+        content.innerHTML = `
+            <div class="space-y-6">
+                <!-- Order Header -->
+                <div class="bg-orange-50 rounded-lg p-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold text-neutral-900">${escapeHtml(orderName)}</h4>
+                            <p class="text-sm text-neutral-600">Order ID: ${escapeHtml(orderReleaseId)}</p>
+                            <p class="text-sm text-neutral-500">Type: ${escapeHtml(order.orderReleaseTypeGid || 'N/A')}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-green-600">${escapeHtml(bestDirectCost)}</p>
+                            <p class="text-sm text-neutral-600">Best Direct Cost</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Route Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-neutral-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                            <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                            Origin
+                        </h5>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">City:</span> ${escapeHtml(sourceCity)}</p>
+                            <p class="text-sm"><span class="font-medium">State:</span> ${escapeHtml(sourceState)}</p>
+                            <p class="text-sm"><span class="font-medium">Pickup Date:</span> ${formatOrderDate(latePickupDate)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-neutral-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                            <i class="fas fa-flag-checkered text-red-500 mr-2"></i>
+                            Destination
+                        </h5>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">City:</span> ${escapeHtml(destCity)}</p>
+                            <p class="text-sm"><span class="font-medium">State:</span> ${escapeHtml(destState)}</p>
+                            <p class="text-sm"><span class="font-medium">Delivery Date:</span> ${formatOrderDate(deliveryDate)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipment Details -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-neutral-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                            <i class="fas fa-weight text-blue-500 mr-2"></i>
+                            Weight & Volume
+                        </h5>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">Total Weight:</span> ${escapeHtml(totalWeight)}</p>
+                            <p class="text-sm"><span class="font-medium">Total Volume:</span> ${escapeHtml(totalVolume)}</p>
+                            <p class="text-sm"><span class="font-medium">Package Count:</span> ${escapeHtml(order.totalPackagingUnitCount || 'N/A')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-neutral-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                            <i class="fas fa-truck text-purple-500 mr-2"></i>
+                            Equipment
+                        </h5>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">Type:</span> ${escapeHtml(equipmentType)}</p>
+                            <p class="text-sm"><span class="font-medium">Length:</span> ${escapeHtml(equipmentLength)}</p>
+                            <p class="text-sm"><span class="font-medium">Ship Units:</span> ${escapeHtml(order.totalShipUnitCount || 'N/A')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-neutral-50 rounded-lg p-4">
+                        <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                            <i class="fas fa-building text-indigo-500 mr-2"></i>
+                            Service Provider
+                        </h5>
+                        <div class="space-y-2">
+                            <p class="text-sm"><span class="font-medium">Provider:</span> ${escapeHtml(serviceProvider)}</p>
+                            <p class="text-sm"><span class="font-medium">Ship Date:</span> ${formatOrderDate(shipDate)}</p>
+                            <p class="text-sm"><span class="font-medium">Priority:</span> ${escapeHtml(order.priority || 'N/A')}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Details -->
+                <div class="bg-neutral-50 rounded-lg p-4">
+                    <h5 class="font-semibold text-neutral-900 mb-3 flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                        Additional Information
+                    </h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p><span class="font-medium">Release Method:</span> ${escapeHtml(order.releaseMethodGid || 'N/A')}</p>
+                            <p><span class="font-medium">Bundling Type:</span> ${escapeHtml(order.bundlingType || 'N/A')}</p>
+                            <p><span class="font-medium">Must Ship Direct:</span> ${order.mustShipDirect ? 'Yes' : 'No'}</p>
+                        </div>
+                        <div>
+                            <p><span class="font-medium">Pickup Appointment:</span> ${order.pickupIsAppt ? 'Required' : 'Not Required'}</p>
+                            <p><span class="font-medium">Delivery Appointment:</span> ${order.deliveryIsAppt ? 'Required' : 'Not Required'}</p>
+                            <p><span class="font-medium">Splittable:</span> ${order.isSplittable ? 'Yes' : 'No'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Raw Data Section (for debugging/additional info) -->
+                <div class="bg-neutral-100 rounded-lg p-4">
+                    <details class="cursor-pointer">
+                        <summary class="font-semibold text-neutral-900 hover:text-neutral-700">
+                            <i class="fas fa-code text-neutral-500 mr-2"></i>
+                            Raw Order Data (Click to expand)
+                        </summary>
+                        <pre class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto">${JSON.stringify(orderData, null, 2)}</pre>
+                    </details>
+                </div>
+            </div>
+        `;
+
+        console.log('DEBUG: HTML content set successfully');
+        console.log('DEBUG: About to show modal...');
+
+        // Show the modal
+        modal.classList.remove('hidden');
+        
+        console.log('DEBUG: Modal shown successfully');
+        console.log('=== DEBUG: displayOrderDetails completed successfully ===');
+        
+    } catch (error) {
+        console.error('=== DEBUG: Error in displayOrderDetails ===');
+        console.error('DEBUG: Error type:', typeof error);
+        console.error('DEBUG: Error name:', error.name);
+        console.error('DEBUG: Error message:', error.message);
+        console.error('DEBUG: Error stack:', error.stack);
+        throw error; // Re-throw the error so selectOrder can catch it
+    }
+}
+
+/**
+ * Formats order dates for display
+ */
+function formatOrderDate(dateString) {
+    if (!dateString || dateString === 'N/A') {
+        return 'N/A';
     }
     
-    // Update chat dropdown if we're on the chat page
-    if (currentView === 'chat') {
-        populateKBSelects();
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return dateString; // Return original if not a valid date
+        }
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    } catch (error) {
+        return dateString; // Return original if parsing fails
     }
+}
+
+/**
+ * Sets up order release modal event handlers
+ */
+function setupOrderReleaseModal() {
+    const modal = document.getElementById('order-detail-modal');
+    const closeBtn = document.getElementById('close-order-detail-modal');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    }
+}
+
+// Initialize order release modal when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setupOrderReleaseModal();
+});
+
+/**
+ * Handles order selection and displays detailed information
+ */
+async function selectOrder(orderGid) {
+    try {
+        console.log('=== DEBUG: selectOrder started ===');
+        console.log('DEBUG: Selecting order:', orderGid);
+        
+        // Show loading state
+        showLoading('Loading order details...');
+        
+        // Fetch detailed order information
+        console.log('DEBUG: About to call fetchOrderDetails...');
+        const orderData = await fetchOrderDetails(orderGid);
+        console.log('DEBUG: fetchOrderDetails completed successfully, got data:', !!orderData);
+        console.log('DEBUG: Order data type:', typeof orderData);
+        console.log('DEBUG: Order data keys:', Object.keys(orderData || {}));
+        
+        // Hide loading state
+        hideLoading();
+        
+        // Display the order details in modal
+        console.log('DEBUG: About to call displayOrderDetails...');
+        displayOrderDetails(orderData, orderGid);
+        console.log('DEBUG: displayOrderDetails completed successfully');
+        console.log('=== DEBUG: selectOrder completed successfully ===');
+        
+    } catch (error) {
+        console.error('=== DEBUG: Error in selectOrder ===');
+        console.error('DEBUG: Error type:', typeof error);
+        console.error('DEBUG: Error name:', error.name);
+        console.error('DEBUG: Error message:', error.message);
+        console.error('DEBUG: Error stack:', error.stack);
+        
+        hideLoading();
+        
+        // Show error notification
+        console.log('DEBUG: About to show error notification...');
+        showNotification(`Failed to load order details: ${error.message}`, 'error');
+        console.log('=== DEBUG: selectOrder error handling completed ===');
+    }
+}
+
+/**
+ * Fetches detailed information for a specific order
+ */
+
+/**
+ * Handles the Get Orders button click event
+ */
+async function handleGetOrdersClick() {
+    console.log('=== DEBUG: handleGetOrdersClick started ===');
+    
+    const statusElement = document.getElementById('order-release-status');
+    const contentElement = document.getElementById('order-release-content');
+    const getOrdersBtn = document.getElementById('get-orders-btn');
+    
+    if (!statusElement || !contentElement) {
+        console.error('Order release card elements not found');
+        return;
+    }
+
+    try {
+        // Debug: Log current lane info
+        console.log('DEBUG: Current lane info:', window.currentLaneInfo);
+        
+        // Update status to loading
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700';
+        statusElement.textContent = 'Loading...';
+
+        // Disable the button and show loading state
+        if (getOrdersBtn) {
+            getOrdersBtn.disabled = true;
+            getOrdersBtn.innerHTML = `
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Loading...
+            `;
+        }
+
+        // Show loading state in content
+        contentElement.innerHTML = `
+            <div class="text-center py-4">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
+                <p class="text-xs text-neutral-600">Fetching unplanned orders...</p>
+            </div>
+        `;
+
+        // Get the current lane info from global variable
+        if (!window.currentLaneInfo) {
+            throw new Error('No lane information available');
+        }
+
+        console.log('DEBUG: About to call fetchUnplannedOrders with:', window.currentLaneInfo);
+
+        // Fetch unplanned orders for the lane
+        const ordersData = await fetchUnplannedOrders(window.currentLaneInfo);
+        
+        console.log('DEBUG: fetchUnplannedOrders returned:', ordersData);
+        console.log('DEBUG: ordersData.success:', ordersData?.success);
+        console.log('DEBUG: ordersData.data:', ordersData?.data);
+        console.log('DEBUG: ordersData.data.items:', ordersData?.data?.items);
+        console.log('DEBUG: ordersData.data.items.length:', ordersData?.data?.items?.length);
+        
+        if (ordersData && ordersData.success && ordersData.data && ordersData.data.items && ordersData.data.items.length > 0) {
+            console.log('DEBUG: Processing successful orders response');
+            
+            // Update status to success
+            statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700';
+            statusElement.textContent = `${ordersData.data.items.length} orders`;
+
+            // Display the orders
+            console.log('DEBUG: About to call displayUnplannedOrders with', ordersData.data.items.length, 'orders');
+            displayUnplannedOrders(ordersData.data.items, contentElement, window.currentLaneInfo);
+        } else {
+            console.log('DEBUG: No orders found or unsuccessful response');
+            console.log('DEBUG: Response details:');
+            console.log('  - success:', ordersData?.success);
+            console.log('  - data exists:', !!ordersData?.data);
+            console.log('  - items exists:', !!ordersData?.data?.items);
+            console.log('  - items is array:', Array.isArray(ordersData?.data?.items));
+            console.log('  - items length:', ordersData?.data?.items?.length);
+            console.log('  - full response:', JSON.stringify(ordersData, null, 2));
+            
+            // No orders found
+            statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
+            statusElement.textContent = 'No orders';
+            
+            const sourceDisplay = window.currentLaneInfo.sourceCity && window.currentLaneInfo.sourceState ? 
+                `${window.currentLaneInfo.sourceCity}, ${window.currentLaneInfo.sourceState}` : 
+                (window.currentLaneInfo.sourceCity || 'Unknown Origin');
+            const destDisplay = window.currentLaneInfo.destinationCity && window.currentLaneInfo.destinationState ? 
+                `${window.currentLaneInfo.destinationCity}, ${window.currentLaneInfo.destinationState}` : 
+                (window.currentLaneInfo.destinationCity || 'Unknown Destination');
+            
+            contentElement.innerHTML = `
+                <div class="text-center py-4 text-neutral-500">
+                    <i class="fas fa-inbox text-2xl mb-2 text-neutral-300"></i>
+                    <p class="text-xs">No unplanned orders found</p>
+                    <p class="text-xs text-neutral-400 mt-1">${sourceDisplay} → ${destDisplay}</p>
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        console.error('DEBUG: Error in handleGetOrdersClick:', error);
+        console.error('DEBUG: Error stack:', error.stack);
+        
+        // Update status to error
+        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700';
+        statusElement.textContent = 'Error';
+        
+        contentElement.innerHTML = `
+            <div class="text-center py-4 text-neutral-500">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2 text-red-400"></i>
+                <p class="text-xs text-red-600">Failed to load orders</p>
+                <p class="text-xs text-neutral-400 mt-1">${error.message}</p>
+                <button class="mt-3 px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs rounded-md transition-colors duration-200"
+                        onclick="handleGetOrdersClick()">
+                    Try Again
+                </button>
+            </div>
+        `;
+    }
+    
+    console.log('=== DEBUG: handleGetOrdersClick completed ===');
 }

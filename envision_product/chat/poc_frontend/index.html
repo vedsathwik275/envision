@@ -441,7 +441,7 @@
                     </div>
 
                     <!-- Spot Analysis (Full Width Below) -->
-                    <div class="spot-analysis-full-width mt-8">
+                    <div class="spot-analysis-full-width mb-8">
                         <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
                             <div class="p-6 border-b border-neutral-100">
                                 <div class="flex items-center justify-between">
@@ -460,6 +460,32 @@
                                         <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
                                         <p>Ask about carrier performance or spot rates to see analysis here</p>
                                         <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Release (Full Width Below Spot Analysis) -->
+                    <div class="order-release-full-width mb-8">
+                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
+                            <div class="p-6 border-b border-neutral-100">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
+                                        <h3 class="text-lg font-semibold text-neutral-900">Order Release Management</h3>
+                                    </div>
+                                    <span id="order-release-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                        No data
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div id="order-release-content" class="space-y-4">
+                                    <div class="text-center py-8 text-neutral-500">
+                                        <i class="fas fa-truck text-4xl mb-4 text-neutral-300"></i>
+                                        <p>Ask about lane orders to see unplanned order releases</p>
+                                        <p class="text-sm mt-2">Example: "Show me orders from Atlanta to Miami"</p>
                                     </div>
                                 </div>
                             </div>
@@ -547,6 +573,28 @@
             <div class="bg-white rounded-xl shadow-2xl p-6 flex items-center space-x-3">
                 <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
                 <span id="loading-text" class="text-neutral-800">Processing...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Release Detail Modal -->
+    <div id="order-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div class="flex items-center justify-between p-6 border-b border-neutral-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
+                        <h3 class="text-xl font-semibold text-neutral-900">Order Release Details</h3>
+                    </div>
+                    <button id="close-order-detail-modal" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <div id="order-detail-content">
+                        <!-- Order details will be populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
