@@ -277,6 +277,14 @@ function updateConnectionStatus(connected) {
 async function loadKnowledgeBases() {
     try {
         knowledgeBases = await makeAPIRequest('/knowledge_bases/');
+        
+        // Clean up default KB if it no longer exists
+        const defaultKBId = getDefaultKB();
+        if (defaultKBId && !knowledgeBases.find(kb => kb.id === defaultKBId)) {
+            clearDefaultKB();
+            showNotification('Default knowledge base was removed and has been cleared', 'info');
+        }
+        
         populateKBSelects();
         updateDashboardStats();
     } catch (error) {
@@ -287,6 +295,7 @@ async function loadKnowledgeBases() {
 
 function populateKBSelects() {
     const selects = [chatKBSelect, document.getElementById('upload-kb-select')];
+    const defaultKBId = getDefaultKB();
     
     selects.forEach(select => {
         if (!select) return;
@@ -299,9 +308,23 @@ function populateKBSelects() {
         knowledgeBases.forEach(kb => {
             const option = document.createElement('option');
             option.value = kb.id;
-            option.textContent = `${kb.name} (${kb.status})`;
+            const isDefault = kb.id === defaultKBId;
+            const starPrefix = isDefault ? '★ ' : '';
+            option.textContent = `${starPrefix}${kb.name} (${kb.status})`;
             select.appendChild(option);
         });
+        
+        // Auto-select default KB in chat dropdown only
+        if (select === chatKBSelect && defaultKBId) {
+            const defaultKB = knowledgeBases.find(kb => kb.id === defaultKBId);
+            if (defaultKB) {
+                select.value = defaultKBId;
+                // Trigger the selection handler to update the UI
+                if (currentView === 'chat') {
+                    handleKBSelection();
+                }
+            }
+        }
     });
 }
 
@@ -342,19 +365,34 @@ function renderKnowledgeBases() {
 
 function createKnowledgeBaseCard(kb) {
     const card = document.createElement('div');
-    card.className = 'border border-neutral-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-white';
+    const isDefault = getDefaultKB() === kb.id;
+    const defaultBorderClass = isDefault ? 'border-yellow-300 bg-yellow-50' : 'border-neutral-200 bg-white';
+    card.className = `border rounded-xl p-6 hover:shadow-md transition-shadow ${defaultBorderClass}`;
     
     const statusColor = getStatusColor(kb.status);
+    const defaultBadge = isDefault ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2"><i class="fas fa-star mr-1"></i>DEFAULT</span>' : '';
     
     card.innerHTML = `
         <div class="flex items-center justify-between">
             <div class="flex-1">
-                <h4 class="font-semibold text-neutral-900">${escapeHtml(kb.name)}</h4>
+                <div class="flex items-center">
+                    <h4 class="font-semibold text-neutral-900">${escapeHtml(kb.name)}</h4>
+                    ${defaultBadge}
+                </div>
                 <p class="text-sm text-neutral-600 mt-1">${escapeHtml(kb.description || 'No description')}</p>
                 <div class="flex items-center mt-3 space-x-4 text-xs text-neutral-500">
                     <span class="inline-flex items-center px-2 py-1 rounded-full ${statusColor}">${kb.status}</span>
                     <span><i class="fas fa-file-alt mr-1"></i>${kb.document_count || 0} documents</span>
                     <span><i class="fas fa-clock mr-1"></i>${formatDate(kb.created_at)}</span>
+                </div>
+                <div class="flex items-center mt-3">
+                    <label class="flex items-center text-sm text-neutral-600 cursor-pointer">
+                        <input type="checkbox" 
+                               class="default-kb-checkbox mr-2 rounded border-neutral-300 text-yellow-600 focus:ring-yellow-500" 
+                               ${isDefault ? 'checked' : ''} 
+                               onchange="handleDefaultKBChange('${kb.id}', this)">
+                        Set as default knowledge base
+                    </label>
                 </div>
             </div>
             <div class="flex items-center space-x-2 ml-4">
@@ -518,6 +556,29 @@ window.startChatWithKB = function(kbId) {
     chatKBSelect.value = kbId;
     handleKBSelection();
     navigateTo('chat');
+};
+
+window.handleDefaultKBChange = function(kbId, checkbox) {
+    // Uncheck all other default checkboxes
+    const allDefaultCheckboxes = document.querySelectorAll('.default-kb-checkbox');
+    allDefaultCheckboxes.forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+        }
+    });
+    
+    if (checkbox.checked) {
+        setDefaultKB(kbId);
+        showNotification('Knowledge base set as default', 'success');
+    } else {
+        clearDefaultKB();
+        showNotification('Default knowledge base removed', 'info');
+    }
+    
+    // Update chat dropdown if we're on the chat page
+    if (currentView === 'chat') {
+        populateKBSelects();
+    }
 };
 
 // Chat Functions
@@ -2541,5 +2602,41 @@ if (typeof escapeHtml !== 'function') {
              .replace(/>/g, "&gt;")
              .replace(/"/g, "&quot;")
              .replace(/'/g, "&#039;");
+    }
+}
+
+// Default Knowledge Base Management Functions
+function setDefaultKB(kbId) {
+    localStorage.setItem('defaultKnowledgeBaseId', kbId);
+}
+
+function getDefaultKB() {
+    return localStorage.getItem('defaultKnowledgeBaseId');
+}
+
+function clearDefaultKB() {
+    localStorage.removeItem('defaultKnowledgeBaseId');
+}
+
+function handleDefaultKBChange(kbId, checkbox) {
+    // Uncheck all other default checkboxes
+    const allDefaultCheckboxes = document.querySelectorAll('.default-kb-checkbox');
+    allDefaultCheckboxes.forEach(cb => {
+        if (cb !== checkbox) {
+            cb.checked = false;
+        }
+    });
+    
+    if (checkbox.checked) {
+        setDefaultKB(kbId);
+        showNotification('Knowledge base set as default', 'success');
+    } else {
+        clearDefaultKB();
+        showNotification('Default knowledge base removed', 'info');
+    }
+    
+    // Update chat dropdown if we're on the chat page
+    if (currentView === 'chat') {
+        populateKBSelects();
     }
 }
