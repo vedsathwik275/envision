@@ -15,10 +15,17 @@ import os
 from .riq import RIQClient
 from .spot_rate_service import SpotRateService
 from .historical_data_service import HistoricalDataService
+from .order_release_service import OrderReleaseService
+from dotenv import load_dotenv
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+base_url = os.getenv("BASE_URL")
+auth_token = os.getenv("AUTH_TOKEN")
 
 app = FastAPI(
     title="Data Tools API",
@@ -165,11 +172,33 @@ class ErrorResponse(BaseModel):
     message: str = Field(..., description="A human-readable message describing the error.")
     details: Optional[Any] = Field(None, description="Optional details about the error, can be a dict or list.")
 
+# Order Release Models
+class OrderReleaseResponse(BaseModel):
+    """Response model for order release queries."""
+    success: bool = Field(..., description="Whether the request was successful")
+    data: Optional[Dict[str, Any]] = Field(None, description="Order release data")
+    error: Optional[str] = Field(None, description="Error message if any")
+    order_release_gid: Optional[str] = Field(None, description="The order release GID that was queried")
+
+class UnplannedOrdersRequest(BaseModel):
+    """Request model for querying unplanned orders by lane."""
+    origin_city: str = Field(..., description="Origin city for the lane")
+    origin_state: str = Field(..., description="Origin state for the lane")
+    origin_country: str = Field("US", description="Origin country for the lane")
+    destination_city: str = Field(..., description="Destination city for the lane")
+    destination_state: str = Field(..., description="Destination state for the lane")
+    destination_country: str = Field("US", description="Destination country for the lane")
+
+class UnplannedOrdersResponse(BaseModel):
+    """Response model for unplanned orders queries."""
+    success: bool = Field(..., description="Whether the request was successful")
+    data: Optional[Dict[str, Any]] = Field(None, description="Unplanned orders data")
+    error: Optional[str] = Field(None, description="Error message if any")
+    lane_info: Optional[Dict[str, str]] = Field(None, description="Lane information that was queried")
+
 # Configuration
 def get_riq_client() -> RIQClient:
     """Get RIQ client instance with configuration."""
-    base_url = os.getenv("RIQ_BASE_URL", "otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com")
-    auth_token = os.getenv("RIQ_AUTH_TOKEN", "QlNMLkNIUl9JTlRFR1JBVElPTjpyNWgzRDFiQ21WMWxmUmQ4cUBpNHpnNiZJ")
     return RIQClient(base_url, auth_token)
 
 # Dependency functions for new services
@@ -207,6 +236,23 @@ def get_historical_data_service() -> HistoricalDataService:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Historical data service could not be initialized."
+        )
+
+def get_order_release_service() -> OrderReleaseService:
+    """FastAPI dependency to get an instance of OrderReleaseService."""
+    try:
+        if not base_url or not auth_token:
+            logger.error("BASE_URL or AUTH_TOKEN environment variables are not set.")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Order Release service configuration is missing."
+            )
+        return OrderReleaseService(base_url, auth_token)
+    except Exception as e:
+        logger.error(f"Failed to initialize OrderReleaseService: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Order Release service could not be initialized."
         )
 
 @app.get("/")
@@ -532,6 +578,177 @@ async def historical_data_health(service: HistoricalDataService = Depends(get_hi
     # The Depends(get_historical_data_service) already performs a check
     # If it passes, the service is considered healthy enough to respond.
     return {"status": "ok", "message": "Historical Data Service is operational.", "data_records_loaded": len(service.df) if service.df is not None else 0}
+
+# Order Release Routes
+@app.get(
+    "/order-release/{order_release_gid}",
+    response_model=OrderReleaseResponse,
+    tags=["Order Release"],
+    summary="Get Order Release by GID",
+    description="Fetches order release data from Oracle Transportation Management by order release GID.",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse, "description": "Bad Request"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Order Release Not Found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
+async def get_order_release(
+    order_release_gid: str,
+    service: OrderReleaseService = Depends(get_order_release_service)
+) -> OrderReleaseResponse:
+    """
+    Fetch order release data by order release GID.
+    
+    Args:
+        order_release_gid: The order release GID to fetch
+        service: OrderReleaseService instance
+        
+    Returns:
+        OrderReleaseResponse containing order release data or error information
+    """
+    try:
+        logger.info(f"Received order release query for GID: {order_release_gid}")
+        
+        # Call the service to get order release data
+        result = service.get_order_release(order_release_gid)
+        
+        # Check if there was an error in the service response
+        if "error" in result:
+            error_msg = result["error"]
+            status_code = result.get("status_code", 500)
+            
+            if status_code == 404:
+                logger.warning(f"Order release not found for GID: {order_release_gid}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Order release with GID '{order_release_gid}' not found"
+                )
+            else:
+                logger.error(f"Order release service error for GID {order_release_gid}: {error_msg}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error fetching order release: {error_msg}"
+                )
+        
+        logger.info(f"Successfully retrieved order release for GID: {order_release_gid}")
+        return OrderReleaseResponse(
+            success=True,
+            data=result,
+            order_release_gid=order_release_gid
+        )
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error processing order release query for GID {order_release_gid}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching order release: {str(e)}"
+        )
+
+@app.post(
+    "/order-release/unplanned-orders",
+    response_model=UnplannedOrdersResponse,
+    tags=["Order Release"],
+    summary="Get Unplanned Orders by Lane",
+    description="Fetches unplanned orders from Oracle Transportation Management by lane parameters (origin/destination city, state, country).",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse, "description": "Bad Request"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "No Unplanned Orders Found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
+async def get_unplanned_orders(
+    request: UnplannedOrdersRequest,
+    service: OrderReleaseService = Depends(get_order_release_service)
+) -> UnplannedOrdersResponse:
+    """
+    Fetch unplanned orders by lane parameters.
+    
+    Args:
+        request: UnplannedOrdersRequest containing origin and destination lane information
+        service: OrderReleaseService instance
+        
+    Returns:
+        UnplannedOrdersResponse containing unplanned orders data or error information
+    """
+    try:
+        logger.info(f"Received unplanned orders query for lane: {request.origin_city}, {request.origin_state} -> {request.destination_city}, {request.destination_state}")
+        
+        # Call the service to get unplanned orders data
+        result = service.get_unplanned_orders(
+            request.origin_city,
+            request.origin_state, 
+            request.origin_country,
+            request.destination_city,
+            request.destination_state,
+            request.destination_country
+        )
+        
+        # Check if there was an error in the service response
+        if "error" in result:
+            error_msg = result["error"]
+            status_code = result.get("status_code", 500)
+            
+            if status_code == 404:
+                logger.warning(f"No unplanned orders found for lane: {request.origin_city}, {request.origin_state} -> {request.destination_city}, {request.destination_state}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No unplanned orders found for the specified lane"
+                )
+            else:
+                logger.error(f"Unplanned orders service error for lane: {error_msg}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error fetching unplanned orders: {error_msg}"
+                )
+        
+        lane_info = {
+            "origin_city": request.origin_city,
+            "origin_state": request.origin_state,
+            "origin_country": request.origin_country,
+            "destination_city": request.destination_city,
+            "destination_state": request.destination_state,
+            "destination_country": request.destination_country
+        }
+        
+        logger.info(f"Successfully retrieved unplanned orders for lane: {request.origin_city}, {request.origin_state} -> {request.destination_city}, {request.destination_state}")
+        return UnplannedOrdersResponse(
+            success=True,
+            data=result,
+            lane_info=lane_info
+        )
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error processing unplanned orders query for lane: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching unplanned orders: {str(e)}"
+        )
+
+@app.get(
+    "/order-release/health",
+    tags=["Order Release", "Health"],
+    summary="Health Check for Order Release Service",
+    description="Checks if the order release service is operational and properly configured."
+)
+async def order_release_health(service: OrderReleaseService = Depends(get_order_release_service)):
+    """
+    Health check endpoint for the order release service.
+    Relies on the `get_order_release_service` dependency to check basic service availability.
+    """
+    # The Depends(get_order_release_service) already performs a check
+    # If it passes, the service is considered healthy enough to respond.
+    return {
+        "status": "ok", 
+        "message": "Order Release Service is operational.",
+        "base_url": service.base_url,
+        "endpoint": service.endpoint
+    }
 
 if __name__ == "__main__":
     import uvicorn

@@ -2,6 +2,7 @@ import http.client
 import json
 import os
 from typing import Optional, Dict, Any
+from dotenv import load_dotenv
 
 
 class RIQClient:
@@ -149,11 +150,25 @@ class RIQClient:
 
 
 def main() -> None:
-    """Example usage of RIQClient."""
+    """
+    Example usage of RIQClient.
+
+    Reads configuration from environment variables, initializes the client,
+    creates sample locations and items, generates a rate request payload,
+    gets a rate quote, and prints the result.
+    """
+    # Load environment variables from .env file in data_tool directory
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    load_dotenv(dotenv_path)
+
     # Configuration
-    BASE_URL = "otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com"
-    AUTH_TOKEN = "QlNMLkNIUl9JTlRFR1JBVElPTjpyNWgzRDFiQ21WMWxmUmQ4cUBpNHpnNiZJ"
-    
+    BASE_URL = os.environ.get("BASE_URL")
+    AUTH_TOKEN = os.environ.get("AUTH_TOKEN")
+
+    if not BASE_URL or not AUTH_TOKEN:
+        print("Error: RIQ_BASE_URL and RIQ_AUTH_TOKEN environment variables must be set.")
+        return
+
     # Initialize client
     client = RIQClient(BASE_URL, AUTH_TOKEN)
     
