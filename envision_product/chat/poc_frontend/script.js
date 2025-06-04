@@ -1,6 +1,7 @@
 // Configuration
 const API_BASE_URL = 'http://localhost:8004/api/v1';
-const RIQ_API_BASE_URL = 'http://localhost:8006';
+const DATA_TOOLS_API_BASE_URL = 'http://localhost:8006'; // Consolidated Data Tools API (formerly RIQ API)
+const RIQ_API_BASE_URL = 'http://localhost:8006'; // Keep for backward compatibility with existing RIQ rate quote calls
 let currentView = 'dashboard';
 let knowledgeBases = [];
 let currentKBId = null;
@@ -2065,7 +2066,7 @@ async function fetchSpotRateMatrix(laneInfo, shipmentDate) {
 
         console.log("Fetching spot rate matrix with payload:", requestPayload);
 
-        const response = await fetch(`${API_BASE_URL}/spot-rate/matrix`, {
+        const response = await fetch(`${DATA_TOOLS_API_BASE_URL}/spot-rate/matrix`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2407,7 +2408,7 @@ async function fetchHistoricalData(laneInfo) {
     });
 
     console.log("Fetching historical data with payload:", requestPayload);
-    const response = await fetch(`${API_BASE_URL}/historical-data/query`, {
+    const response = await fetch(`${DATA_TOOLS_API_BASE_URL}/historical-data/query`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
