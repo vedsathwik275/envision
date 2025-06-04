@@ -44,6 +44,48 @@
         .gradient-bg {
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         }
+        
+        /* Notion-style dropdown styling */
+        #chat-kb-select {
+            background-image: none;
+        }
+        
+        #chat-kb-select:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Hide default select arrow since we have custom one */
+        #chat-kb-select::-ms-expand {
+            display: none;
+        }
+        
+        /* Enhance chat input area */
+        .chat-input-container {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .chat-input-container:focus-within {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+            border-color: rgb(59, 130, 246);
+        }
+        
+        /* Custom scrollbar for chat messages */
+        #chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #chat-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        #chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-800 min-h-screen">
@@ -250,53 +292,62 @@
                         <p class="text-neutral-600 mt-2">Ask questions about your documents using AI-powered retrieval</p>
                     </div>
 
-                    <!-- Chat Interface Container -->
-                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-6" style="height: 480px;">
-                        <!-- Knowledge Base Selector -->
-                        <div class="xl:col-span-1">
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full">
-                                <div class="p-4 border-b border-neutral-100">
-                                    <h3 class="font-semibold text-neutral-900">Select Knowledge Base</h3>
-                                </div>
-                                <div class="p-4">
-                                    <select id="chat-kb-select" class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
-                                        <option value="">Choose a knowledge base...</option>
-                                    </select>
-                                    <div id="selected-kb-info" class="mt-4 hidden">
-                                        <div class="bg-neutral-50 rounded-lg p-4">
-                                            <h4 id="selected-kb-name" class="font-medium text-neutral-900"></h4>
-                                            <p id="selected-kb-description" class="text-sm text-neutral-600 mt-1"></p>
-                                            <div class="flex items-center mt-3">
-                                                <span id="selected-kb-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"></span>
+                    <!-- Chat + Lane Analysis Grid (2 columns, 50% each) -->
+                    <div class="grid grid-cols-2 gap-6 h-[550px] mb-8">
+                        <!-- Chat Window (Left 50%) -->
+                        <div class="flex flex-col h-full overflow-hidden">
+                            <!-- Main Chat Container - Notion Style -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
+                                <!-- Chat Header with integrated KB selector -->
+                                <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
+                                    <div class="flex items-center space-x-4">
+                                        <!-- Knowledge Base Selector - Notion Style -->
+                                        <div class="relative">
+                                            <select id="chat-kb-select" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[200px]">
+                                                <option value="">★ All sources ▼</option>
+                                            </select>
+                                            <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                <i class="fas fa-chevron-down text-neutral-400 text-xs"></i>
                                             </div>
                                         </div>
+                                        
+                                        <!-- Chat Title -->
+                                        <div class="flex items-center">
+                                            <i class="fas fa-robot text-primary-500 mr-2"></i>
+                                            <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Chat Interface -->
-                        <div class="xl:col-span-4">
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
-                                <!-- Chat Header -->
-                                <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-robot text-primary-500 mr-3"></i>
-                                        <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
-                                    </div>
+                                    
+                                    <!-- Header Right Side -->
                                     <div class="flex items-center space-x-4">
                                         <div id="connection-status" class="flex items-center text-sm">
                                             <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
                                             <span class="text-neutral-500">Not Ready</span>
                                         </div>
-                                        <button id="clear-chat" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                                        <button id="clear-chat" class="text-neutral-400 hover:text-neutral-600 transition-colors p-2 rounded-lg hover:bg-neutral-100">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Chat Messages -->
-                                <div id="chat-messages" class="overflow-y-auto p-4 space-y-4" style="height: 340px;">
+                                <!-- Knowledge Base Info Panel (when KB is selected) -->
+                                <div id="selected-kb-info" class="px-4 py-3 bg-neutral-50 border-b border-neutral-100 hidden flex-shrink-0">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-database text-primary-500"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 id="selected-kb-name" class="font-medium text-neutral-900 text-sm"></h4>
+                                            <p id="selected-kb-description" class="text-xs text-neutral-600"></p>
+                                        </div>
+                                        <div>
+                                            <span id="selected-kb-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Chat Messages Area -->
+                                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 min-h-0" style="max-height: calc(100% - 120px);">
                                     <div class="flex items-start space-x-3">
                                         <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                                             <i class="fas fa-robot text-white text-sm"></i>
@@ -310,49 +361,57 @@
                                     </div>
                                 </div>
 
-                                <!-- Chat Input -->
-                                <div class="p-4 border-t border-neutral-100 flex-shrink-0">
-                                    <div class="flex space-x-3">
-                                        <div class="flex-1">
-                                            <input 
-                                                type="text" 
-                                                id="chat-input" 
-                                                placeholder="Ask a question about your documents..." 
-                                                class="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:bg-neutral-50 disabled:text-neutral-400"
+                                <!-- Chat Input Area - Enhanced -->
+                                <div class="p-4 border-t border-neutral-100 bg-neutral-50 rounded-b-xl flex-shrink-0">
+                                    <div class="bg-white rounded-lg border border-neutral-200 shadow-sm chat-input-container">
+                                        <div class="flex items-end space-x-3 p-3">
+                                            <div class="flex-1">
+                                                <input 
+                                                    type="text" 
+                                                    id="chat-input" 
+                                                    placeholder="Ask a question about your documents..." 
+                                                    class="w-full border-0 bg-transparent resize-none focus:outline-none focus:ring-0 placeholder:text-neutral-500 text-neutral-900"
+                                                    disabled
+                                                >
+                                            </div>
+                                            <button 
+                                                id="send-btn" 
+                                                class="flex-shrink-0 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
                                                 disabled
                                             >
+                                                <i class="fas fa-paper-plane text-sm"></i>
+                                            </button>
                                         </div>
-                                        <button 
-                                            id="send-btn" 
-                                            class="px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
-                                            disabled
-                                        >
-                                            <i class="fas fa-paper-plane"></i>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Lane Information Cards Section -->
-                    <div class="space-y-6 mt-8">
-                        <!-- Top Row: RIQ and SPOT Cards -->
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                            <!-- Rate Inquiry Card (25% width) -->
-                            <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-neutral-200">
-                                <div class="p-6 border-b border-neutral-100">
+                        
+                        <!-- Lane Analysis Stack (Right 50%) -->
+                        <div class="flex flex-col h-full space-y-3">
+                            <!-- RIQ Card (Top Right) -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[265px] flex flex-col flex-shrink-0 overflow-hidden">
+                                <div class="p-4 border-b border-neutral-100 flex-shrink-0">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <i class="fas fa-calculator text-blue-500 mr-3 text-xl"></i>
                                             <h3 class="text-lg font-semibold text-neutral-900">Rate Inquiry Details</h3>
                                         </div>
-                                        <span id="rate-inquiry-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                            No data
-                                        </span>
+                                        <div class="flex items-center space-x-3">
+                                            <span id="rate-inquiry-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                                No data
+                                            </span>
+                                            <button 
+                                                id="get-rates-btn" 
+                                                onclick="handleGetRatesClick()" 
+                                                class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors hidden"
+                                            >
+                                                Get Rates
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="p-6">
+                                <div class="p-4 flex-1 overflow-y-auto min-h-0">
                                     <div id="rate-inquiry-content" class="space-y-4">
                                         <div class="text-center py-8 text-neutral-500">
                                             <i class="fas fa-search text-4xl mb-4 text-neutral-300"></i>
@@ -363,50 +422,52 @@
                                 </div>
                             </div>
 
-                            <!-- Spot API Card (75% width) -->
-                            <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-neutral-200">
-                                <div class="p-6 border-b border-neutral-100">
+                            <!-- Historical Card (Bottom Right) -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[265px] flex flex-col flex-shrink-0 overflow-hidden">
+                                <div class="p-4 border-b border-neutral-100 flex-shrink-0">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
-                                            <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
-                                            <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
+                                            <i class="fas fa-history text-purple-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Historical Lane Analysis</h3>
                                         </div>
-                                        <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                        <span id="historical-data-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                             No data
                                         </span>
                                     </div>
                                 </div>
-                                <div class="p-6">
-                                    <div id="spot-api-content" class="space-y-4">
+                                <div class="p-4 flex-1 overflow-y-auto min-h-0">
+                                    <div id="historical-data-content" class="space-y-4">
                                         <div class="text-center py-8 text-neutral-500">
-                                            <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
-                                            <p>Ask about carrier performance or spot rates to see analysis here</p>
-                                            <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                                            <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
+                                            <p>Ask about transportation routes to see historical data</p>
+                                            <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Bottom Row: Historical Lane Analysis Card (Full Width) -->
+                    <!-- Spot Analysis (Full Width Below) -->
+                    <div class="spot-analysis-full-width mt-8">
                         <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
                             <div class="p-6 border-b border-neutral-100">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <i class="fas fa-history text-purple-500 mr-3 text-xl"></i>
-                                        <h3 class="text-lg font-semibold text-neutral-900">Historical Lane Analysis</h3>
+                                        <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
+                                        <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
                                     </div>
-                                    <span id="historical-data-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                    <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                         No data
                                     </span>
                                 </div>
                             </div>
                             <div class="p-6">
-                                <div id="historical-data-content" class="space-y-4">
+                                <div id="spot-api-content" class="space-y-4">
                                     <div class="text-center py-8 text-neutral-500">
-                                        <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
-                                        <p>Ask about transportation routes to see historical data</p>
-                                        <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
+                                        <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
+                                        <p>Ask about carrier performance or spot rates to see analysis here</p>
+                                        <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
                                     </div>
                                 </div>
                             </div>

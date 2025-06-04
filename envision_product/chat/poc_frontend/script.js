@@ -305,12 +305,25 @@ function populateKBSelects() {
             select.removeChild(select.lastChild);
         }
         
+        // Update the default option text based on which select this is
+        if (select === chatKBSelect) {
+            select.children[0].textContent = "★ All sources";
+            select.children[0].value = "";
+        }
+        
         knowledgeBases.forEach(kb => {
             const option = document.createElement('option');
             option.value = kb.id;
             const isDefault = kb.id === defaultKBId;
             const starPrefix = isDefault ? '★ ' : '';
-            option.textContent = `${starPrefix}${kb.name} (${kb.status})`;
+            
+            // For chat select, use cleaner formatting
+            if (select === chatKBSelect) {
+                option.textContent = `${starPrefix}${kb.name}`;
+            } else {
+                // For upload select, keep status indicator
+                option.textContent = `${starPrefix}${kb.name} (${kb.status})`;
+            }
             select.appendChild(option);
         });
         
@@ -593,12 +606,25 @@ function handleKBSelection() {
     if (selectedKBId) {
         const kb = knowledgeBases.find(k => k.id === selectedKBId);
         if (kb) {
+            // Update the KB info in the integrated panel
             document.getElementById('selected-kb-name').textContent = kb.name;
             document.getElementById('selected-kb-description').textContent = kb.description || 'No description';
             document.getElementById('selected-kb-status').textContent = kb.status;
-            document.getElementById('selected-kb-status').className = `inline-flex items-center px-2 py-1 rounded-full ${getStatusColor(kb.status)}`;
+            document.getElementById('selected-kb-status').className = `inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(kb.status)}`;
             
+            // Show the KB info panel
             selectedKBInfo.classList.remove('hidden');
+            
+            // Update the dropdown to show selected KB name (without the dropdown arrow text)
+            const defaultKBId = getDefaultKB();
+            const isDefault = kb.id === defaultKBId;
+            const starPrefix = isDefault ? '★ ' : '';
+            
+            // Update the selected option display
+            const selectedOption = chatKBSelect.querySelector(`option[value="${selectedKBId}"]`);
+            if (selectedOption) {
+                selectedOption.textContent = `${starPrefix}${kb.name}`;
+            }
             
             if (kb.status === 'ready') {
                 currentKBId = selectedKBId;
@@ -610,10 +636,14 @@ function handleKBSelection() {
             }
         }
     } else {
+        // Hide the KB info panel when no KB is selected
         selectedKBInfo.classList.add('hidden');
         currentKBId = null;
         disableChat('Please select a knowledge base');
         updateChatConnectionStatus(false);
+        
+        // Reset the dropdown to show "All sources"
+        chatKBSelect.children[0].textContent = "★ All sources";
     }
 }
 
@@ -639,12 +669,20 @@ function enableChat() {
     chatInput.disabled = false;
     sendBtn.disabled = false;
     chatInput.placeholder = 'Ask a question about your documents...';
+    
+    // Update visual state for the new design
+    chatInput.classList.remove('text-neutral-400');
+    chatInput.classList.add('text-neutral-900');
 }
 
 function disableChat(reason) {
     chatInput.disabled = true;
     sendBtn.disabled = true;
     chatInput.placeholder = reason;
+    
+    // Update visual state for the new design
+    chatInput.classList.remove('text-neutral-900');
+    chatInput.classList.add('text-neutral-400');
 }
 
 async function sendMessage() {
@@ -657,7 +695,7 @@ async function sendMessage() {
     // Disable chat while processing
     enableChat();
     sendBtn.disabled = true;
-    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
     
     try {
         const response = await makeAPIRequest(`/knowledge_bases/${currentKBId}/chat`, {
@@ -677,7 +715,7 @@ async function sendMessage() {
     } finally {
         // Re-enable chat
         sendBtn.disabled = false;
-        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
     }
 }
 
@@ -897,15 +935,21 @@ function clearLaneInfoCards() {
     // Clear Rate Inquiry Card
     const rateInquiryStatus = document.getElementById('rate-inquiry-status');
     const rateInquiryContent = document.getElementById('rate-inquiry-content');
+    const getRatesBtn = document.getElementById('get-rates-btn');
     
     rateInquiryStatus.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
     rateInquiryStatus.textContent = 'No data';
     
+    // Hide the Get Rates button
+    if (getRatesBtn) {
+        getRatesBtn.classList.add('hidden');
+    }
+    
     rateInquiryContent.innerHTML = `
-        <div class="text-center py-8 text-neutral-500">
-            <i class="fas fa-search text-4xl mb-4 text-neutral-300"></i>
-            <p>Ask about lane rates to see parsed information here</p>
-            <p class="text-sm mt-2">Example: "What's the best rate from Los Angeles to Chicago?"</p>
+        <div class="text-center py-6 text-neutral-500">
+            <i class="fas fa-search text-3xl mb-3 text-neutral-300"></i>
+            <p class="text-sm">Ask about lane rates to see parsed information here</p>
+            <p class="text-xs mt-2">Example: "What's the best rate from Los Angeles to Chicago?"</p>
         </div>
     `;
     
@@ -935,10 +979,10 @@ function clearLaneInfoCards() {
     
     if (historicalDataContent) {
         historicalDataContent.innerHTML = `
-            <div class="text-center py-8 text-neutral-500">
-                <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
-                <p>Ask about transportation routes to see historical data</p>
-                <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
+            <div class="text-center py-6 text-neutral-500">
+                <i class="fas fa-database text-3xl mb-3 text-neutral-300"></i>
+                <p class="text-sm">Ask about transportation routes to see historical data</p>
+                <p class="text-xs mt-2">Example: "Show me rates from Chicago to Miami"</p>
             </div>
         `;
     }
@@ -1312,24 +1356,27 @@ function isSpotAPIPrompt(message) {
 function updateRateInquiryCard(laneInfo, userMessage, response) {
     const statusElement = document.getElementById('rate-inquiry-status');
     const contentElement = document.getElementById('rate-inquiry-content');
+    const getRatesBtn = document.getElementById('get-rates-btn');
     
     // Update status
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
     statusElement.textContent = 'Ready for API Call';
     
-    // Build content with analysis parameters
-    let content = `
-        <div class="space-y-4">
-    `;
+    // Show the Get Rates button
+    if (getRatesBtn) {
+        getRatesBtn.classList.remove('hidden');
+        getRatesBtn.textContent = 'Get Rates';
+        getRatesBtn.className = 'px-3 py-1 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors';
+    }
     
-    // Combined RIQ Parameters Section
-    content += `
-            <div class="bg-blue-50 rounded-lg p-4">
-                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
-                    <i class="fas fa-shipping-fast text-blue-600 mr-2"></i>
-                    Rate Inquiry Parameters
-                </h4>
-                <div class="grid grid-cols-2 gap-3 text-sm">
+    // Build content with analysis parameters (optimized for fixed height)
+    let content = `
+        <div class="bg-blue-50 rounded-lg p-3">
+            <h4 class="font-medium text-blue-900 mb-2 flex items-center text-sm">
+                <i class="fas fa-shipping-fast text-blue-600 mr-2"></i>
+                Rate Inquiry Parameters
+            </h4>
+            <div class="grid grid-cols-2 gap-2 text-xs">
     `;
     
     if (laneInfo.sourceCity) {
@@ -1348,37 +1395,21 @@ function updateRateInquiryCard(laneInfo, userMessage, response) {
         content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
     }
     if (laneInfo.carrierName) {
-        content += `<div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${laneInfo.carrierName}</span></div>`;
+        content += `<div class="col-span-2"><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${laneInfo.carrierName}</span></div>`;
     }
     if (laneInfo.weight) {
-        content += `<div><span class="text-neutral-600">Order Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
+        content += `<div><span class="text-neutral-600">Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
     }
     if (laneInfo.volume) {
-        content += `<div><span class="text-neutral-600">Order Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
+        content += `<div><span class="text-neutral-600">Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
     }
     
     content += `<div><span class="text-neutral-600">Type:</span> <span class="font-medium">Rate Inquiry</span></div>`;
-    content += `<div><span class="text-neutral-600">Status:</span> <span class="font-medium text-blue-600">Ready for API Call</span></div>`;
+    content += `<div><span class="text-neutral-600">Status:</span> <span class="font-medium text-blue-600">Ready</span></div>`;
     
     content += `
-                </div>
             </div>
-    `;
-    
-    // Retrieve Rate Inquiry Details Button Card
-    content += `
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h5 class="font-medium mb-1">Retrieve Rate Inquiry Details</h5>
-                        <p class="text-blue-100 text-sm">Get rate quotes using parsed parameters</p>
-                    </div>
-                    <button onclick="retrieveRateInquiry()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center">
-                        <i class="fas fa-search mr-2"></i>
-                        Get Rates
-                    </button>
-                </div>
-            </div>
+        </div>
     `;
     
     contentElement.innerHTML = content;
@@ -1821,12 +1852,12 @@ function displayRateResults(results, laneInfo) {
         statusElement.textContent = 'Error';
         
         contentElement.innerHTML = `
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h5 class="font-medium text-red-800 mb-2 flex items-center">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                <h5 class="font-medium text-red-800 mb-2 flex items-center text-sm">
                     <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
                     Rate Query Failed
                 </h5>
-                <p class="text-sm text-red-700">${results.error}</p>
+                <p class="text-xs text-red-700">${results.error}</p>
             </div>
         `;
         return;
@@ -1836,7 +1867,7 @@ function displayRateResults(results, laneInfo) {
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
     statusElement.textContent = 'Rates Retrieved';
     
-    let content = '<div class="space-y-4">';
+    let content = '<div class="space-y-3">';
     
     // Display cheapest rate
     if (results.cheapest?.data?.rateAndRouteResponse?.length > 0) {
@@ -1852,14 +1883,10 @@ function displayRateResults(results, laneInfo) {
         // Extract key information
         const totalCost = cheapestRate.totalActualCost?.value || cheapestRate.primaryTotalCost?.value || 'N/A';
         const currency = cheapestRate.totalActualCost?.currency || cheapestRate.primaryTotalCost?.currency || 'USD';
-        const costPerUnit = cheapestRate.costPerUnit?.value || 'N/A';
-        const transportMode = cheapestRate.transportMode?.transportModeGid || 'N/A';
         const serviceProviderGid = cheapestRate.serviceProvider?.servprovGid || 'N/A';
         const cleanCarrierName = cleanServiceProviderGid(serviceProviderGid);
         const transitTime = cheapestRate.transitTime?.amount || 'N/A';
         const transitTimeType = cheapestRate.transitTime?.type || '';
-        const shipmentDistance = cheapestRate.toShipments?.[0]?.distance ? 
-            `${cheapestRate.toShipments[0].distance.amount} ${cheapestRate.toShipments[0].distance.type}` : 'N/A';
         
         // Calculate average cost per distance unit
         let averageCost = 'N/A';
@@ -1872,25 +1899,17 @@ function displayRateResults(results, laneInfo) {
             }
         }
         
-        // Format lane name with capitalized locations
-        const formattedLaneName = laneInfo.laneName ? 
-            laneInfo.laneName.split(' to ').map(city => capitalizeLocation(city)).join(' to ') : 'N/A';
-        
         content += `
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h5 class="font-medium text-green-800 mb-3 flex items-center">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                <h5 class="font-medium text-green-800 mb-2 flex items-center text-sm">
                     <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
-                    Cheapest Carrier Option
+                    Cheapest Option
                 </h5>
-                ${formattedLaneName !== 'N/A' ? `<p class="text-sm text-green-700 mb-3 font-medium">${formattedLaneName}</p>` : ''}
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="grid grid-cols-2 gap-2 text-xs">
                     <div><span class="text-neutral-600">Total Cost:</span> <span class="font-medium text-green-700">${currency} ${parseFloat(totalCost).toLocaleString()}</span></div>
-                    <div><span class="text-neutral-600">Average Cost:</span> <span class="font-medium">${averageCost}</span></div>
-                    <div><span class="text-neutral-600">Cost Per Unit:</span> <span class="font-medium">${costPerUnit}</span></div>
-                    <div><span class="text-neutral-600">Transport Mode:</span> <span class="font-medium">${transportMode}</span></div>
+                    <div><span class="text-neutral-600">Avg Cost:</span> <span class="font-medium">${averageCost}</span></div>
                     <div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${cleanCarrierName}</span></div>
-                    <div><span class="text-neutral-600">Transit Time:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
-                    <div><span class="text-neutral-600">Distance:</span> <span class="font-medium">${shipmentDistance}</span></div>
+                    <div><span class="text-neutral-600">Transit:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
                 </div>
             </div>
         `;
@@ -1904,14 +1923,10 @@ function displayRateResults(results, laneInfo) {
         // Extract key information
         const totalCost = bestRate.totalActualCost?.value || bestRate.primaryTotalCost?.value || 'N/A';
         const currency = bestRate.totalActualCost?.currency || bestRate.primaryTotalCost?.currency || 'USD';
-        const costPerUnit = bestRate.costPerUnit?.value || 'N/A';
-        const transportMode = bestRate.transportMode?.transportModeGid || 'N/A';
         const serviceProviderGid = bestRate.serviceProvider?.servprovGid || 'N/A';
         const cleanCarrierName = cleanServiceProviderGid(serviceProviderGid);
         const transitTime = bestRate.transitTime?.amount || 'N/A';
         const transitTimeType = bestRate.transitTime?.type || '';
-        const shipmentDistance = bestRate.toShipments?.[0]?.distance ? 
-            `${bestRate.toShipments[0].distance.amount} ${bestRate.toShipments[0].distance.type}` : 'N/A';
         
         // Calculate average cost per distance unit
         let averageCost = 'N/A';
@@ -1924,25 +1939,17 @@ function displayRateResults(results, laneInfo) {
             }
         }
         
-        // Format lane name with capitalized locations
-        const formattedLaneName = laneInfo.laneName ? 
-            laneInfo.laneName.split(' to ').map(city => capitalizeLocation(city)).join(' to ') : 'N/A';
-        
         content += `
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h5 class="font-medium text-blue-800 mb-3 flex items-center">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <h5 class="font-medium text-blue-800 mb-2 flex items-center text-sm">
                     <i class="fas fa-star text-blue-600 mr-2"></i>
-                    Best Performing Carrier (${laneInfo.bestCarrier})
+                    Best Performer (${laneInfo.bestCarrier})
                 </h5>
-                ${formattedLaneName !== 'N/A' ? `<p class="text-sm text-blue-700 mb-3 font-medium">${formattedLaneName}</p>` : ''}
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="grid grid-cols-2 gap-2 text-xs">
                     <div><span class="text-neutral-600">Total Cost:</span> <span class="font-medium text-blue-700">${currency} ${parseFloat(totalCost).toLocaleString()}</span></div>
-                    <div><span class="text-neutral-600">Average Cost:</span> <span class="font-medium">${averageCost}</span></div>
-                    <div><span class="text-neutral-600">Cost Per Unit:</span> <span class="font-medium">${costPerUnit}</span></div>
-                    <div><span class="text-neutral-600">Transport Mode:</span> <span class="font-medium">${transportMode}</span></div>
+                    <div><span class="text-neutral-600">Avg Cost:</span> <span class="font-medium">${averageCost}</span></div>
                     <div><span class="text-neutral-600">Carrier:</span> <span class="font-medium">${cleanCarrierName}</span></div>
-                    <div><span class="text-neutral-600">Transit Time:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
-                    <div><span class="text-neutral-600">Distance:</span> <span class="font-medium">${shipmentDistance}</span></div>
+                    <div><span class="text-neutral-600">Transit:</span> <span class="font-medium">${transitTime} ${transitTimeType}</span></div>
                 </div>
             </div>
         `;
@@ -2001,15 +2008,49 @@ function displayRateResults(results, laneInfo) {
 }
 
 // Global functions for API button actions
-window.retrieveRateInquiry = async function() {
+window.handleGetRatesClick = async function() {
+    const getRatesBtn = document.getElementById('get-rates-btn');
     const statusElement = document.getElementById('rate-inquiry-status');
+    
+    if (!getRatesBtn) return;
+    
+    // Update button to loading state
+    getRatesBtn.textContent = 'Loading...';
+    getRatesBtn.className = 'px-3 py-1 bg-yellow-500 text-white text-sm rounded-lg font-medium cursor-not-allowed transition-colors';
+    getRatesBtn.disabled = true;
+    
+    // Add spinner
+    getRatesBtn.innerHTML = `
+        <div class="flex items-center">
+            <div class="animate-spin rounded-full h-3 w-3 border-b border-white mr-2"></div>
+            Loading...
+        </div>
+    `;
+    
+    try {
+        // Call the existing retrieveRateInquiry function
+        await retrieveRateInquiry();
+        
+        // Success state
+        getRatesBtn.innerHTML = 'Rates Retrieved';
+        getRatesBtn.className = 'px-3 py-1 bg-green-600 text-white text-sm rounded-lg font-medium transition-colors';
+        getRatesBtn.disabled = false;
+        
+    } catch (error) {
+        console.error('Rate inquiry failed:', error);
+        
+        // Error state
+        getRatesBtn.innerHTML = 'Retry';
+        getRatesBtn.className = 'px-3 py-1 bg-red-600 text-white text-sm rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors';
+        getRatesBtn.disabled = false;
+    }
+};
+
+window.retrieveRateInquiry = async function() {
     const contentElement = document.getElementById('rate-inquiry-content');
     
     try {
-        // Show loading state
-        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
-        statusElement.textContent = 'Loading...';
-        
+        // Show loading state in content area
         contentElement.innerHTML = `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex items-center">
@@ -2046,10 +2087,7 @@ window.retrieveRateInquiry = async function() {
     } catch (error) {
         console.error('Rate inquiry failed:', error);
         
-        // Show error state
-        statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800';
-        statusElement.textContent = 'Error';
-        
+        // Show error state in content area
         contentElement.innerHTML = `
             <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                 <h5 class="font-medium text-red-800 mb-2 flex items-center">
@@ -2057,11 +2095,11 @@ window.retrieveRateInquiry = async function() {
                     Rate Query Failed
                 </h5>
                 <p class="text-sm text-red-700">${error.message}</p>
-                <button onclick="retrieveRateInquiry()" class="mt-3 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors">
-                    Try Again
-                </button>
             </div>
         `;
+        
+        // Re-throw the error so handleGetRatesClick can catch it
+        throw error;
     }
 };
 
@@ -2488,7 +2526,7 @@ async function fetchHistoricalData(laneInfo) {
 function displayHistoricalData(data, contentElement, laneInfo) {
     if (!data || !data.records) {
         console.error("Invalid historical data received:", data);
-        contentElement.innerHTML = `<p class="text-red-500 text-center">Error: Invalid data received from server.</p>`;
+        contentElement.innerHTML = `<p class="text-red-500 text-center text-sm">Error: Invalid data received from server.</p>`;
         return;
     }
 
@@ -2496,90 +2534,18 @@ function displayHistoricalData(data, contentElement, laneInfo) {
     const queryRoute = `${query_parameters.source_city || 'Any'} to ${query_parameters.dest_city || 'Any'}`;
 
     let content = `
-        <div class="space-y-4">
-            <!-- Lane Summary -->
-            <div class="bg-purple-50 rounded-lg p-4">
-                <h4 class="font-medium text-purple-900 mb-3 flex items-center">
-                    <i class="fas fa-route text-purple-600 mr-2"></i>
-                    Lane Summary: ${escapeHtml(lane_summary.route || queryRoute)}
-                </h4>
-                <div class="grid grid-cols-2 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div><span class="text-neutral-600">Total Matches:</span> <span class="font-medium">${total_count}</span></div>
-                    <div><span class="text-neutral-600">Avg Cost/Mile:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_mile === 'number' ? '$'+cost_statistics.avg_cost_per_mile.toFixed(2) : 'N/A'}</span></div>
-                    <div><span class="text-neutral-600">Common Mode:</span> <span class="font-medium">${escapeHtml(lane_summary.most_common_mode || 'N/A')}</span></div>
-                    <div><span class="text-neutral-600">Avg Cost/Lb:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_lb === 'number' ? '$'+cost_statistics.avg_cost_per_lb.toFixed(2) : 'N/A'}</span></div>
-                    <div><span class="text-neutral-600">Avg Cost/CUFT:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_cuft === 'number' ? '$'+cost_statistics.avg_cost_per_cuft.toFixed(2) : 'N/A'}</span></div>
-                    <div><span class="text-neutral-600">Total Shpts (Data):</span> <span class="font-medium">${lane_summary.total_shipments_in_data || 'N/A'}</span></div>
-                </div>
-            </div>`;
-
-    if (records.length > 0) {
-        content += `
-            <!-- Historical Records Table -->
-            <div class="bg-neutral-50 rounded-lg p-4">
-                <h4 class="font-medium text-neutral-900 mb-3">Recent Historical Records (up to ${records.length})</h4>
-                <div class="overflow-x-auto text-xs">
-                    <table class="min-w-full">
-                        <thead class="bg-neutral-100">
-                            <tr class="border-b border-neutral-200">
-                                <th class="text-left py-2 px-3 font-semibold">Lane</th>
-                                <th class="text-left py-2 px-3 font-semibold">Mode</th>
-                                <th class="text-right py-2 px-3 font-semibold">Cost/Mile</th>
-                                <th class="text-right py-2 px-3 font-semibold">Cost/Lb</th>
-                                <th class="text-right py-2 px-3 font-semibold">Cost/CUFT</th>
-                                <th class="text-right py-2 px-3 font-semibold">Shp Count</th>
-                                <th class="text-left py-2 px-3 font-semibold">Preference</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-neutral-100">
-        `;
-        
-        records.forEach(record => {
-            const preferenceColor = record.MODE_PREFERENCE === 'Preferred Mode' ? 'text-green-600' 
-                                : record.MODE_PREFERENCE === 'Least Preferred Mode' ? 'text-red-600' 
-                                : 'text-neutral-600';
-            content += `
-                <tr>
-                    <td class="py-2 px-3 whitespace-nowrap">${escapeHtml(record.source_city)} <span class="text-neutral-400">(${escapeHtml(record.source_state)})</span> → ${escapeHtml(record.dest_city)} <span class="text-neutral-400">(${escapeHtml(record.dest_state)})</span></td>
-                    <td class="py-2 px-3">${escapeHtml(record.TMODE)}</td>
-                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_MILE === 'number' ? '$'+record.COST_PER_MILE.toFixed(2) : 'N/A'}</td>
-                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_LB === 'number' ? '$'+record.COST_PER_LB.toFixed(2) : 'N/A'}</td>
-                    <td class="py-2 px-3 text-right">${typeof record.COST_PER_CUFT === 'number' ? '$'+record.COST_PER_CUFT.toFixed(2) : 'N/A'}</td>
-                    <td class="py-2 px-3 text-right">${typeof record.SHP_COUNT === 'number' ? record.SHP_COUNT : 'N/A'}</td>
-                    <td class="py-2 px-3 ${preferenceColor} font-medium">${escapeHtml(record.MODE_PREFERENCE || 'N/A')}</td>
-                </tr>
-            `;
-        });
-        
-        content += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    } else {
-        content += `
-            <div class="text-center py-8 text-neutral-500">
-                <i class="fas fa-search-minus text-4xl mb-4 text-neutral-300"></i>
-                <p>No specific historical records found matching your exact criteria.</p>
-                <p class="text-sm mt-1">Total matches for the broader lane (if applicable): ${total_count}</p>
-            </div>
-        `;
-    }
-    
-    content += `
-            <!-- View All Data Button (Placeholder) -->
-            <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white mt-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h5 class="font-medium mb-1">Detailed Historical Analysis</h5>
-                        <p class="text-purple-100 text-sm">View complete historical data and trends (Feature Coming Soon)</p>
-                    </div>
-                    <button onclick="viewDetailedHistoricalData()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors flex items-center">
-                        <i class="fas fa-chart-area mr-2"></i>
-                        View Details
-                    </button>
-                </div>
+        <div class="bg-purple-50 rounded-lg p-3">
+            <h4 class="font-medium text-purple-900 mb-2 flex items-center text-sm">
+                <i class="fas fa-route text-purple-600 mr-2"></i>
+                Lane Summary: ${escapeHtml(lane_summary.route || queryRoute)}
+            </h4>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <div><span class="text-neutral-600">Matches:</span> <span class="font-medium">${total_count}</span></div>
+                <div><span class="text-neutral-600">Avg $/Mile:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_mile === 'number' ? '$'+cost_statistics.avg_cost_per_mile.toFixed(2) : 'N/A'}</span></div>
+                <div><span class="text-neutral-600">Mode:</span> <span class="font-medium">${escapeHtml(lane_summary.most_common_mode || 'N/A')}</span></div>
+                <div><span class="text-neutral-600">Avg $/Lb:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_lb === 'number' ? '$'+cost_statistics.avg_cost_per_lb.toFixed(2) : 'N/A'}</span></div>
+                <div><span class="text-neutral-600">Avg $/CUFT:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_cuft === 'number' ? '$'+cost_statistics.avg_cost_per_cuft.toFixed(2) : 'N/A'}</span></div>
+                <div><span class="text-neutral-600">Shipments:</span> <span class="font-medium">${lane_summary.total_shipments_in_data || 'N/A'}</span></div>
             </div>
         </div>
     `;
