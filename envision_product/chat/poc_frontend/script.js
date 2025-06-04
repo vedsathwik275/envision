@@ -3325,17 +3325,6 @@ function displayOrderDetails(orderData, orderGid) {
                         </div>
                     </div>
                 </div>
-
-                <!-- Raw Data Section (for debugging/additional info) -->
-                <div class="bg-neutral-100 rounded-lg p-4">
-                    <details class="cursor-pointer">
-                        <summary class="font-semibold text-neutral-900 hover:text-neutral-700">
-                            <i class="fas fa-code text-neutral-500 mr-2"></i>
-                            Raw Order Data (Click to expand)
-                        </summary>
-                        <pre class="mt-3 text-xs bg-white p-3 rounded border overflow-x-auto">${JSON.stringify(orderData, null, 2)}</pre>
-                    </details>
-                </div>
             </div>
         `;
 
