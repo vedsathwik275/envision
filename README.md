@@ -19,7 +19,7 @@ Envision is a comprehensive AI platform featuring neural network models, RAG cha
 | **Neural Backend** | `envision_product/neural/backend/` | 8000 | `uvicorn main:app --reload` | ML model API and data processing |
 | **RAG Chatbot Backend** | `envision_product/chat/backend/` | 8004 | `uvicorn api.main:app --reload --port 8004` | Knowledge base and chat API |
 | **Gmail S3 Tools** | `envision_product/tools/gmail_s3/` | 8002 | `uvicorn app.main:app --reload --port 8002` | Email attachment processing |
-| **RIQ Backend** | `envision_product/tools/` | 8006 | `uvicorn data_tool.main:app --reload --port 8006` | RIQ API |
+| **Data Tools Backend** | `envision_product/tools/` | 8006 | `uvicorn data_tool.main:app --reload --port 8006` | Data Tools API |
 
 ## Quick Start
 
