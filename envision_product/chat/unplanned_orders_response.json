@@ -1,0 +1,1731 @@
+{
+    "success": true,
+    "data": {
+      "hasMore": false,
+      "limit": 100,
+      "count": 9,
+      "offset": 0,
+      "items": [
+        {
+          "orderReleaseXid": "284730",
+          "orderReleaseName": "284730",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-02-26T00:00:00-08:00"
+          },
+          "totalWeight": {
+            "value": 72,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 7.85,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 20,
+          "totalItemPackageCount": 141,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_PAMT",
+          "totalNetWeight": {
+            "value": 27,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 7.85,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 0,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 20,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-02-26T08:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-03-05T09:18:54Z"
+          },
+          "insertDate": {
+            "value": "2025-03-05T09:18:50Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.284730"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "288166",
+          "orderReleaseName": "288166",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-03-12T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 67.44,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 6.49,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 16,
+          "totalItemPackageCount": 117,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 22.44,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 6.49,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 0,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 16,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-03-12T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-03-07T07:39:02Z"
+          },
+          "insertDate": {
+            "value": "2025-03-07T07:38:59Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.288166"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "299374",
+          "orderReleaseName": "299374",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-03-19T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 66.3,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 6.15,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 15,
+          "totalItemPackageCount": 111,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 21.3,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 6.15,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 0,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 15,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-03-19T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-03-14T06:08:48Z"
+          },
+          "insertDate": {
+            "value": "2025-03-14T06:08:43Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.299374"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "309595",
+          "orderReleaseName": "309595",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-03-26T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 245.5,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 7.66,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 19,
+          "totalItemPackageCount": 138,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 200.5,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 7.66,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 19,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-03-26T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-03-21T06:29:44Z"
+          },
+          "insertDate": {
+            "value": "2025-03-21T06:29:40Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.309595"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "321232",
+          "orderReleaseName": "321232",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-04-02T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 236.35,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 7.51,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 19,
+          "totalItemPackageCount": 135,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 191.35,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 7.51,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 19,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-04-02T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-03-28T06:59:37Z"
+          },
+          "insertDate": {
+            "value": "2025-03-28T06:59:33Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.321232"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "333397",
+          "orderReleaseName": "333397",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-04-09T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 265.6,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 8.68,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 22,
+          "totalItemPackageCount": 156,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 220.6,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 8.68,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 22,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-04-09T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-04-04T07:43:22Z"
+          },
+          "insertDate": {
+            "value": "2025-04-04T07:43:18Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.333397"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "348965",
+          "orderReleaseName": "348965",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-04-16T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 98.6,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 2.72,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 8,
+          "totalItemPackageCount": 48,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 53.6,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 2.72,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "shipUnitWidth": {
+            "value": 3.33,
+            "unit": "FT"
+          },
+          "shipUnitLength": {
+            "value": 4,
+            "unit": "FT"
+          },
+          "shipUnitHeight": {
+            "value": 0.9375,
+            "unit": "FT"
+          },
+          "transportHandlingUnitGid": "BSL.GMA PALLET",
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Full Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 8,
+          "attributeNumber19": 1,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-04-16T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-04-11T06:21:08Z"
+          },
+          "insertDate": {
+            "value": "2025-04-11T06:21:03Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.348965"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "358934",
+          "orderReleaseName": "358934",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-04-23T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 331.45,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 10.45,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 25,
+          "totalItemPackageCount": 189,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 286.45,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 10.45,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 25,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-04-23T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-04-18T05:50:33Z"
+          },
+          "insertDate": {
+            "value": "2025-04-18T05:50:28Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.358934"
+            }
+          ]
+        },
+        {
+          "orderReleaseXid": "374451",
+          "orderReleaseName": "374451",
+          "orderReleaseTypeGid": "BSL.COLLECT_SALES_ORDER",
+          "isTemplate": false,
+          "sourceLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/sourceLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.300000035689670-300000054405976"
+              }
+            ]
+          },
+          "destinationLocation": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/destinationLocation"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/locations/BSL.100000086278632"
+              }
+            ]
+          },
+          "latePickupDate": {
+            "value": "2025-04-30T00:00:00-07:00"
+          },
+          "totalWeight": {
+            "value": 227.2,
+            "unit": "LB"
+          },
+          "totalVolume": {
+            "value": 7.36,
+            "unit": "CUFT"
+          },
+          "totalPackagingUnitCount": 19,
+          "totalItemPackageCount": 132,
+          "bestDirectCostBuy": {
+            "value": 5000,
+            "currency": "USD"
+          },
+          "bestDirectRateofferGidBuy": "BSL.TL_BNCH",
+          "totalNetWeight": {
+            "value": 182.2,
+            "unit": "LB"
+          },
+          "totalNetVolume": {
+            "value": 7.36,
+            "unit": "CUFT"
+          },
+          "totalShipUnitCount": 1,
+          "pickupIsAppt": false,
+          "deliveryIsAppt": false,
+          "timeWindowEmphasisGid": "BOTH",
+          "isKnownShipper": false,
+          "releaseMethodGid": "BSL.BISSELL_AUTO_CALC",
+          "locAmount": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "secondaryTWeight": {
+            "value": 0,
+            "unit": "LB"
+          },
+          "secondaryTVolume": {
+            "value": 0,
+            "unit": "CUFT"
+          },
+          "servprov": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/servprov"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/serviceProviders/BSL.BNCH"
+              }
+            ]
+          },
+          "servprovProfileGid": "BSL.CUS-52061",
+          "equipmentGroup": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/equipmentGroup"
+              },
+              {
+                "rel": "canonical",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/equipmentGroups/BSL.53FT_TRAILERS"
+              }
+            ]
+          },
+          "mustShipDirect": false,
+          "mustShipThruXDock": false,
+          "mustShipThruPool": false,
+          "importLicenseRequired": "MAY BE REQUIRED",
+          "isLocRequired": false,
+          "inspectionRequired": "MAY BE REQUIRED",
+          "customerUnitizationRequest": false,
+          "isLocStale": false,
+          "bundlingType": "AUTOMATIC",
+          "isConsolidateOrEquipment": false,
+          "dutyPaid": "NA",
+          "totalDeclaredValue": {
+            "value": 0,
+            "currency": "USD"
+          },
+          "onRtExecution": false,
+          "isSplittable": false,
+          "otmVersion": "6.0",
+          "priority": 1,
+          "domainName": "BSL",
+          "isPreEnteredPu": false,
+          "attribute19": "Mixed Pallets",
+          "attributeNumber3": 5000,
+          "attributeNumber4": 1,
+          "attributeNumber5": 14,
+          "isTopoff": false,
+          "attributeNumber11": 0,
+          "attributeNumber12": 19,
+          "attributeNumber19": 2,
+          "attributeNumber20": 1,
+          "attributeDate18": {
+            "value": "2025-04-30T07:00:00Z"
+          },
+          "updateDate": {
+            "value": "2025-04-25T05:58:45Z"
+          },
+          "insertDate": {
+            "value": "2025-04-25T05:58:41Z"
+          },
+          "lines": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/lines"
+              }
+            ]
+          },
+          "statuses": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/statuses"
+              }
+            ]
+          },
+          "refnums": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/refnums"
+              }
+            ]
+          },
+          "remarks": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/remarks"
+              }
+            ]
+          },
+          "shipUnits": {
+            "links": [
+              {
+                "rel": "self",
+                "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451/shipUnits"
+              }
+            ]
+          },
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451"
+            },
+            {
+              "rel": "canonical",
+              "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases/BSL.374451"
+            }
+          ]
+        }
+      ],
+      "links": [
+        {
+          "rel": "self",
+          "href": "https://otmgtm-test-ejhu.otmgtm.us-ashburn-1.ocs.oraclecloud.com:443/logisticsRestApi/resources-int/v2/orderReleases"
+        }
+      ]
+    },
+    "error": null,
+    "lane_info": {
+      "origin_city": "LANCASTER",
+      "origin_state": "TX",
+      "origin_country": "US",
+      "destination_city": "DALLAS",
+      "destination_state": "TX",
+      "destination_country": "US"
+    }
+  }
