@@ -2276,17 +2276,6 @@ function displaySpotRateMatrix(data) {
 
     let content = `
         <div class="space-y-4">
-            <!-- Lane Summary -->
-            <div class="bg-green-50 rounded-lg p-4">
-                <h4 class="font-medium text-green-900 mb-3 flex items-center">
-                    <i class="fas fa-route text-green-600 mr-2"></i>
-                    Spot Rate Matrix: ${escapeHtml(origin_city)}, ${escapeHtml(origin_state)} → ${escapeHtml(destination_city)}, ${escapeHtml(destination_state)}
-                </h4>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div><span class="text-neutral-600">Shipment Date:</span> <span class="font-medium">${escapeHtml(shipment_date)}</span></div>
-                    <div><span class="text-neutral-600">Carriers Found:</span> <span class="font-medium">${spot_costs.length}</span></div>
-                </div>
-            </div>
     `;
 
     if (spot_costs.length > 0) {
@@ -2320,43 +2309,94 @@ function displaySpotRateMatrix(data) {
             }
         }
 
-        // Rate Statistics Section (moved here, after lane summary, before matrix)
+        // Combined Rate Statistics and Lane Parameters Section
         content += `
-            <!-- Rate Statistics -->
-            <div class="bg-blue-50 rounded-lg p-4">
-                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
-                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+            <!-- Combined Rate Statistics & Lane Parameters -->
+            <div class="bg-green-50 rounded-lg p-4">
+                <h4 class="font-medium text-green-900 mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-green-600 mr-2"></i>
                     Rate Statistics
                 </h4>
-                <div class="grid grid-cols-3 gap-3 text-sm">
-                    <div class="text-center">
-                        <div class="text-neutral-600">Lowest Rate</div>
-                        <div class="font-medium text-lg text-green-600">$${minRateData.cost.toFixed(2)}</div>
-                        <div class="text-xs text-neutral-500">${minRateData.carrier} - ${minRateData.date}</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-neutral-600">Best Carrier Rate</div>`;
+                
+                <!-- Lane Parameters Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm mb-4">`;
+
+        // Add lane parameters dynamically
+        if (laneInfo && laneInfo.sourceCity) {
+            content += `<div><span class="text-neutral-600">Origin:</span> <span class="font-medium">${laneInfo.sourceCity}</span></div>`;
+        } else {
+            content += `<div><span class="text-neutral-600">Origin:</span> <span class="font-medium">${escapeHtml(origin_city)}</span></div>`;
+        }
+        
+        if (laneInfo && laneInfo.destinationCity) {
+            content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${laneInfo.destinationCity}</span></div>`;
+        } else {
+            content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${escapeHtml(destination_city)}</span></div>`;
+        }
+        
+        content += `<div><span class="text-neutral-600">Shipment Date:</span> <span class="font-medium">${escapeHtml(shipment_date)}</span></div>`;
+        content += `<div><span class="text-neutral-600">Carriers Found:</span> <span class="font-medium">${spot_costs.length}</span></div>`;
+        
+        if (laneInfo && laneInfo.laneName) {
+            content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
+        }
+        
+        if (laneInfo && laneInfo.equipmentType) {
+            content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
+        }
+        
+        if (laneInfo && laneInfo.serviceType) {
+            content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
+        }
+        
+        if (laneInfo && laneInfo.weight) {
+            content += `<div><span class="text-neutral-600">Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
+        }
+        
+        if (laneInfo && laneInfo.volume) {
+            content += `<div><span class="text-neutral-600">Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
+        }
+
+        content += `
+                </div>
+                
+                <!-- Rate Statistics Grid -->
+                <div class="border-t border-green-200 pt-4">
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div class="text-center">
+                            <div class="text-neutral-600 mb-1">Lowest Rate</div>
+                            <div class="font-medium text-lg text-green-700">$${minRateData.cost.toFixed(2)}</div>
+                            <div class="text-xs text-neutral-500">${minRateData.carrier}</div>
+                            <div class="text-xs text-neutral-500">${minRateData.date}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-neutral-600 mb-1">Best Carrier Rate</div>`;
         
         if (bestCarrierBestRate) {
             content += `
-                        <div class="font-medium text-lg text-blue-600">$${bestCarrierBestRate.cost.toFixed(2)}</div>
-                        <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier} - ${bestCarrierBestRate.date}</div>`;
+                            <div class="font-medium text-lg text-green-700">$${bestCarrierBestRate.cost.toFixed(2)}</div>
+                            <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier}</div>
+                            <div class="text-xs text-neutral-500">${bestCarrierBestRate.date}</div>`;
         } else if (laneInfo && laneInfo.bestCarrier) {
             content += `
-                        <div class="font-medium text-lg text-gray-500">Not Available</div>
-                        <div class="text-xs text-neutral-500">${laneInfo.bestCarrier} - Not in spot data</div>`;
+                            <div class="font-medium text-lg text-gray-500">Not Available</div>
+                            <div class="text-xs text-neutral-500">${laneInfo.bestCarrier}</div>
+                            <div class="text-xs text-neutral-500">Not in spot data</div>`;
         } else {
             content += `
-                        <div class="font-medium text-lg text-gray-500">Not Identified</div>
-                        <div class="text-xs text-neutral-500">No best carrier from chat</div>`;
+                            <div class="font-medium text-lg text-gray-500">Not Identified</div>
+                            <div class="text-xs text-neutral-500">No best carrier</div>
+                            <div class="text-xs text-neutral-500">from chat</div>`;
         }
         
         content += `
-                    </div>
-                    <div class="text-center">
-                        <div class="text-neutral-600">Highest Rate</div>
-                        <div class="font-medium text-lg text-red-600">$${maxRateData.cost.toFixed(2)}</div>
-                        <div class="text-xs text-neutral-500">${maxRateData.carrier} - ${maxRateData.date}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-neutral-600 mb-1">Highest Rate</div>
+                            <div class="font-medium text-lg text-red-600">$${maxRateData.cost.toFixed(2)}</div>
+                            <div class="text-xs text-neutral-500">${maxRateData.carrier}</div>
+                            <div class="text-xs text-neutral-500">${maxRateData.date}</div>
+                        </div>
                     </div>
                 </div>
             </div>
