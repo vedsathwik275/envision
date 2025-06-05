@@ -101,11 +101,8 @@ export function setupEventListeners() {
  * Assign global functions to window object for HTML onclick handlers
  */
 export function assignGlobalFunctions() {
-    // Knowledge base functions
-    window.uploadToKB = uploadToKB;
-    window.processKB = processKB;
-    window.startChatWithKB = startChatWithKB;
-    window.handleDefaultKBChange = handleDefaultKBChange;
+    // Knowledge base functions are now auto-assigned by knowledge-base.js module
+    // No need to assign them here as they're handled by their own module
     
     // Modal functions
     window.openCreateKBModal = openCreateKBModal;

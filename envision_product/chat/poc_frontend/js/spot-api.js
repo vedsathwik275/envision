@@ -32,31 +32,32 @@ export function toggleSpotRateMatrix() {
 }
 
 /**
- * Fetch spot rate matrix - placeholder
+ * Fetch spot rate matrix from API
  */
 export async function fetchSpotRateMatrix(laneInfo, shipmentDate) {
     console.log('📊 Fetching spot rate matrix...', { laneInfo, shipmentDate });
     
-    // Placeholder implementation
-    return {
-        origin_city: laneInfo?.sourceCity || 'Unknown',
-        destination_city: laneInfo?.destinationCity || 'Unknown',
-        shipment_date: shipmentDate,
-        spot_costs: [
-            {
-                carrier: 'Sample Carrier 1',
-                cost_details: [
-                    { ship_date: shipmentDate, total_spot_cost: '1250.00' }
-                ]
-            },
-            {
-                carrier: 'Sample Carrier 2', 
-                cost_details: [
-                    { ship_date: shipmentDate, total_spot_cost: '1180.00' }
-                ]
-            }
-        ]
-    };
+    try {
+        const payload = {
+            origin_city: laneInfo?.sourceCity || '',
+            destination_city: laneInfo?.destinationCity || '',
+            shipment_date: shipmentDate || new Date().toISOString().split('T')[0]
+        };
+        
+        const response = await callDataToolsAPI('/spot-rate/matrix', payload);
+        return response;
+    } catch (error) {
+        console.error('Failed to fetch spot rate matrix:', error);
+        showNotification('Failed to fetch spot rate matrix', 'error');
+        
+        // Return placeholder data on error
+        return {
+            origin_city: laneInfo?.sourceCity || 'Unknown',
+            destination_city: laneInfo?.destinationCity || 'Unknown', 
+            shipment_date: shipmentDate,
+            spot_costs: []
+        };
+    }
 }
 
 /**

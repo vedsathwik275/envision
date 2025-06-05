@@ -227,6 +227,7 @@ export function setCurrentView(view) {
 export function updateDashboardStats() {
     const kbCountElement = document.getElementById('kb-count');
     const readyKbElement = document.getElementById('ready-kb-count');
+    const docCountElement = document.getElementById('doc-count');
     
     if (kbCountElement && window.knowledgeBases) {
         kbCountElement.textContent = window.knowledgeBases.length;
@@ -235,5 +236,10 @@ export function updateDashboardStats() {
     if (readyKbElement && window.knowledgeBases) {
         const readyCount = window.knowledgeBases.filter(kb => kb.status === 'ready').length;
         readyKbElement.textContent = readyCount;
+    }
+    
+    if (docCountElement && window.knowledgeBases) {
+        const totalDocs = window.knowledgeBases.reduce((sum, kb) => sum + (kb.document_count || 0), 0);
+        docCountElement.textContent = totalDocs;
     }
 } 

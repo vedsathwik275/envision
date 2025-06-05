@@ -104,6 +104,21 @@
         #order-release-content::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        
+        /* Custom styling for default knowledge base checkbox */
+        .default-kb-checkbox {
+            accent-color: #ca8a04; /* yellow-600 equivalent */
+        }
+        
+        .default-kb-checkbox:checked {
+            background-color: #ca8a04;
+            border-color: #ca8a04;
+        }
+        
+        .default-kb-checkbox:focus {
+            box-shadow: 0 0 0 3px rgba(202, 138, 4, 0.1);
+            border-color: #ca8a04;
+        }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-800 min-h-screen">
@@ -712,7 +727,23 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
+    <!-- Load modules in correct dependency order -->
+    <!-- <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/api-client.js"></script>
+    <script type="module" src="js/ui-manager.js"></script>
+    <script type="module" src="js/modal-manager.js"></script>
+    <script type="module" src="js/knowledge-base.js"></script>
+    <script type="module" src="js/chat-system.js"></script>
+    <script type="module" src="js/data-parser.js"></script>
+    <script type="module" src="js/riq-api.js"></script>
+    <script type="module" src="js/spot-api.js"></script>
+    <script type="module" src="js/historical-api.js"></script>
+    <script type="module" src="js/order-api.js"></script>
+    <script type="module" src="js/ai-recommendations.js"></script>
+    <script type="module" src="js/event-handlers.js"></script>
+    <script type="module" src="js/app.js"></script> -->
 </body>
 </html>
 

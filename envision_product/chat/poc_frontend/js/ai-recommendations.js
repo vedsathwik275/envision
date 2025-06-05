@@ -3,6 +3,7 @@
  * Data collection status tracking, recommendation generation, aggregated data management
  */
 
+import { makeAPIRequest } from './api-client.js';
 import { showNotification } from './utils.js';
 
 /**
@@ -19,9 +20,24 @@ export async function handleGenerateRecommendationsClick() {
         const hasData = Object.values(aggregatedData).some(item => item.hasData);
         
         if (hasData) {
-            console.log('Using aggregated data for recommendations:', aggregatedData);
-            // Complex AI recommendation logic would go here
-            showNotification('AI recommendations generated successfully', 'success');
+            try {
+                const payload = {
+                    aggregated_data: aggregatedData,
+                    lane_info: window.currentLaneInfo
+                };
+                
+                const response = await makeAPIRequest('/recommendations/generate', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                
+                console.log('AI recommendations response:', response);
+                showNotification('AI recommendations generated successfully', 'success');
+                return response;
+            } catch (error) {
+                console.error('Failed to generate AI recommendations:', error);
+                showNotification('Failed to generate AI recommendations', 'error');
+            }
         } else {
             showNotification('Insufficient data for comprehensive recommendations. Please perform more analyses first.', 'warning');
         }

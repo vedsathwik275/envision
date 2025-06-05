@@ -41,9 +41,28 @@ export async function updateHistoricalDataCard(laneInfo, userMessage, response) 
 /**
  * View detailed historical data
  */
-export function viewDetailedHistoricalData() {
+export async function viewDetailedHistoricalData() {
     console.log('📈 Viewing detailed historical data...');
     showNotification('Historical data analysis starting...', 'info');
+    
+    if (window.currentLaneInfo) {
+        try {
+            const payload = {
+                origin_city: window.currentLaneInfo.sourceCity || '',
+                destination_city: window.currentLaneInfo.destinationCity || '',
+                date_range: '90' // last 90 days
+            };
+            
+            const response = await callDataToolsAPI('/historical-data/query', payload);
+            console.log('Historical data response:', response);
+            showNotification('Historical data loaded successfully', 'success');
+        } catch (error) {
+            console.error('Failed to fetch historical data:', error);
+            showNotification('Failed to fetch historical data', 'error');
+        }
+    } else {
+        showNotification('No lane information available for historical analysis', 'warning');
+    }
 }
 
 /**

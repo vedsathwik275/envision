@@ -94,11 +94,10 @@ export async function sendMessage() {
     addChatMessage('', 'assistant', { typing: true, id: typingId });
     
     try {
-        const response = await makeAPIRequest('/chat', {
+        const response = await makeAPIRequest(`/knowledge_bases/${window.currentKBId}/chat`, {
             method: 'POST',
             body: JSON.stringify({
-                message: message,
-                knowledge_base_id: window.currentKBId
+                query: message
             })
         });
         

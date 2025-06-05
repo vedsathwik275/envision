@@ -6,7 +6,7 @@
 import { makeAPIRequest } from './api-client.js';
 import { CONFIG } from './config.js';
 import { showNotification, escapeHtml, formatDate } from './utils.js';
-import { showLoading, hideLoading } from './ui-manager.js';
+import { showLoading, hideLoading, updateDashboardStats } from './ui-manager.js';
 import { closeCreateKBModal, closeUploadDocModal } from './modal-manager.js';
 
 // Global knowledge base state
@@ -18,9 +18,13 @@ export let currentKBId = null;
  */
 export async function loadKnowledgeBases() {
     try {
-        const data = await makeAPIRequest('/knowledge-bases');
+        const data = await makeAPIRequest('/knowledge_bases/');
         knowledgeBases = data;
         window.knowledgeBases = knowledgeBases; // Keep global reference
+        
+        // Update dashboard statistics when knowledge bases are loaded
+        updateDashboardStats();
+        
         return knowledgeBases;
     } catch (error) {
         console.error('Failed to load knowledge bases:', error);
@@ -69,8 +73,11 @@ export function populateKBSelects() {
  * Load knowledge bases view
  */
 export async function loadKnowledgeBasesView() {
+    console.log('🔄 Loading knowledge bases view...');
     await loadKnowledgeBases();
+    console.log(`📊 Loaded ${knowledgeBases.length} knowledge bases:`, knowledgeBases);
     renderKnowledgeBases();
+    console.log('✅ Knowledge bases view rendered');
 }
 
 /**
@@ -78,7 +85,11 @@ export async function loadKnowledgeBasesView() {
  */
 export function renderKnowledgeBases() {
     const container = document.getElementById('kb-list');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ kb-list container not found!');
+        return;
+    }
+    console.log(`🎨 Rendering ${knowledgeBases.length} knowledge bases in container:`, container);
     
     if (knowledgeBases.length === 0) {
         container.innerHTML = `
@@ -95,6 +106,29 @@ export function renderKnowledgeBases() {
     }
     
     container.innerHTML = knowledgeBases.map(kb => createKnowledgeBaseCard(kb)).join('');
+    
+    // Add event listeners to implement radio-button-like behavior for default checkboxes
+    setupDefaultCheckboxBehavior();
+}
+
+/**
+ * Setup radio-button-like behavior for default knowledge base checkboxes
+ */
+function setupDefaultCheckboxBehavior() {
+    const defaultCheckboxes = document.querySelectorAll('.default-kb-checkbox');
+    
+    defaultCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck all other default checkboxes
+                defaultCheckboxes.forEach(otherCheckbox => {
+                    if (otherCheckbox !== this) {
+                        otherCheckbox.checked = false;
+                    }
+                });
+            }
+        });
+    });
 }
 
 /**
@@ -106,13 +140,18 @@ export function createKnowledgeBaseCard(kb) {
     const statusColor = getStatusColor(kb.status);
     const isDefaultKB = getDefaultKB() === kb.id;
     
+    // Apply gold styling to the entire card if it's the default KB
+    const cardClasses = isDefaultKB 
+        ? "bg-yellow-50 rounded-lg shadow-sm border-2 border-yellow-400 p-6" 
+        : "bg-white rounded-lg shadow-sm border border-neutral-200 p-6";
+    
     return `
-        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+        <div class="${cardClasses}">
             <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
                         <h3 class="text-lg font-semibold text-neutral-900">${escapeHtml(kb.name)}</h3>
-                        ${isDefaultKB ? '<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">Default</span>' : ''}
+                        ${isDefaultKB ? '<span class="bg-yellow-200 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">Default</span>' : ''}
                     </div>
                     <p class="text-sm text-neutral-600 mb-3">${escapeHtml(kb.description || 'No description provided')}</p>
                     <div class="flex items-center gap-4 text-sm text-neutral-500">
@@ -125,8 +164,13 @@ export function createKnowledgeBaseCard(kb) {
                         ${kb.status === 'processing' ? '<i class="fas fa-spinner fa-spin mr-1"></i>' : ''}
                         ${kb.status}
                     </span>
-                    <input type="checkbox" ${isDefaultKB ? 'checked' : ''} onchange="handleDefaultKBChange('${kb.id}', this)" 
-                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" title="Set as default KB">
+                    <label class="flex items-center text-sm text-neutral-600 cursor-pointer">
+                        <input type="checkbox" 
+                               class="default-kb-checkbox h-4 w-4 mr-2 rounded border-neutral-300" 
+                               ${isDefaultKB ? 'checked' : ''} 
+                               onchange="handleDefaultKBChange('${kb.id}', this)">
+                        Set as default knowledge base
+                    </label>
                 </div>
             </div>
             
@@ -169,7 +213,7 @@ export async function handleCreateKB(e) {
     
     try {
         showLoading('Creating knowledge base...');
-        await makeAPIRequest('/knowledge-bases', {
+        await makeAPIRequest('/knowledge_bases/', {
             method: 'POST',
             body: JSON.stringify(kbData)
         });
@@ -217,7 +261,7 @@ export async function handleUploadDocument(e) {
             const uploadData = new FormData();
             uploadData.append('file', file);
             
-            await fetch(`${CONFIG.API_BASE_URL}/knowledge-bases/${kbId}/documents`, {
+            await fetch(`${CONFIG.API_BASE_URL}/knowledge_bases/${kbId}/documents`, {
                 method: 'POST',
                 body: uploadData
             });
@@ -257,7 +301,7 @@ export function uploadToKB(kbId) {
 export async function processKB(kbId) {
     try {
         showLoading('Processing knowledge base...');
-        await makeAPIRequest(`/knowledge-bases/${kbId}/process`, {
+        await makeAPIRequest(`/knowledge_bases/${kbId}/process`, {
             method: 'POST'
         });
         
@@ -297,7 +341,7 @@ export function startChatWithKB(kbId) {
  * @param {string} kbId - Knowledge base ID
  */
 export function setDefaultKB(kbId) {
-    localStorage.setItem('defaultKBId', kbId);
+    localStorage.setItem('defaultKnowledgeBaseId', kbId);
 }
 
 /**
@@ -305,14 +349,14 @@ export function setDefaultKB(kbId) {
  * @returns {string|null} Default KB ID
  */
 export function getDefaultKB() {
-    return localStorage.getItem('defaultKBId');
+    return localStorage.getItem('defaultKnowledgeBaseId');
 }
 
 /**
  * Clear default KB
  */
 export function clearDefaultKB() {
-    localStorage.removeItem('defaultKBId');
+    localStorage.removeItem('defaultKnowledgeBaseId');
 }
 
 /**
@@ -322,21 +366,9 @@ export function clearDefaultKB() {
  */
 export function handleDefaultKBChange(kbId, checkbox) {
     if (checkbox.checked) {
-        // Uncheck all other default checkboxes
-        document.querySelectorAll('input[type="checkbox"][onchange*="handleDefaultKBChange"]').forEach(cb => {
-            if (cb !== checkbox) {
-                cb.checked = false;
-            }
-        });
-        
         setDefaultKB(kbId);
-        showNotification('Default knowledge base updated', 'success');
-        
-        // Update KB selects with new default
-        populateKBSelects();
     } else {
         clearDefaultKB();
-        showNotification('Default knowledge base cleared', 'info');
     }
 }
 
@@ -363,4 +395,29 @@ export function getCurrentKBId() {
 export function setCurrentKBId(kbId) {
     currentKBId = kbId;
     window.currentKBId = kbId;
-} 
+}
+
+/**
+ * Assign knowledge base functions to window object for global access
+ */
+function assignGlobalFunctions() {
+    window.loadKnowledgeBasesView = loadKnowledgeBasesView;
+    window.loadKnowledgeBases = loadKnowledgeBases;
+    window.renderKnowledgeBases = renderKnowledgeBases;
+    window.populateKBSelects = populateKBSelects;
+    window.uploadToKB = uploadToKB;
+    window.processKB = processKB;
+    window.startChatWithKB = startChatWithKB;
+    window.handleDefaultKBChange = handleDefaultKBChange;
+    window.handleCreateKB = handleCreateKB;
+    window.handleUploadDocument = handleUploadDocument;
+    window.getKnowledgeBases = getKnowledgeBases;
+    window.getCurrentKBId = getCurrentKBId;
+    window.setCurrentKBId = setCurrentKBId;
+    window.setDefaultKB = setDefaultKB;
+    window.getDefaultKB = getDefaultKB;
+    window.clearDefaultKB = clearDefaultKB;
+}
+
+// Auto-assign functions when module loads
+assignGlobalFunctions(); 

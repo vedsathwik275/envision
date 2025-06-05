@@ -39,23 +39,44 @@ export async function updateOrderReleaseCard(laneInfo, userMessage, response) {
 }
 
 /**
- * Select an order
+ * Select an order and get detailed information
  */
 export async function selectOrder(orderGid) {
     console.log('📋 Selecting order:', orderGid);
-    showNotification(`Order ${orderGid} selected`, 'info');
+    
+    try {
+        const response = await callDataToolsAPI(`/order-release/${orderGid}`, {});
+        console.log('Order details:', response);
+        showNotification(`Order ${orderGid} details loaded`, 'success');
+        return response;
+    } catch (error) {
+        console.error('Failed to get order details:', error);
+        showNotification(`Failed to load order ${orderGid} details`, 'error');
+    }
 }
 
 /**
- * Handle get orders click
+ * Handle get orders click - fetch unplanned orders for the lane
  */
 export async function handleGetOrdersClick() {
     console.log('🚚 Getting orders...');
     showNotification('Loading orders...', 'info');
     
     if (window.currentLaneInfo) {
-        console.log('Using lane info for orders:', window.currentLaneInfo);
-        // Complex order fetching logic would go here
+        try {
+            const payload = {
+                origin_city: window.currentLaneInfo.sourceCity || '',
+                destination_city: window.currentLaneInfo.destinationCity || ''
+            };
+            
+            const response = await callDataToolsAPI('/order-release/unplanned-orders', payload);
+            console.log('Unplanned orders response:', response);
+            showNotification('Orders loaded successfully', 'success');
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+            showNotification('Failed to load orders', 'error');
+        }
     } else {
         showNotification('No lane information available for order search', 'warning');
     }
