@@ -172,6 +172,52 @@ class ErrorResponse(BaseModel):
     message: str = Field(..., description="A human-readable message describing the error.")
     details: Optional[Any] = Field(None, description="Optional details about the error, can be a dict or list.")
 
+# New RIQ REST and XML Models
+class LaneRequest(BaseModel):
+    """Request model for lane-based location queries."""
+    source_city: str = Field(..., description="Source city name")
+    source_state: str = Field(..., description="Source state/province code")
+    source_country: str = Field("US", description="Source country code")
+    dest_city: str = Field(..., description="Destination city name")
+    dest_state: str = Field(..., description="Destination state/province code")
+    dest_country: str = Field("US", description="Destination country code")
+
+class LocationResponse(BaseModel):
+    """Response model for location ID queries."""
+    success: bool = Field(..., description="Whether the request was successful")
+    locations: Optional[Dict[str, str]] = Field(None, description="Location IDs (source_location_id, dest_location_id)")
+    raw_response: Optional[Dict[str, Any]] = Field(None, description="Raw response from Oracle API")
+    error: Optional[str] = Field(None, description="Error message if any")
+
+class RIQXMLRequest(BaseModel):
+    """Request model for XML-based RIQ queries."""
+    source_location_id: str = Field(..., description="Source location XID")
+    dest_location_id: str = Field(..., description="Destination location XID")
+    weight: float = Field(..., description="Weight value in pounds")
+    volume: float = Field(0, description="Volume value in cubic feet")
+    transport_modes: List[str] = Field(["LTL", "TL"], description="Transport modes to query")
+
+class RIQResult(BaseModel):
+    """Individual RIQ result from XML response."""
+    service_provider: Optional[str] = Field(None, description="Service provider code")
+    transport_mode: Optional[str] = Field(None, description="Transport mode")
+    cost: Optional[float] = Field(None, description="Cost amount")
+    currency: Optional[str] = Field(None, description="Currency code")
+    distance: Optional[float] = Field(None, description="Distance value")
+    distance_unit: Optional[str] = Field(None, description="Distance unit")
+    is_optimal: Optional[bool] = Field(None, description="Whether this is an optimal result")
+    transit_time_hours: Optional[float] = Field(None, description="Transit time in hours")
+    transit_time_unit: Optional[str] = Field(None, description="Transit time unit")
+
+class RIQXMLResponse(BaseModel):
+    """Response model for XML-based RIQ queries."""
+    success: bool = Field(..., description="Whether the request was successful")
+    results: List[RIQResult] = Field([], description="List of RIQ results")
+    total_results: int = Field(0, description="Total number of results")
+    raw_xml_request: Optional[str] = Field(None, description="Raw XML request sent")
+    raw_xml_response: Optional[str] = Field(None, description="Raw XML response received")
+    error: Optional[str] = Field(None, description="Error message if any")
+
 # Order Release Models
 class OrderReleaseResponse(BaseModel):
     """Response model for order release queries."""
@@ -578,6 +624,166 @@ async def historical_data_health(service: HistoricalDataService = Depends(get_hi
     # The Depends(get_historical_data_service) already performs a check
     # If it passes, the service is considered healthy enough to respond.
     return {"status": "ok", "message": "Historical Data Service is operational.", "data_records_loaded": len(service.df) if service.df is not None else 0}
+
+# New RIQ REST and XML Routes
+@app.post(
+    "/new-riq-rest",
+    response_model=LocationResponse,
+    tags=["RIQ Location"],
+    summary="Get Location IDs for Lane",
+    description="Retrieves location IDs from Oracle's REST API for a given transportation lane.",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse, "description": "Bad Request"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Locations Not Found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
+async def get_location_ids(
+    request: LaneRequest,
+    client: RIQClient = Depends(get_riq_client)
+) -> LocationResponse:
+    """
+    Query Oracle's REST API to get location IDs for a given lane.
+    
+    This endpoint accepts lane parameters (source and destination city, state, country)
+    and returns the location XIDs needed for subsequent RIQ XML API calls.
+    
+    Args:
+        request: LaneRequest containing source and destination location details
+        client: RIQ client instance
+        
+    Returns:
+        LocationResponse containing location IDs or error information
+    """
+    try:
+        logger.info(f"Received location ID query request: {request.model_dump_json(indent=2)}")
+        
+        # Call the RIQ client to get location IDs
+        result = client.get_location_ids(
+            request.source_city,
+            request.source_state,
+            request.source_country,
+            request.dest_city,
+            request.dest_state,
+            request.dest_country
+        )
+        
+        # Check if there was an error in the service response
+        if "error" in result:
+            error_msg = result["error"]
+            logger.error(f"Location query error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error querying locations: {error_msg}"
+            )
+        
+        # Check if locations were found
+        locations = result.get("locations", {})
+        if not locations.get("source_location_id") or not locations.get("dest_location_id"):
+            logger.warning(f"Incomplete location data found for lane: {request.source_city}, {request.source_state} -> {request.dest_city}, {request.dest_state}")
+            missing = []
+            if not locations.get("source_location_id"):
+                missing.append(f"source ({request.source_city}, {request.source_state})")
+            if not locations.get("dest_location_id"):
+                missing.append(f"destination ({request.dest_city}, {request.dest_state})")
+            
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Could not find location IDs for: {', '.join(missing)}"
+            )
+        
+        logger.info(f"Successfully retrieved location IDs for lane: {request.source_city}, {request.source_state} -> {request.dest_city}, {request.dest_state}")
+        return LocationResponse(
+            success=True,
+            locations=locations,
+            raw_response=result.get("raw_response")
+        )
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error processing location ID query: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while querying location IDs: {str(e)}"
+        )
+
+@app.post(
+    "/riq-xml",
+    response_model=RIQXMLResponse,
+    tags=["RIQ XML"],
+    summary="Get RIQ Quote via XML API",
+    description="Gets comprehensive rate quotes using Oracle's XML-based RIQ API with location IDs.",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse, "description": "Bad Request"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "No Results Found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
+async def get_riq_xml_quote(
+    request: RIQXMLRequest,
+    client: RIQClient = Depends(get_riq_client)
+) -> RIQXMLResponse:
+    """
+    Get comprehensive rate quotes using Oracle's XML-based RIQ API.
+    
+    This endpoint accepts location IDs (obtained from /new-riq-rest or provided directly)
+    along with shipment parameters to get detailed rate information including all carriers,
+    costs, distances, and transit times.
+    
+    Args:
+        request: RIQXMLRequest containing location IDs and shipment parameters
+        client: RIQ client instance
+        
+    Returns:
+        RIQXMLResponse containing comprehensive rate information or error
+    """
+    try:
+        logger.info(f"Received RIQ XML query request: {request.model_dump_json(indent=2)}")
+        
+        # Call the RIQ client to get XML quote
+        result = client.get_riq_xml_quote(
+            request.source_location_id,
+            request.dest_location_id,
+            request.weight,
+            request.volume,
+            request.transport_modes
+        )
+        
+        # Check if there was an error in the service response
+        if "error" in result:
+            error_msg = result["error"]
+            logger.error(f"RIQ XML query error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error executing RIQ XML query: {error_msg}"
+            )
+        
+        # Convert results to Pydantic models
+        riq_results = []
+        for raw_result in result.get("results", []):
+            riq_result = RIQResult(**raw_result)
+            riq_results.append(riq_result)
+        
+        logger.info(f"Successfully processed RIQ XML query, found {len(riq_results)} results")
+        return RIQXMLResponse(
+            success=True,
+            results=riq_results,
+            total_results=result.get("total_results", len(riq_results)),
+            raw_xml_request=result.get("raw_xml_request"),
+            raw_xml_response=result.get("raw_xml_response")
+        )
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error processing RIQ XML query: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while executing RIQ XML query: {str(e)}"
+        )
 
 # Order Release Routes
 @app.get(

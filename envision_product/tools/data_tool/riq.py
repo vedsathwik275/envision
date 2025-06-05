@@ -1,8 +1,11 @@
 import http.client
 import json
 import os
-from typing import Optional, Dict, Any
+import xml.etree.ElementTree as ET
+from typing import Optional, Dict, Any, List
 from dotenv import load_dotenv
+import uuid
+from datetime import datetime
 
 
 class RIQClient:
@@ -19,6 +22,8 @@ class RIQClient:
         self.base_url = base_url
         self.auth_token = auth_token
         self.endpoint = "/logisticsRestApi/resources-int/v2/custom-actions/riqRateAndRoute"
+        self.locations_endpoint = "/logisticsRestApi/resources-int/v2/custom-actions/queries/locations"
+        self.xml_endpoint = "/GC3/glog.integration.servlet.WMServlet"
     
     def create_location(self, city: str, province_code: str, postal_code: str = "00000", country_code: str = "US") -> Dict[str, str]:
         """
@@ -143,6 +148,341 @@ class RIQClient:
             response = conn.getresponse()
             data = response.read()
             return json.loads(data.decode("utf-8"))
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            conn.close()
+
+    def get_location_ids(self, source_city: str, source_state: str, source_country: str,
+                        dest_city: str, dest_state: str, dest_country: str) -> Dict[str, Any]:
+        """
+        Query Oracle's REST API to get location IDs for a given lane.
+        
+        Args:
+            source_city: Source city name
+            source_state: Source state/province code
+            source_country: Source country code
+            dest_city: Destination city name
+            dest_state: Destination state/province code
+            dest_country: Destination country code
+            
+        Returns:
+            Dictionary containing location IDs or error information
+        """
+        conn = http.client.HTTPSConnection(self.base_url)
+        
+        headers = {
+            'Content-Type': 'application/vnd.oracle.resource+json;type=query-def',
+            'Prefer': 'transient',
+            'Authorization': f'Basic {self.auth_token}'
+        }
+        
+        # Create POST payload for locations query
+        query_payload = {
+            "copiedFrom": "BSL.LOCATIONS_BY_LANE",
+            "parameterValues": {
+                "0": source_city,
+                "1": source_state,
+                "2": source_country,
+                "3": dest_city,
+                "4": dest_state,
+                "5": dest_country
+            }
+        }
+        
+        payload_json = json.dumps(query_payload)
+        
+        try:
+            # Use POST request with JSON payload
+            conn.request("POST", self.locations_endpoint, payload_json, headers)
+            response = conn.getresponse()
+            
+            if response.status != 200:
+                return {"error": f"HTTP {response.status}: {response.reason}"}
+            
+            data = response.read()
+            response_data = json.loads(data.decode("utf-8"))
+            
+            # Extract location IDs from response
+            locations = {}
+            if "items" in response_data:
+                for item in response_data["items"]:
+                    city = item.get("city", "").upper()
+                    state = item.get("provinceCode", "").upper()
+                    country = item.get("countryCode3Gid", "").upper()
+                    location_xid = item.get("locationXid")
+                    
+                    # Match source location
+                    if (source_city.upper() in city and 
+                        source_state.upper() == state and 
+                        source_country.upper() == country):
+                        locations["source_location_id"] = location_xid
+                    
+                    # Match destination location
+                    if (dest_city.upper() in city and 
+                        dest_state.upper() == state and 
+                        dest_country.upper() == country):
+                        locations["dest_location_id"] = location_xid
+            
+            return {
+                "success": True,
+                "locations": locations,
+                "raw_response": response_data
+            }
+            
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            conn.close()
+
+    def generate_xml_request(self, source_location_id: str, dest_location_id: str,
+                           weight: float, volume: float = 0, 
+                           transport_modes: List[str] = None) -> str:
+        """
+        Generate XML request for RIQ query.
+        
+        Args:
+            source_location_id: Source location XID
+            dest_location_id: Destination location XID
+            weight: Weight value
+            volume: Volume value (optional)
+            transport_modes: List of transport modes (optional, defaults to ['LTL', 'TL'])
+            
+        Returns:
+            XML string for RIQ request
+        """
+        if transport_modes is None:
+            transport_modes = ['LTL', 'TL']
+        
+        # Generate unique transmission number
+        transmission_no = f"{datetime.now().strftime('%Y%m%d%H%M%S')}{str(uuid.uuid4())[:8]}"
+        
+        # Start building XML with correct namespace and structure
+        xml_parts = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<Transmission xmlns="http://xmlns.oracle.com/apps/otm/transmission/v6.4">',
+            '	<TransmissionHeader>',
+            '		<TransmissionType>QUERY</TransmissionType>',
+            f'		<SenderTransmissionNo>{transmission_no}</SenderTransmissionNo>',
+            '	</TransmissionHeader>',
+            '	<TransmissionBody>',
+            '		<GLogXMLElement>',
+            '			<RemoteQuery>',
+            '				<RIQQuery>',
+            '					<RIQRequestType>AllOptions</RIQRequestType>',
+            '					<SourceAddress>',
+            '						<MileageAddress>',
+            '							<LocationGid>',
+            '								<Gid>',
+            '									<DomainName>BSL</DomainName>',
+            f'									<Xid>{source_location_id}</Xid>',
+            '								</Gid>',
+            '							</LocationGid>',
+            '						</MileageAddress>',
+            '					</SourceAddress>',
+            '					<DestAddress>',
+            '						<MileageAddress>',
+            '							<LocationGid>',
+            '								<Gid>',
+            '									<DomainName>BSL</DomainName>',
+            f'									<Xid>{dest_location_id}</Xid>',
+            '								</Gid>',
+            '							</LocationGid>',
+            '						</MileageAddress>',
+            '					</DestAddress>'
+        ]
+        
+        # Add transport modes
+        for mode in transport_modes:
+            xml_parts.extend([
+                '					<TransportModeGid>',
+                '						<Gid>',
+                f'							<Xid>{mode}</Xid>',
+                '						</Gid>',
+                '					</TransportModeGid>'
+            ])
+        
+        # Add ship unit with weight and volume
+        xml_parts.extend([
+            '					<ShipUnit>',
+            '						<WeightVolume>',
+            '							<Weight>',
+            f'								<WeightValue>{weight}</WeightValue>',
+            '								<WeightUOMGid>',
+            '									<Gid>',
+            '										<Xid>LB</Xid>',
+            '									</Gid>',
+            '								</WeightUOMGid>',
+            '							</Weight>'
+        ])
+        
+        # Add volume if provided
+        if volume > 0:
+            xml_parts.extend([
+                '							<Volume>',
+                f'								<VolumeValue>{volume}</VolumeValue>',
+                '								<VolumeUOMGid>',
+                '									<Gid>',
+                '										<Xid>CUFT</Xid>',
+                '									</Gid>',
+                '								</VolumeUOMGid>',
+                '							</Volume>'
+            ])
+        
+        # Close WeightVolume and add commodity classification
+        xml_parts.extend([
+            '						</WeightVolume>',
+            '						<FlexCommodityQualifierGid>',
+            '							<Gid>',
+            '								<Xid>NMFC_CLASS</Xid>',
+            '							</Gid>',
+            '						</FlexCommodityQualifierGid>',
+            '						<FlexCommodityValue>70.0</FlexCommodityValue>',
+            '						<ShipUnitCount>1</ShipUnitCount>',
+            '					</ShipUnit>',
+            '				</RIQQuery>',
+            '			</RemoteQuery>',
+            '		</GLogXMLElement>',
+            '	</TransmissionBody>',
+            '</Transmission>'
+        ])
+        
+        return '\n'.join(xml_parts)
+
+    def parse_xml_response(self, xml_response: str) -> Dict[str, Any]:
+        """
+        Parse XML response from RIQ query.
+        
+        Args:
+            xml_response: XML response string from Oracle
+            
+        Returns:
+            Dictionary containing parsed response data
+        """
+        try:
+            # Parse XML with namespace handling
+            root = ET.fromstring(xml_response)
+            
+            # Define namespace - Oracle uses this namespace in responses
+            namespaces = {'otm': 'http://xmlns.oracle.com/apps/otm'}
+            
+            # Check for errors first
+            stack_trace = root.find('.//otm:StackTrace', namespaces)
+            if stack_trace is not None:
+                return {"error": f"Oracle API Error: {stack_trace.text}"}
+            
+            # Extract RIQ results from RemoteQueryReply
+            results = []
+            riq_results = root.findall('.//otm:RemoteQueryReply/otm:RIQQueryReply/otm:RIQResult', namespaces)
+            
+            for result in riq_results:
+                parsed_result = {}
+                
+                # Service Provider
+                service_provider = result.find('.//otm:ServiceProviderGid/otm:Gid/otm:Xid', namespaces)
+                if service_provider is not None:
+                    parsed_result['service_provider'] = service_provider.text
+                
+                # Transport Mode
+                transport_mode = result.find('.//otm:TransportModeGid/otm:Gid/otm:Xid', namespaces)
+                if transport_mode is not None:
+                    parsed_result['transport_mode'] = transport_mode.text
+                
+                # Cost
+                cost_element = result.find('.//otm:Cost/otm:FinancialAmount/otm:MonetaryAmount', namespaces)
+                if cost_element is not None:
+                    parsed_result['cost'] = float(cost_element.text)
+                
+                # Currency
+                currency_element = result.find('.//otm:Cost/otm:FinancialAmount/otm:CurrencyGid/otm:Gid/otm:Xid', namespaces)
+                if currency_element is not None:
+                    parsed_result['currency'] = currency_element.text
+                
+                # Distance
+                distance_element = result.find('.//otm:Distance/otm:DistanceValue', namespaces)
+                if distance_element is not None:
+                    parsed_result['distance'] = float(distance_element.text)
+                
+                # Distance Unit
+                distance_unit = result.find('.//otm:Distance/otm:DistanceUom/otm:Gid/otm:Xid', namespaces)
+                if distance_unit is not None:
+                    parsed_result['distance_unit'] = distance_unit.text
+                
+                # Is Optimal Result
+                is_optimal = result.find('.//otm:IsOptimalResult', namespaces)
+                if is_optimal is not None:
+                    parsed_result['is_optimal'] = is_optimal.text.lower() == 'true'
+                
+                # Transit Time
+                transit_time = result.find('.//otm:TransitTime/otm:Duration/otm:DurationValue', namespaces)
+                if transit_time is not None:
+                    parsed_result['transit_time_hours'] = float(transit_time.text)
+                
+                # Transit Time Unit
+                transit_time_unit = result.find('.//otm:TransitTime/otm:Duration/otm:DurationUom/otm:Gid/otm:Xid', namespaces)
+                if transit_time_unit is not None:
+                    parsed_result['transit_time_unit'] = transit_time_unit.text
+                
+                if parsed_result:  # Only add if we found some data
+                    results.append(parsed_result)
+            
+            return {
+                "success": True,
+                "results": results,
+                "total_results": len(results)
+            }
+            
+        except ET.ParseError as e:
+            return {"error": f"XML parsing error: {str(e)}"}
+        except Exception as e:
+            return {"error": f"Error parsing XML response: {str(e)}"}
+
+    def get_riq_xml_quote(self, source_location_id: str, dest_location_id: str,
+                         weight: float, volume: float = 0, 
+                         transport_modes: List[str] = None) -> Dict[str, Any]:
+        """
+        Get RIQ quote using XML API.
+        
+        Args:
+            source_location_id: Source location XID
+            dest_location_id: Destination location XID
+            weight: Weight value
+            volume: Volume value (optional)
+            transport_modes: List of transport modes (optional)
+            
+        Returns:
+            Dictionary containing parsed RIQ response or error information
+        """
+        conn = http.client.HTTPSConnection(self.base_url)
+        
+        headers = {
+            'Content-Type': 'application/xml',
+            'Authorization': f'Basic {self.auth_token}'
+        }
+        
+        # Generate XML request
+        xml_request = self.generate_xml_request(
+            source_location_id, dest_location_id, weight, volume, transport_modes
+        )
+        
+        try:
+            conn.request("POST", self.xml_endpoint, xml_request, headers)
+            response = conn.getresponse()
+            
+            if response.status != 200:
+                return {"error": f"HTTP {response.status}: {response.reason}"}
+            
+            xml_response = response.read().decode("utf-8")
+            
+            # Parse the XML response
+            parsed_response = self.parse_xml_response(xml_response)
+            
+            # Add raw XML for debugging if needed
+            parsed_response["raw_xml_request"] = xml_request
+            parsed_response["raw_xml_response"] = xml_response
+            
+            return parsed_response
+            
         except Exception as e:
             return {"error": str(e)}
         finally:

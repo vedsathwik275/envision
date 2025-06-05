@@ -18,6 +18,15 @@ class ChatRequest(BaseModel):
     query: str = Field(..., min_length=1, description="The user's query.")
     # Add other chat options if needed, e.g., session_id, temperature
 
+class RecommendationRequest(BaseModel):
+    """Request model for generating AI transportation recommendations."""
+    aggregated_data: Dict[str, Any] = Field(..., description="Aggregated transportation data from various sources.")
+    source_city: Optional[str] = Field(None, description="Source city for the lane.")
+    destination_city: Optional[str] = Field(None, description="Destination city for the lane.")
+    weight: Optional[str] = Field(None, description="Shipment weight with unit.")
+    volume: Optional[str] = Field(None, description="Shipment volume with unit.")
+    context: Optional[str] = Field(None, description="Additional context or requirements.")
+
 # Response Models
 class KBInfo(BaseModel):
     """Response model for knowledge base information."""
@@ -136,4 +145,58 @@ class SpotRateMatrixResponse(BaseModel):
     destination_state: str = Field(..., description="Destination state code.")
     shipment_date: str = Field(..., description="Base shipment date in MM/DD/YYYY format.")
     spot_costs: List[CarrierSpotCost] = Field(..., description="List of carriers with their cost details.")
-    query_parameters: SpotRateRequest = Field(..., description="The parameters used for this query.") 
+    query_parameters: SpotRateRequest = Field(..., description="The parameters used for this query.")
+
+class RecommendationAlternative(BaseModel):
+    """Represents an alternative transportation option."""
+    option_name: str = Field(..., description="Name of the alternative option.")
+    carrier: Optional[str] = Field(None, description="Recommended carrier for this option.")
+    estimated_cost: Optional[str] = Field(None, description="Estimated cost for this option.")
+    transit_time: Optional[str] = Field(None, description="Expected transit time.")
+    risk_level: str = Field(..., description="Risk assessment (Low, Medium, High).")
+    reasoning: str = Field(..., description="Reasoning for this alternative.")
+
+class CostOptimizationAnalysis(BaseModel):
+    """Represents cost optimization analysis between RIQ and spot rates."""
+    strategy_type: str = Field(..., description="Type of strategy (RIQ_CONTRACT, SPOT_MARKET, HYBRID).")
+    estimated_savings: Optional[str] = Field(None, description="Estimated cost savings.")
+    risk_assessment: str = Field(..., description="Risk level of this strategy.")
+    market_timing: str = Field(..., description="Market timing recommendations.")
+    reasoning: str = Field(..., description="Detailed reasoning for this strategy.")
+
+class RiskAssessment(BaseModel):
+    """Represents transportation risk assessment."""
+    overall_risk_level: str = Field(..., description="Overall risk level (Low, Medium, High).")
+    performance_risk: Optional[str] = Field(None, description="Performance risk based on historical data.")
+    market_risk: Optional[str] = Field(None, description="Market volatility risk.")
+    capacity_risk: Optional[str] = Field(None, description="Capacity availability risk.")
+    mitigation_strategies: List[str] = Field(default_factory=list, description="Risk mitigation recommendations.")
+
+class RecommendationMetadata(BaseModel):
+    """Metadata about the recommendation generation process."""
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Overall confidence in the recommendation.")
+    data_sources_used: List[str] = Field(..., description="List of data sources used for the recommendation.")
+    data_completeness: float = Field(..., ge=0.0, le=1.0, description="Completeness of available data.")
+    processing_notes: List[str] = Field(default_factory=list, description="Notes about the processing.")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of generation.")
+
+class RecommendationResponse(BaseModel):
+    """Response model for AI transportation recommendations."""
+    primary_recommendation: str = Field(..., description="Primary transportation recommendation with detailed reasoning.")
+    recommended_carrier: Optional[str] = Field(None, description="Primary recommended carrier.")
+    estimated_cost: Optional[str] = Field(None, description="Estimated cost for primary recommendation.")
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the recommendation.")
+    
+    cost_optimization: CostOptimizationAnalysis = Field(..., description="Cost optimization analysis.")
+    risk_assessment: RiskAssessment = Field(..., description="Risk assessment and mitigation strategies.")
+    alternatives: List[RecommendationAlternative] = Field(default_factory=list, description="Alternative transportation options.")
+    market_timing: str = Field(..., description="Market timing and timing recommendations.")
+    
+    metadata: RecommendationMetadata = Field(..., description="Metadata about the recommendation process.")
+    raw_ai_response: str = Field(..., description="Raw response from the AI model.")
+    structured_data: Dict[str, Any] = Field(default_factory=dict, description="Structured data extracted from the response.")
+    
+    # Lane information
+    source_city: Optional[str] = Field(None, description="Source city.")
+    destination_city: Optional[str] = Field(None, description="Destination city.")
+    lane_name: Optional[str] = Field(None, description="Full lane description.") 

@@ -86,6 +86,24 @@
         #chat-messages::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        
+        /* Custom scrollbar for order release content */
+        #order-release-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #order-release-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        #order-release-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        #order-release-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-800 min-h-screen">
@@ -284,105 +302,82 @@
 
                 <!-- Chat Section -->
                 <section id="chat" class="hidden">
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold text-neutral-900 flex items-center">
-                            <i class="fas fa-comments mr-3 text-primary-500"></i>
-                            RAG Chat Interface
-                        </h2>
-                        <p class="text-neutral-600 mt-2">Ask questions about your documents using AI-powered retrieval</p>
-                    </div>
-
-                    <!-- Chat + Lane Analysis Grid (2 columns, 50% each) -->
-                    <div class="grid grid-cols-2 gap-6 h-[550px] mb-8">
-                        <!-- Chat Window (Left 50%) -->
-                        <div class="flex flex-col h-full overflow-hidden">
-                            <!-- Main Chat Container - Notion Style -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
-                                <!-- Chat Header with integrated KB selector -->
-                                <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
-                                    <div class="flex items-center space-x-4">
-                                        <!-- Knowledge Base Selector with Status - Notion Style -->
-                                        <div class="flex items-center space-x-3">
-                                            <div class="relative">
-                                                <select id="chat-kb-select" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[200px]">
-                                                    <option value="">★ All sources ▼</option>
-                                                </select>
-                                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                    <i class="fas fa-chevron-down text-neutral-400 text-xs"></i>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <!-- Left Column -->
+                        <div class="flex flex-col space-y-6">
+                            <!-- Chat Window (kept as is) -->
+                            <div class="flex flex-col h-[550px] overflow-hidden">
+                                <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-full flex flex-col">
+                                    <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="relative">
+                                                    <select id="chat-kb-select" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[200px]">
+                                                        <option value="">★ All sources ▼</option>
+                                                    </select>
+                                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                        <i class="fas fa-chevron-down text-neutral-400 text-xs"></i>
+                                                    </div>
+                                                </div>
+                                                <div id="kb-selection-status" class="flex items-center">
+                                                    <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
+                                                    <span class="text-sm text-neutral-500">Ready</span>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- Status Indicator next to KB selector -->
-                                            <div id="kb-selection-status" class="flex items-center">
+                                            <div class="flex items-center">
+                                                <i class="fas fa-robot text-primary-500 mr-2"></i>
+                                                <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-4">
+                                            <div id="connection-status" class="flex items-center text-sm">
                                                 <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                                <span class="text-sm text-neutral-500">Ready</span>
+                                                <span class="text-neutral-500">Not Ready</span>
                                             </div>
-                                        </div>
-                                        
-                                        <!-- Chat Title -->
-                                        <div class="flex items-center">
-                                            <i class="fas fa-robot text-primary-500 mr-2"></i>
-                                            <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
+                                            <button id="clear-chat" class="text-neutral-400 hover:text-neutral-600 transition-colors p-2 rounded-lg hover:bg-neutral-100">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Header Right Side -->
-                                    <div class="flex items-center space-x-4">
-                                        <div id="connection-status" class="flex items-center text-sm">
-                                            <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                            <span class="text-neutral-500">Not Ready</span>
-                                        </div>
-                                        <button id="clear-chat" class="text-neutral-400 hover:text-neutral-600 transition-colors p-2 rounded-lg hover:bg-neutral-100">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Chat Messages Area -->
-                                <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 min-h-0" style="max-height: calc(100% - 120px);">
-                                    <div class="flex items-start space-x-3">
-                                        <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-                                            <i class="fas fa-robot text-white text-sm"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="bg-neutral-100 rounded-lg p-3">
-                                                <p class="text-neutral-800">Welcome! Select a knowledge base and start asking questions. I'll help you find relevant information from your documents using advanced retrieval techniques.</p>
+                                    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 min-h-0" style="max-height: calc(100% - 120px);">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-robot text-white text-sm"></i>
                                             </div>
-                                            <p class="text-xs text-neutral-500 mt-1">Just now</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Chat Input Area - Enhanced -->
-                                <div class="p-4 border-t border-neutral-100 bg-neutral-50 rounded-b-xl flex-shrink-0">
-                                    <div class="bg-white rounded-lg border border-neutral-200 shadow-sm chat-input-container">
-                                        <div class="flex items-end space-x-3 p-3">
                                             <div class="flex-1">
-                                                <input 
-                                                    type="text" 
-                                                    id="chat-input" 
-                                                    placeholder="Ask a question about your documents..." 
-                                                    class="w-full border-0 bg-transparent resize-none focus:outline-none focus:ring-0 placeholder:text-neutral-500 text-neutral-900"
+                                                <div class="bg-neutral-100 rounded-lg p-3">
+                                                    <p class="text-neutral-800">Welcome! Select a knowledge base and start asking questions. I'll help you find relevant information from your documents using advanced retrieval techniques.</p>
+                                                </div>
+                                                <p class="text-xs text-neutral-500 mt-1">Just now</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 border-t border-neutral-100 bg-neutral-50 rounded-b-xl flex-shrink-0">
+                                        <div class="bg-white rounded-lg border border-neutral-200 shadow-sm chat-input-container">
+                                            <div class="flex items-center space-x-3 p-1">
+                                                <div class="flex-1">
+                                                    <input 
+                                                        type="text" 
+                                                        id="chat-input" 
+                                                        placeholder="Ask a question about your documents..." 
+                                                        class="w-full border-0 bg-transparent resize-none focus:outline-none focus:ring-0 placeholder:text-neutral-500 text-neutral-900"
+                                                        disabled
+                                                    >
+                                                </div>
+                                                <button 
+                                                    id="send-btn" 
+                                                    class="flex-shrink-0 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
                                                     disabled
                                                 >
+                                                    <i class="fas fa-paper-plane text-sm"></i>
+                                                </button>
                                             </div>
-                                            <button 
-                                                id="send-btn" 
-                                                class="flex-shrink-0 p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
-                                                disabled
-                                            >
-                                                <i class="fas fa-paper-plane text-sm"></i>
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <!-- Lane Analysis Stack (Right 50%) -->
-                        <div class="flex flex-col h-full space-y-3">
-                            <!-- RIQ Card (Top Right - 60% height) -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[318px] flex flex-col flex-shrink-0 overflow-hidden">
+                            <!-- Stacked Cards Below Chat -->
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[340px] flex flex-col flex-shrink-0 overflow-hidden">
                                 <div class="p-4 border-b border-neutral-100 flex-shrink-0">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
@@ -413,24 +408,58 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Historical Card (Bottom Right - 40% height) -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[220px] flex flex-col flex-shrink-0 overflow-hidden">
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[450px] flex flex-col flex-shrink-0 overflow-hidden">
+                                <div class="p-6 border-b border-neutral-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
+                                        </div>
+                                        <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                            No data
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-32">
+                                            <label class="block text-xs font-medium text-neutral-700 mb-1">Shipment Date</label>
+                                            <input type="date" id="spot-ship-date" class="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-green-500" />
+                                        </div>
+                                        <button onclick="performSpotAnalysis()" class="px-3 py-1 bg-green-600 text-white text-xs rounded font-medium hover:bg-green-700 transition-colors flex items-center mt-5">
+                                            <i class="fas fa-chart-line mr-1"></i>
+                                            Analyze
+                                        </button>
+                                        <button onclick="openSpotMatrixModal()" class="px-3 py-1 bg-blue-600 text-white text-xs rounded font-medium hover:bg-blue-700 transition-colors flex items-center mt-5">
+                                            <i class="fas fa-table mr-1"></i>
+                                            7-Day Matrix
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-6">
+                                    <div id="spot-api-content" class="space-y-4">
+                                        <div class="text-center py-8 text-neutral-500">
+                                            <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
+                                            <p>Ask about carrier performance or spot rates to see analysis here</p>
+                                            <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[198px] flex flex-col flex-shrink-0 overflow-hidden">
                                 <div class="p-4 border-b border-neutral-100 flex-shrink-0">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <i class="fas fa-history text-purple-500 mr-3 text-xl"></i>
                                             <h3 class="text-lg font-semibold text-neutral-900">Historical Lane Analysis</h3>
                                         </div>
-                                        <span id="historical-data-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                        <span id="historical-lane-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                             No data
                                         </span>
                                     </div>
                                 </div>
                                 <div class="p-4 flex-1 overflow-y-auto min-h-0">
                                     <div id="historical-data-content" class="space-y-4">
-                                        <div class="text-center py-8 text-neutral-500">
-                                            <i class="fas fa-database text-4xl mb-4 text-neutral-300"></i>
+                                        <div class="text-center py-0 text-neutral-500">
+                                            <i class="fas fa-database text-2xl mb-4 text-neutral-300"></i>
                                             <p>Ask about transportation routes to see historical data</p>
                                             <p class="text-sm mt-2">Example: "Show me rates from Chicago to Miami"</p>
                                         </div>
@@ -438,54 +467,97 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Spot Analysis (Full Width Below) -->
-                    <div class="spot-analysis-full-width mb-8">
-                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
-                            <div class="p-6 border-b border-neutral-100">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-chart-line text-green-500 mr-3 text-xl"></i>
-                                        <h3 class="text-lg font-semibold text-neutral-900">Spot API Analysis</h3>
+                        <!-- Right Column -->
+                        <div class="flex flex-col space-y-6">
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[930px] flex flex-col flex-shrink-0 overflow-hidden">
+                                <div class="p-6 border-b border-neutral-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-brain text-indigo-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">AI Transportation Recommendations</h3>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <span id="ai-recommendations-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                                Awaiting Data
+                                            </span>
+                                            <button 
+                                                id="generate-recommendations-btn" 
+                                                onclick="handleGenerateRecommendationsClick()" 
+                                                class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 transition-colors hidden"
+                                            >
+                                                Generate AI Recommendations
+                                            </button>
+                                        </div>
                                     </div>
-                                    <span id="spot-api-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                        No data
-                                    </span>
+                                </div>
+                                <div class="p-6">
+                                    <div id="ai-recommendations-content" class="space-y-4 overflow-y-auto">
+                                        <div class="text-center py-8 text-neutral-500">
+                                            <i class="fas fa-lightbulb text-4xl mb-4 text-neutral-300"></i>
+                                            <p class="text-sm mb-2">AI-Powered Transportation Recommendations</p>
+                                            <p class="text-xs text-neutral-400">Gather transportation data from multiple sources to unlock intelligent recommendations</p>
+                                            <div class="mt-6 max-w-md mx-auto">
+                                                <div class="text-xs text-neutral-600 mb-2">Data Collection Progress</div>
+                                                <div class="space-y-2">
+                                                    <div class="flex items-center justify-between text-xs">
+                                                        <span class="flex items-center">
+                                                            <i class="fas fa-circle w-2 h-2 mr-2 text-gray-300" id="riq-data-indicator"></i>
+                                                            RIQ Rate Analysis
+                                                        </span>
+                                                        <span class="text-neutral-400" id="riq-data-status">Not Available</span>
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-xs">
+                                                        <span class="flex items-center">
+                                                            <i class="fas fa-circle w-2 h-2 mr-2 text-gray-300" id="spot-data-indicator"></i>
+                                                            Spot Rate Matrix
+                                                        </span>
+                                                        <span class="text-neutral-400" id="spot-data-status">Not Available</span>
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-xs">
+                                                        <span class="flex items-center">
+                                                            <i class="fas fa-circle w-2 h-2 mr-2 text-gray-300" id="historical-data-indicator"></i>
+                                                            Historical Lane Data
+                                                        </span>
+                                                        <span class="text-neutral-400" id="historical-data-status">Not Available</span>
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-xs">
+                                                        <span class="flex items-center">
+                                                            <i class="fas fa-circle w-2 h-2 mr-2 text-gray-300" id="chat-insights-indicator"></i>
+                                                            Chat-Parsed Insights
+                                                        </span>
+                                                        <span class="text-neutral-400" id="chat-insights-status">Not Available</span>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div id="data-collection-progress" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                                    </div>
+                                                    <div class="text-xs text-neutral-500 mt-1" id="data-collection-summary">0 of 4 data sources collected</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="p-6">
-                                <div id="spot-api-content" class="space-y-4">
-                                    <div class="text-center py-8 text-neutral-500">
-                                        <i class="fas fa-analytics text-4xl mb-4 text-neutral-300"></i>
-                                        <p>Ask about carrier performance or spot rates to see analysis here</p>
-                                        <p class="text-sm mt-2">Example: "Show carrier performance for Dallas to Miami"</p>
+                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[655px]">
+                                <div class="p-6 border-b border-neutral-100">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Order Release Management</h3>
+                                        </div>
+                                        <span id="order-release-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                            No data
+                                        </span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Order Release (Full Width Below Spot Analysis) -->
-                    <div class="order-release-full-width mb-8">
-                        <div class="bg-white rounded-xl shadow-sm border border-neutral-200">
-                            <div class="p-6 border-b border-neutral-100">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
-                                        <h3 class="text-lg font-semibold text-neutral-900">Order Release Management</h3>
-                                    </div>
-                                    <span id="order-release-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                        No data
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="p-6">
-                                <div id="order-release-content" class="space-y-4">
-                                    <div class="text-center py-8 text-neutral-500">
-                                        <i class="fas fa-truck text-4xl mb-4 text-neutral-300"></i>
-                                        <p>Ask about lane orders to see unplanned order releases</p>
-                                        <p class="text-sm mt-2">Example: "Show me orders from Atlanta to Miami"</p>
+                                <div class="p-6">
+                                    <div id="order-release-content" class="space-y-4 overflow-y-auto max-h-[520px]">
+                                        <div class="text-center py-8 text-neutral-500">
+                                            <i class="fas fa-truck text-4xl mb-4 text-neutral-300"></i>
+                                            <p>Ask about lane orders to see unplanned order releases</p>
+                                            <p class="text-sm mt-2">Example: "Show me orders from Atlanta to Miami"</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -599,6 +671,34 @@
         </div>
     </div>
 
+    <!-- Spot Rate 7-Day Matrix Modal -->
+    <div id="spot-matrix-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
+                <div class="flex items-center justify-between p-6 border-b border-neutral-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-table text-blue-500 mr-3 text-xl"></i>
+                        <h3 class="text-xl font-semibold text-neutral-900">7-Day Spot Rate Matrix</h3>
+                    </div>
+                    <button id="close-spot-matrix-modal" class="text-neutral-400 hover:text-neutral-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <div id="spot-matrix-content">
+                        <!-- Matrix content will be populated here -->
+                        <div class="text-center py-12 text-neutral-500">
+                            <i class="fas fa-table text-4xl mb-4 text-neutral-300"></i>
+                            <p class="text-lg mb-2">No Matrix Data Available</p>
+                            <p class="text-sm text-neutral-400">Perform a spot analysis first to generate the 7-day matrix</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
+
