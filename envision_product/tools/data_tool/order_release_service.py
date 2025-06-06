@@ -6,6 +6,9 @@ import os
 from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+# only do the above if you are using the mac
 
 class OrderReleaseService:
     """Oracle Transportation Management Order Release API client."""

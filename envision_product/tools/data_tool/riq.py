@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 import uuid
 from datetime import datetime
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+# only do the above if you are using the mac
 
 class RIQClient:
     """Oracle Transportation Management RIQ (Rate, Inventory, Quote) API client."""
