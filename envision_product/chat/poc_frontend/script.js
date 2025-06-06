@@ -2599,7 +2599,7 @@ function displaySpotRateMatrix(data) {
                             <div class="text-xs text-neutral-500">${minRateData.date}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-neutral-600 mb-1">Best Carrier Rate</div>`;
+                            <div class="text-neutral-600 mb-1">Best Rate</div>`;
         
         if (bestCarrierBestRate) {
             content += `
