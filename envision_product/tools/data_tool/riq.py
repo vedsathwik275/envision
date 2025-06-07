@@ -520,7 +520,7 @@ def main() -> None:
     destination = client.create_location("OWASSO", "OK", "74055")
     
     # Create items
-    items = [client.create_item(weight_value=2400, volume_value=150)]
+    items = [client.create_item(weight_value=8000, volume_value=150)]
     
     # Create request
     request_payload = client.create_rate_request(source, destination, items)

@@ -35,7 +35,7 @@ class AITransportationRecommendationService:
     and prompting techniques as the enhanced RAG chain.
     """
     
-    def __init__(self, temperature: float = 0.7, model_name: str = "gpt-4o-mini"):
+    def __init__(self, temperature: float = 1, model_name: str = "o4-mini-2025-04-16"):
         """
         Initialize the recommendation service with the same configuration as enhanced_rc.py.
         
@@ -61,100 +61,59 @@ class AITransportationRecommendationService:
         Create a sophisticated recommendation prompt template based on enhanced_rc.py patterns.
         This adapts the same structured approach for transportation recommendations.
         """
-        template = """You are an expert transportation and logistics consultant analyzing aggregated market data to provide intelligent, actionable transportation recommendations.
+        template = """You are an expert transportation and logistics consultant analyzing carrier data to provide optimal shipping recommendations.
 
-INSTRUCTIONS:
-- Analyze the provided aggregated transportation data comprehensively
-- Provide strategic recommendations based on cost optimization, performance metrics, and risk assessment
-- Structure your response with the exact format specified below
-- Focus on actionable insights that balance cost, performance, and risk
-- Use the same analytical rigor as the enhanced RAG chain for transportation data
+**ANALYSIS FRAMEWORK:**
 
-KEY ANALYSIS AREAS:
-1. **Cost Optimization Strategy**: Compare RIQ contract rates vs spot market opportunities
-2. **Performance Risk Assessment**: Analyze carrier reliability and on-time performance metrics
-3. **Market Timing**: Evaluate current market conditions and timing recommendations
-4. **Alternative Options**: Provide backup strategies and alternative carriers
-5. **Risk Mitigation**: Identify potential risks and mitigation strategies
+1. **Performance Classification:**
+   - Tier 1 (Premium): >90% on-time performance
+   - Tier 2 (Standard): 80-90% on-time performance  
+   - Tier 3 (Risk): <80% on-time performance
 
-RESPONSE FORMAT REQUIREMENTS:
-- Start with: "🎯 **Transportation Recommendation** (Confidence: [XX%])"
-- Provide detailed primary recommendation with reasoning
-- Include cost optimization analysis comparing different strategies
-- Assess risks based on performance metrics and market conditions
-- Suggest alternative options with timing considerations
-- End with structured data section for parsing
+2. **Recommendation Logic:**
+   - If the cheapest SPOT rate is 10% less than the cheapest RIQ Rate or best performing carrier RIQ Rate, then recommend the cheapest SPOT rate.
+        - Choose the cheapest option from the SPOT rate matrix for the carrier and the date, not the AVERAGE cost.
+   - Select lowest cost option from Tier 1 or Tier 2 carriers only
+   - If no Tier 1/2 options exist, choose lowest cost overall but flag as high risk
+   - If cheapest option is >20% more expensive than alternatives, recommend hybrid approach
 
-AGGREGATED DATA PROVIDED:
-{aggregated_data}
+3. **Cost Analysis:**
+   - Compare all RIQ contract rates
+   - Compare all spot market rates
+   - Calculate percentage savings between options
 
-LANE CONTEXT:
-- Source: {source_city}
-- Destination: {destination_city}
-- Weight: {weight}
-- Volume: {volume}
-- Additional Context: {context}
+**REQUIRED RESPONSE FORMAT:**
 
-DETAILED RECOMMENDATION ANALYSIS:
+🎯 **Transportation Recommendation** (Confidence: XX%)
 
-PRIMARY RECOMMENDATION:
-Analyze the aggregated data and provide your primary transportation recommendation. Consider:
-- Best performing carriers based on historical data
-- Cost-effective options comparing RIQ vs spot rates
-- Performance reliability and risk factors
-- Market conditions and timing
+**PRIMARY RECOMMENDATION:** [Carrier Name] via [RIQ Contract/Spot Market] at $[amount]
 
-COST OPTIMIZATION ANALYSIS:
-Compare RIQ contract strategies vs spot market opportunities:
-- Analyze rate differentials and potential savings
-- Consider volume commitments and contract terms
-- Evaluate market volatility and timing factors
-- Recommend optimal procurement strategy
+**REASONING:**
+- Cost: $[amount] ([X]% vs next best alternative)
+- Performance: [On-time %] (Tier [1/2/3])
+- Risk Level: [Low/Medium/High]
 
-RISK ASSESSMENT:
-Evaluate transportation risks based on the data:
-- Performance risk from carrier reliability metrics
-- Market risk from rate volatility
-- Capacity risk from market conditions
-- Operational risk factors
+**ALTERNATIVES:**
+- Option 2: [Carrier] at $[amount] ([RIQ/Spot])
+- Option 3: [Carrier] at $[amount] ([RIQ/Spot])
 
-ALTERNATIVE OPTIONS:
-Provide 2-3 alternative transportation strategies:
-- Alternative carriers with different risk/cost profiles
-- Different service levels or equipment types
-- Market timing alternatives (immediate vs delayed)
-- Backup options for capacity constraints
+**MARKET TIMING:** [Immediate/Monitor/Delayed] - [brief reasoning]
 
-MARKET TIMING:
-Recommend optimal timing for transportation procurement:
-- Current market conditions assessment
-- Seasonal or cyclical factors
-- Capacity availability trends
-- Rate trend predictions
+---STRUCTURED_OUTPUT---
+PRIMARY_CARRIER: [Name]
+STRATEGY: [RIQ_CONTRACT/SPOT_MARKET]
+COST: $[amount] Date: [date]
+CONFIDENCE: [XX%]
+TIMING: [IMMEDIATE/DELAYED/MONITOR]
+PERFORMANCE_TIER: [1/2/3]
+LANE: [source] to [destination]
+---END---
 
-CONFIDENCE AND DATA QUALITY:
-Assess the reliability of your recommendation:
-- Data completeness and quality
-- Historical data depth
-- Market condition certainty
-- Recommendation confidence level
-
-STRUCTURED OUTPUT:
-End your response with this exact format:
-
----STRUCTURED_RECOMMENDATION---
-PRIMARY_CARRIER: [Recommended carrier name or "MULTIPLE"]
-PRIMARY_STRATEGY: [RIQ_CONTRACT, SPOT_MARKET, or HYBRID]
-ESTIMATED_COST: [Cost estimate with currency or "TBD"]
-CONFIDENCE_LEVEL: [XX%]
-RISK_LEVEL: [LOW, MEDIUM, or HIGH]
-MARKET_TIMING: [IMMEDIATE, DELAYED, or FLEXIBLE]
-DATA_COMPLETENESS: [XX%]
-ALTERNATIVE_COUNT: [Number of alternatives provided]
-LANE: {source_city} to {destination_city}
----END_STRUCTURED_RECOMMENDATION---
-
-RECOMMENDATION:"""
+**INPUT DATA:**
+Carriers: {aggregated_data}
+Lane: {source_city} to {destination_city}
+Shipment Details: {weight} lbs, {volume} cubic feet
+Context: {context}"""
         
         return PromptTemplate(
             template=template,

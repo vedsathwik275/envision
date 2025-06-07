@@ -1704,7 +1704,7 @@ function parseWeightAndVolume(weightStr, volumeStr) {
      * Parse weight and volume strings to extract numeric values and units
      */
     const result = {
-        weight_value: 1000, // Default
+        weight_value: 8000, // Default
         weight_unit: 'LB',
         volume_value: 50,   // Default
         volume_unit: 'CUFT'
@@ -3343,12 +3343,32 @@ function displayOrderDetails(orderData, orderGid) {
         
         console.log('DEBUG: Dates extracted - Pickup:', latePickupDate, 'Ship:', shipDate);
         
-        // Extract location information (these are complex nested structures in the API)
-        // For now, we'll show placeholder data since location details require separate API calls
-        const sourceCity = 'Lancaster'; // From API context
-        const sourceState = 'TX';
-        const destCity = 'Dallas'; // From API context
-        const destState = 'TX';
+        // Extract location information from parsed chat data (same way as RIQ, Spot, Historical)
+        let sourceCity = 'N/A';
+        let sourceState = 'N/A';
+        let destCity = 'N/A';
+        let destState = 'N/A';
+        
+        // Use lane information parsed from chat (same as RIQ, Spot, Historical analysis)
+        if (window.currentLaneInfo) {
+            if (window.currentLaneInfo.sourceCity) {
+                const sourceParts = parseLocationFromCity(window.currentLaneInfo.sourceCity);
+                sourceCity = sourceParts.city || window.currentLaneInfo.sourceCity;
+                sourceState = sourceParts.province_code || 'N/A';
+            }
+            
+            if (window.currentLaneInfo.destinationCity) {
+                const destParts = parseLocationFromCity(window.currentLaneInfo.destinationCity);
+                destCity = destParts.city || window.currentLaneInfo.destinationCity;
+                destState = destParts.province_code || 'N/A';
+            }
+            
+            console.log('DEBUG: Using lane info from chat - Source:', sourceCity, sourceState, 'Dest:', destCity, destState);
+        } else {
+            console.log('DEBUG: No lane info available from chat, using fallback values');
+            // Fallback to try parsing from order data if available (future enhancement)
+            // For now, keep as N/A to indicate missing data
+        }
 
         // Extract equipment information
         let equipmentType = 'N/A';
@@ -3962,74 +3982,160 @@ function displayAIRecommendations(recommendationData) {
         contentElement.innerHTML = `<p class="text-red-500 text-center text-sm">Error: Invalid recommendation data received.</p>`;
         return;
     }
+
+    // Parse the new prompt format
+    const rawResponse = recommendationData.primary_recommendation || '';
+    
+    // Extract structured output data (but don't display it)
+    const structuredMatch = rawResponse.match(/---STRUCTURED_OUTPUT---([\s\S]*?)---END---/);
+    let structuredData = {};
+    if (structuredMatch) {
+        const structuredText = structuredMatch[1];
+        const lines = structuredText.split('\n').filter(line => line.trim());
+        lines.forEach(line => {
+            const [key, ...valueParts] = line.split(':');
+            if (key && valueParts.length > 0) {
+                structuredData[key.trim()] = valueParts.join(':').trim().replace(/^\[|\]$/g, '');
+            }
+        });
+    }
+    
+    // Remove structured output from display text
+    const cleanResponse = rawResponse.replace(/---STRUCTURED_OUTPUT---[\s\S]*?---END---/, '').trim();
+    
+    // Parse sections from the response
+    const sections = parseRecommendationSections(cleanResponse);
     
     let content = `
         <div class="space-y-6">
-            <!-- Primary Recommendation Section -->
+            <!-- Primary Recommendation Table (First Thing User Sees) -->
+            ${structuredData.PRIMARY_CARRIER ? `
             <div class="bg-indigo-50 rounded-lg p-4">
                 <h4 class="font-medium text-indigo-900 mb-3 flex items-center">
-                    <i class="fas fa-brain text-indigo-600 mr-2"></i>
-                    🎯 AI Primary Recommendation
+                    <i class="fas fa-trophy text-indigo-600 mr-2"></i>
+                    🎯 Primary Recommendation
                     <span class="ml-auto text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
-                        Confidence: ${(recommendationData.confidence_score * 100).toFixed(0)}%
+                        Confidence: ${structuredData.CONFIDENCE || (recommendationData.confidence_score * 100).toFixed(0) + '%'}
                     </span>
                 </h4>
-                <div class="text-sm text-indigo-800 whitespace-pre-wrap">${escapeHtml(recommendationData.primary_recommendation)}</div>
-                
-                ${recommendationData.recommended_carrier ? `
-                <div class="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                    <div><span class="text-indigo-600">Recommended Carrier:</span> <span class="font-medium">${escapeHtml(recommendationData.recommended_carrier)}</span></div>
-                    ${recommendationData.estimated_cost ? `<div><span class="text-indigo-600">Estimated Cost:</span> <span class="font-medium">${escapeHtml(recommendationData.estimated_cost)}</span></div>` : ''}
-                    <div><span class="text-indigo-600">Strategy:</span> <span class="font-medium">${escapeHtml(recommendationData.cost_optimization.strategy_type.replace('_', ' '))}</span></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <tbody class="bg-white">
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25 w-1/3">Carrier</td>
+                                <td class="px-3 py-2">${escapeHtml(structuredData.PRIMARY_CARRIER)}</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25">Strategy</td>
+                                <td class="px-3 py-2">${escapeHtml(structuredData.STRATEGY?.replace('_', ' ') || 'N/A')}</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25">Cost</td>
+                                <td class="px-3 py-2 font-medium text-green-600">${escapeHtml(structuredData.COST || 'N/A')}</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25">Performance Tier</td>
+                                <td class="px-3 py-2">
+                                    <span class="px-2 py-1 rounded-full text-xs ${getTierBadgeClass(structuredData.PERFORMANCE_TIER)}">
+                                        Tier ${structuredData.PERFORMANCE_TIER || 'Unknown'}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25">Timing</td>
+                                <td class="px-3 py-2">${escapeHtml(structuredData.TIMING || 'N/A')}</td>
+                            </tr>
+                            ${structuredData.LANE ? `
+                            <tr>
+                                <td class="px-3 py-2 font-medium text-indigo-700 bg-indigo-25">Lane</td>
+                                <td class="px-3 py-2">${escapeHtml(structuredData.LANE)}</td>
+                            </tr>
+                            ` : ''}
+                        </tbody>
+                    </table>
                 </div>
-                ` : ''}
             </div>
+            ` : ''}
             
-            <!-- Cost Optimization Analysis -->
+            <!-- Reasoning Section -->
+            ${sections.reasoning ? `
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h4 class="font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-blue-600 mr-2"></i>
+                    Reasoning
+                </h4>
+                <div class="text-sm text-blue-800 whitespace-pre-wrap">${escapeHtml(sections.reasoning)}</div>
+            </div>
+            ` : ''}
+            
+            <!-- Alternatives Table -->
+            ${sections.alternatives ? `
             <div class="bg-green-50 rounded-lg p-4">
                 <h4 class="font-medium text-green-900 mb-3 flex items-center">
-                    <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
-                    Cost Optimization Analysis
+                    <i class="fas fa-list-alt text-green-600 mr-2"></i>
+                    Alternative Options
                 </h4>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div>
-                        <div class="text-sm text-green-800 mb-2">${escapeHtml(recommendationData.cost_optimization.reasoning)}</div>
-                        ${recommendationData.cost_optimization.estimated_savings ? `
-                        <div class="text-xs text-green-700">
-                            <span class="font-medium">Potential Savings:</span> ${escapeHtml(recommendationData.cost_optimization.estimated_savings)}
-                        </div>
-                        ` : ''}
-                    </div>
-                    <div class="text-xs space-y-1">
-                        <div><span class="text-green-600">Strategy Type:</span> <span class="font-medium">${escapeHtml(recommendationData.cost_optimization.strategy_type.replace('_', ' '))}</span></div>
-                        <div><span class="text-green-600">Risk Level:</span> <span class="font-medium">${escapeHtml(recommendationData.cost_optimization.risk_assessment)}</span></div>
-                        <div><span class="text-green-600">Market Timing:</span> <span class="font-medium">${escapeHtml(recommendationData.cost_optimization.market_timing)}</span></div>
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-green-100">
+                                <th class="px-3 py-2 text-left font-medium text-green-800">Option</th>
+                                <th class="px-3 py-2 text-left font-medium text-green-800">Carrier</th>
+                                <th class="px-3 py-2 text-left font-medium text-green-800">Cost</th>
+                                <th class="px-3 py-2 text-left font-medium text-green-800">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            ${parseAlternativesTable(sections.alternatives)}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+            ` : ''}
             
-            <!-- Market Timing & Metadata -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Market Timing -->
-                <div class="bg-purple-50 rounded-lg p-4">
-                    <h4 class="font-medium text-purple-900 mb-3 flex items-center">
-                        <i class="fas fa-clock text-purple-600 mr-2"></i>
-                        Market Timing
-                    </h4>
-                    <div class="text-sm text-purple-800">${escapeHtml(recommendationData.market_timing)}</div>
+            <!-- Market Timing Table -->
+            ${sections.marketTiming ? `
+            <div class="bg-purple-50 rounded-lg p-4">
+                <h4 class="font-medium text-purple-900 mb-3 flex items-center">
+                    <i class="fas fa-clock text-purple-600 mr-2"></i>
+                    Market Timing Analysis
+                </h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <tbody class="bg-white">
+                            <tr>
+                                <td class="px-3 py-2 font-medium text-purple-700 bg-purple-25 w-1/4">Recommendation</td>
+                                <td class="px-3 py-2">${escapeHtml(sections.marketTiming)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                
-                <!-- Analysis Metadata -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h4 class="font-medium text-gray-900 mb-3 flex items-center">
-                        <i class="fas fa-info-circle text-gray-600 mr-2"></i>
-                        Analysis Details
-                    </h4>
-                    <div class="space-y-2 text-xs">
-                        <div><span class="text-gray-600">Data Sources:</span> <span class="font-medium">${recommendationData.metadata.data_sources_used.join(', ')}</span></div>
-                        <div><span class="text-gray-600">Data Completeness:</span> <span class="font-medium">${(recommendationData.metadata.data_completeness * 100).toFixed(0)}%</span></div>
-                        <div><span class="text-gray-600">Generated:</span> <span class="font-medium">${new Date(recommendationData.metadata.generated_at).toLocaleString()}</span></div>
-                    </div>
+            </div>
+            ` : ''}
+            
+            <!-- Analysis Metadata Table -->
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-info-circle text-gray-600 mr-2"></i>
+                    Analysis Details
+                </h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <tbody class="bg-white">
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-gray-700 bg-gray-25 w-1/3">Data Sources</td>
+                                <td class="px-3 py-2">${recommendationData.metadata ? recommendationData.metadata.data_sources_used.join(', ') : 'N/A'}</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="px-3 py-2 font-medium text-gray-700 bg-gray-25">Data Completeness</td>
+                                <td class="px-3 py-2">${recommendationData.metadata ? (recommendationData.metadata.data_completeness * 100).toFixed(0) + '%' : 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-3 py-2 font-medium text-gray-700 bg-gray-25">Generated At</td>
+                                <td class="px-3 py-2">${recommendationData.metadata ? new Date(recommendationData.metadata.generated_at).toLocaleString() : 'N/A'}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
@@ -4044,6 +4150,84 @@ function displayAIRecommendations(recommendationData) {
     `;
     
     contentElement.innerHTML = content;
+}
+
+// Helper function to parse recommendation sections
+function parseRecommendationSections(text) {
+    const sections = {};
+    
+    // Extract reasoning section
+    const reasoningMatch = text.match(/\*\*REASONING:\*\*([\s\S]*?)(?=\*\*ALTERNATIVES:\*\*|\*\*MARKET TIMING:\*\*|$)/i);
+    if (reasoningMatch) {
+        sections.reasoning = reasoningMatch[1].trim();
+    }
+    
+    // Extract alternatives section
+    const alternativesMatch = text.match(/\*\*ALTERNATIVES:\*\*([\s\S]*?)(?=\*\*MARKET TIMING:\*\*|$)/i);
+    if (alternativesMatch) {
+        sections.alternatives = alternativesMatch[1].trim();
+    }
+    
+    // Extract market timing section
+    const marketTimingMatch = text.match(/\*\*MARKET TIMING:\*\*([\s\S]*?)$/i);
+    if (marketTimingMatch) {
+        sections.marketTiming = marketTimingMatch[1].trim();
+    }
+    
+    return sections;
+}
+
+// Helper function to parse alternatives into table rows
+function parseAlternativesTable(alternativesText) {
+    const lines = alternativesText.split('\n').filter(line => line.trim());
+    let tableRows = '';
+    
+    lines.forEach((line, index) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
+            // Parse line like "- Option 2: [Carrier] at $[amount] ([RIQ/Spot])"
+            const match = trimmedLine.match(/(?:Option\s+\d+|Alternative\s+\d+):\s*([^)]+?)(?:\s+at\s+)?\$?([^(]*?)(?:\s*\(([^)]+)\))?$/i);
+            if (match) {
+                const optionNum = index + 1;
+                const carrierAndCost = match[1].trim();
+                const type = match[3] || 'Unknown';
+                
+                // Try to separate carrier and cost
+                const carrierCostMatch = carrierAndCost.match(/^(.*?)\s+(?:at\s+)?\$?([^$]*?)$/);
+                const carrier = carrierCostMatch ? carrierCostMatch[1].trim() : carrierAndCost;
+                const cost = carrierCostMatch ? '$' + carrierCostMatch[2].trim() : 'N/A';
+                
+                tableRows += `
+                    <tr class="border-b">
+                        <td class="px-3 py-2">Option ${optionNum}</td>
+                        <td class="px-3 py-2">${escapeHtml(carrier)}</td>
+                        <td class="px-3 py-2 font-medium">${escapeHtml(cost)}</td>
+                        <td class="px-3 py-2">
+                            <span class="px-2 py-1 rounded-full text-xs ${type.toLowerCase().includes('riq') ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}">
+                                ${escapeHtml(type)}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    });
+    
+    return tableRows || '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-500">No alternatives available</td></tr>';
+}
+
+// Helper function to get tier badge class
+function getTierBadgeClass(tier) {
+    switch(tier) {
+        case '1':
+            return 'bg-green-100 text-green-700';
+        case '2':
+            return 'bg-yellow-100 text-yellow-700';
+        case '3':
+            return 'bg-red-100 text-red-700';
+        default:
+            return 'bg-gray-100 text-gray-700';
+    }
 }
 
 // Integration with existing data collection systems
