@@ -2616,41 +2616,9 @@ function displaySpotRateMatrix(data) {
                 <!-- Lane Parameters Grid -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-sm mb-4">`;
 
-        // // Add lane parameters dynamically
-        // if (laneInfo && laneInfo.sourceCity) {
-        //     content += `<div><span class="text-neutral-600">Origin:</span> <span class="font-medium">${laneInfo.sourceCity}</span></div>`;
-        // } else {
-        //     content += `<div><span class="text-neutral-600">Origin:</span> <span class="font-medium">${escapeHtml(origin_city)}</span></div>`;
-        // }
-        
-        // if (laneInfo && laneInfo.destinationCity) {
-        //     content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${laneInfo.destinationCity}</span></div>`;
-        // } else {
-        //     content += `<div><span class="text-neutral-600">Destination:</span> <span class="font-medium">${escapeHtml(destination_city)}</span></div>`;
-        // }
-        
-        // content += `<div><span class="text-neutral-600">Shipment Date:</span> <span class="font-medium">${escapeHtml(shipment_date)}</span></div>`;
-        // content += `<div><span class="text-neutral-600">Carriers Found:</span> <span class="font-medium">${spot_costs.length}</span></div>`;
-        
-        // if (laneInfo && laneInfo.laneName) {
-        //     content += `<div class="col-span-2"><span class="text-neutral-600">Route:</span> <span class="font-medium">${laneInfo.laneName}</span></div>`;
-        // }
-        
-        // if (laneInfo && laneInfo.equipmentType) {
-        //     content += `<div><span class="text-neutral-600">Equipment:</span> <span class="font-medium">${laneInfo.equipmentType}</span></div>`;
-        // }
-        
-        // if (laneInfo && laneInfo.serviceType) {
-        //     content += `<div><span class="text-neutral-600">Service:</span> <span class="font-medium">${laneInfo.serviceType}</span></div>`;
-        // }
-        
-        // if (laneInfo && laneInfo.weight) {
-        //     content += `<div><span class="text-neutral-600">Weight:</span> <span class="font-medium">${laneInfo.weight}</span></div>`;
-        // }
-        
-        // if (laneInfo && laneInfo.volume) {
-        //     content += `<div><span class="text-neutral-600">Volume:</span> <span class="font-medium">${laneInfo.volume}</span></div>`;
-        // }
+        if (laneInfo && (laneInfo.equipmentType || laneInfo.transportMode)) {
+            content += `<div><span class="text-neutral-600">Mode:</span> <span class="font-medium">${laneInfo.equipmentType || laneInfo.transportMode || 'N/A'}</span></div>`;
+        }
 
         content += `
                 </div>
@@ -2661,7 +2629,7 @@ function displaySpotRateMatrix(data) {
                         <div class="text-center">
                             <div class="text-neutral-600 mb-1">Lowest Rate</div>
                             <div class="font-medium text-lg text-green-700">$${minRateData.cost.toFixed(2)}</div>
-                            <div class="text-xs text-neutral-500">${minRateData.carrier}</div>
+                            <div class="text-xs text-neutral-500">${minRateData.carrier} (${minRateData.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${minRateData.date}</div>
                         </div>
                         <div class="text-center">
@@ -2670,7 +2638,7 @@ function displaySpotRateMatrix(data) {
         if (bestCarrierBestRate) {
             content += `
                             <div class="font-medium text-lg text-green-700">$${bestCarrierBestRate.cost.toFixed(2)}</div>
-                            <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier}</div>
+                            <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier} (${bestCarrierBestRate.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${bestCarrierBestRate.date}</div>`;
         } else if (laneInfo && laneInfo.bestCarrier) {
             content += `
@@ -2689,32 +2657,50 @@ function displaySpotRateMatrix(data) {
                         <div class="text-center">
                             <div class="text-neutral-600 mb-1">Highest Rate</div>
                             <div class="font-medium text-lg text-red-600">$${maxRateData.cost.toFixed(2)}</div>
-                            <div class="text-xs text-neutral-500">${maxRateData.carrier}</div>
+                            <div class="text-xs text-neutral-500">${maxRateData.carrier} (${maxRateData.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${maxRateData.date}</div>
                         </div>
                     </div>
                 </div>
             </div>
         `;
+        
+        // Detailed carrier breakdown
+        content += `
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="font-medium text-gray-900 mb-3">Carrier Breakdown</h4>
+                <div class="space-y-3">
+        `;
+        
+        spot_costs.forEach(carrierData => {
+            const bestRateForCarrier = allRatesWithDetails
+                .filter(rate => rate.carrier === carrierData.carrier)
+                .reduce((min, rate) => rate.cost < min.cost ? rate : min);
 
-        // Get all unique dates from all carriers to ensure consistent columns
-        const allDates = [...new Set(spot_costs.flatMap(carrier => 
-            carrier.cost_details.map(detail => detail.ship_date)
-        ))].sort();
-
-        const minRate = Math.min(...allRatesWithDetails.map(r => r.cost));
-        const maxRate = Math.max(...allRatesWithDetails.map(r => r.cost));
-
+            content += `
+                <div class="grid grid-cols-4 items-center text-sm">
+                    <div class="col-span-2 font-medium">${escapeHtml(carrierData.carrier)}</div>
+                    <div class="text-center text-gray-600">${bestRateForCarrier.mode || 'N/A'}</div>
+                    <div class="text-right font-semibold text-gray-800">$${bestRateForCarrier.cost.toFixed(2)}</div>
+                </div>
+            `;
+        });
+        
+        content += `
+                </div>
+            </div>
+        `;
     } else {
         content += `
             <div class="text-center py-8 text-neutral-500">
-                <i class="fas fa-info-circle text-4xl mb-4 text-neutral-300"></i>
-                <p>No carriers found for this lane and date combination.</p>
+                <i class="fas fa-box-open text-3xl mb-3 text-neutral-300"></i>
+                <p>No spot rate data available for this lane on the selected date.</p>
             </div>
         `;
     }
-
+    
     content += `</div>`;
+    
     contentElement.innerHTML = content;
 }
 
@@ -4962,23 +4948,6 @@ function displayRateResultsComprehensive(results, laneInfo) {
     
     let content = '<div class="space-y-3">';
     
-    // // Display summary statistics
-    // if (results.metadata && results.metadata.totalOptions > 0) {
-    //     content += `
-    //        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-    //             <h5 class="font-medium text-blue-800 mb-2 flex items-center text-sm">
-    //                 <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
-    //                 Query Summary
-    //             </h5>
-    //             <div class="grid grid-cols-3 gap-2 text-xs">
-    //                 <div><span class="text-neutral-600">Total Options:</span> <span class="font-medium">${results.metadata.totalOptions}</span></div>
-    //                 <div><span class="text-neutral-600">Carriers:</span> <span class="font-medium">${results.metadata.carriers.length}</span></div>
-    //                 <div><span class="text-neutral-600">Modes:</span> <span class="font-medium">${results.metadata.transportModes.join(', ')}</span></div>
-    //             </div>
-    //         </div>
-    //     `;
-    // } 
-    
     // Display cheapest rate
     if (results.cheapest?.data) {
         const cheapest = results.cheapest.data;
@@ -5029,29 +4998,6 @@ function displayRateResultsComprehensive(results, laneInfo) {
                 </div>
             </div>
         `;
-        
-        // // Add comparison if both rates available
-        // if (results.cheapest?.data) {
-        //     const cheapestCost = results.cheapest.data.cost || 0;
-        //     const bestCost = bestCarrier.cost || 0;
-        //     const difference = bestCost - cheapestCost;
-        //     const percentDiff = cheapestCost > 0 ? ((difference / cheapestCost) * 100).toFixed(1) : 0;
-            
-        //     content += `
-        //         <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-3">
-        //             <h5 class="font-medium text-neutral-800 mb-2 flex items-center text-sm">
-        //                 <i class="fas fa-balance-scale text-neutral-600 mr-2"></i>
-        //                 Rate Comparison
-        //             </h5>
-        //             <p class="text-xs text-neutral-700">
-        //                 ${difference >= 0 
-        //                     ? `Best performer costs ${bestCarrier.currency} ${Math.abs(difference).toLocaleString()} more (+${percentDiff}%) than cheapest option` 
-        //                     : `Best performer costs ${bestCarrier.currency} ${Math.abs(difference).toLocaleString()} less (-${Math.abs(percentDiff)}%) than cheapest option`
-        //                 }
-        //             </p>
-        //         </div>
-        //     `;
-        // }
     }
     
     // Show any partial errors or best carrier unavailable message
@@ -5218,6 +5164,7 @@ function displaySpotMatrixInModal(data) {
                     <div><span class="text-blue-600">Destination:</span> <span class="font-medium">${escapeHtml(destination_city || laneInfo?.destinationCity || 'N/A')}</span></div>
                     <div><span class="text-blue-600">Weight:</span> <span class="font-medium">${escapeHtml(laneInfo?.weight || 'N/A')}</span></div>
                     <div><span class="text-blue-600">Base Date:</span> <span class="font-medium">${shipment_date}</span></div>
+                    <div><span class="text-blue-600">Mode:</span> <span class="font-medium">${escapeHtml(laneInfo?.equipmentType || 'N/A')}</span></div>
                 </div>
             </div>
             
@@ -5226,6 +5173,7 @@ function displaySpotMatrixInModal(data) {
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carrier</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Mode</th>
     `;
     
     // Create column headers for each date
@@ -5247,9 +5195,13 @@ function displaySpotMatrixInModal(data) {
     spot_costs.forEach((carrierData, index) => {
         const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
         
+        // Extract transport mode; assume it's consistent for the carrier in this view
+        const transportMode = carrierData.cost_details[0]?.transport_mode || 'N/A';
+        
         matrixHTML += `
             <tr class="${rowClass}">
                 <td class="px-4 py-3 text-sm font-medium text-gray-900">${escapeHtml(carrierData.carrier)}</td>
+                <td class="px-4 py-3 text-sm text-center text-gray-600">${transportMode}</td>
         `;
         
         // Create a map of dates to costs for this carrier
@@ -5294,6 +5246,7 @@ function displaySpotMatrixInModal(data) {
         carrier.cost_details.map(detail => ({
             cost: parseFloat(detail.total_spot_cost),
             carrier: carrier.carrier,
+            mode: detail.transport_mode,
             date: detail.ship_date
         }))
     );
@@ -5303,6 +5256,17 @@ function displaySpotMatrixInModal(data) {
         const maxRate = Math.max(...allRatesWithDetails.map(r => r.cost));
         const avgRate = allRatesWithDetails.reduce((sum, r) => sum + r.cost, 0) / allRatesWithDetails.length;
         
+        // Calculate mode breakdown
+        const modeCounts = allRatesWithDetails.reduce((acc, rate) => {
+            const mode = rate.mode || 'N/A';
+            acc[mode] = (acc[mode] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const modeBreakdown = Object.entries(modeCounts)
+            .map(([mode, count]) => `${mode}: ${count}`)
+            .join(', ');
+
         matrixHTML += `
             <div class="mt-6 bg-gray-50 rounded-lg p-4">
                 <h5 class="font-medium text-gray-900 mb-3">Matrix Summary</h5>
@@ -5311,6 +5275,9 @@ function displaySpotMatrixInModal(data) {
                     <div><span class="text-gray-600">Best Rate:</span> <span class="font-medium text-green-600">$${minRate.toFixed(2)}</span></div>
                     <div><span class="text-gray-600">Highest Rate:</span> <span class="font-medium text-red-600">$${maxRate.toFixed(2)}</span></div>
                     <div><span class="text-gray-600">Market Avg:</span> <span class="font-medium">$${avgRate.toFixed(2)}</span></div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-gray-200 text-sm">
+                    <span class="text-gray-600">Mode Breakdown:</span> <span class="font-medium">${modeBreakdown}</span>
                 </div>
             </div>
         `;

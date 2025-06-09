@@ -23,21 +23,21 @@
 ## 2. Show Transport Mode on Spot Matrix and Summary
 
 ### Frontend Changes (script.js)
-- [ ] Modify `displaySpotRateMatrix()` function to include transport mode in summary
-- [ ] Update the rate statistics section to show mode breakdown:
+- [x] Modify `displaySpotRateMatrix()` function to include transport mode in summary
+- [x] Update the rate statistics section to show mode breakdown:
   ```javascript
   // Add transport mode to summary grid
   if (laneInfo.equipmentType || laneInfo.transportMode) {
     content += `<div><span class="text-neutral-600">Mode:</span> <span class="font-medium">${laneInfo.equipmentType || 'N/A'}</span></div>`;
   }
   ```
-- [ ] Modify `displaySpotMatrixInModal()` to include transport mode column
-- [ ] Add transport mode to the matrix table headers
-- [ ] Update carrier data processing to extract and display transport mode
+- [x] Modify `displaySpotMatrixInModal()` to include transport mode column
+- [x] Add transport mode to the matrix table headers
+- [x] Update carrier data processing to extract and display transport mode
 
 ### Backend Integration
-- [ ] Ensure spot rate API response includes transport mode data
-- [ ] Verify transport mode is properly parsed from API response
+- [x] Ensure spot rate API response includes transport mode data
+- [x] Verify transport mode is properly parsed from API response
 
 ## 3. Convert Order Release Management to Table with Checkboxes
 

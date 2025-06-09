@@ -7,6 +7,7 @@
 - Added a 2.5-second delay for the auto-trigger of spot analysis to ensure sequential execution.
 - Updated the Spot API Analysis card to display "Auto-analyzing for [date]..." during automatic analysis.
 - Added a visual indicator in the Spot API Analysis card header to show when a date is auto-selected.
+- Added transport mode information to the Spot API Analysis card and the Spot Matrix modal, including a mode breakdown in the summary statistics.
 
 ### Changed
 
