@@ -14,6 +14,10 @@
 - Added "Create Shipment" button section below analysis cards, enabling based on order selections.
 - Created modal success screen for shipment creation, showing fake details after a delay.
 - Moved the Create Shipment button to the same line as the Order Release Management header and removed the separate card.
+- Added auto-generation toggle for AI recommendations, allowing users to enable or disable automatic triggering.
+- Modified checkRecommendationReadiness() to automatically trigger when all 4 data sources (RIQ rate analysis, spot rate matrix, historical lane data, and chat-parsed insights) are available, with 2-second debouncing and per-lane tracking.
+- Added visual indicators for auto-generation status and data readiness.
+- Ensured manual overrides and implemented error handling to prevent disruptions to existing functionality.
 
 ### Changed
 
@@ -941,4 +945,4 @@
 - Created `order_volume_model.py`
 
 
-Timestamp: 2025-06-03 12:27:00
+Timestamp: 2025-06-09 14:35:00

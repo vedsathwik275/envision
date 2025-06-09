@@ -255,13 +255,13 @@
 ## 8. Change Label from "Shipments" to "Order Volume"
 
 ### Global Text Replacements
-- [ ] Search and replace in `index.html`:
-  - [ ] Lane summary section: `shipments` → `order volume`
-  - [ ] Historical data display: `total_shipments_in_data` → `total_order_volume_in_data`
-  - [ ] Any other instances of "shipments" in labels
+- [x] Search and replace in `index.html`:
+  - [x] Lane summary section: `shipments` → `order volume`
+  - [x] Historical data display: `total_shipments_in_data` → `total_order_volume_in_data`
+  - [x] Any other instances of "shipments" in labels
 
 ### Frontend Changes (script.js)
-- [ ] Update `displayHistoricalData()` function:
+- [x] Update `displayHistoricalData()` function:
   ```javascript
   // Change this line:
   <div><span class="text-neutral-600">Shipments:</span> <span class="font-medium">${lane_summary.total_shipments_in_data || 'N/A'}</span></div>
@@ -270,20 +270,20 @@
   ```
 
 ### Backend Verification
-- [ ] Ensure API responses use "order_volume" terminology where applicable
+- [x] Ensure API responses use "order_volume" terminology where applicable
 
 ## 9. Change "Chat" Labels to "Intelligent Carrier Selection"
 
 ### HTML Changes (index.html)
-- [ ] Update navigation menu:
+- [x] Update navigation menu:
   ```html
   <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Intelligent Carrier Selection</span>
   ```
-- [ ] Update page title mappings in JavaScript
-- [ ] Update any tooltips or help text
+- [x] Update page title mappings in JavaScript
+- [x] Update any tooltips or help text
 
 ### Frontend Changes (script.js)
-- [ ] Update `updatePageTitle()` function:
+- [x] Update `updatePageTitle()` function:
   ```javascript
   const titles = {
     dashboard: { title: 'Dashboard', subtitle: 'RAG Chatbot Management' },
@@ -291,22 +291,52 @@
     chat: { title: 'Intelligent Carrier Selection', subtitle: 'AI-powered carrier recommendations' }
   };
   ```
-- [ ] Update any other references to "chat" in user-facing text
+- [x] Update any other references to "chat" in user-facing text
 
 ## 10. Change "AI Transportation Recommendations" to "Recommendations Powered by AI"
 
 ### HTML Changes (index.html)
-- [ ] Update card header:
+- [x] Update card header:
   ```html
   <h3 class="text-lg font-semibold text-neutral-900">Recommendations Powered by AI</h3>
   ```
 
 ### Frontend Changes (script.js)
-- [ ] Update any JavaScript that sets this title dynamically
-- [ ] Update placeholder text:
+- [x] Update any JavaScript that sets this title dynamically
+- [x] Update placeholder text:
   ```javascript
   <p class="text-sm mb-2">Recommendations Powered by AI</p>
   ```
+## 11. Update Order Field Labels to User-Friendly Terms
+
+### HTML Changes (index.html)
+- [x] Update order table column headers to use new user-friendly labels:
+  - [x] "Order ID" (instead of orderReleaseXid)
+  - [x] "Weight" (instead of totalWeight technical reference)
+  - [x] "Volume" (instead of totalVolume technical reference)
+  - [x] "Case Count" (for totalPackagingUnitCount)
+  - [x] "Item Count" (for totalItemPackageCount)
+  - [x] "Pallet Count" (for totalShipUnitCount)
+  - [x] "Deliver By" (for lateDeliveryDate)
+
+### Frontend Changes (script.js)
+- [x] Update `displayUnplannedOrders()` function to use new field labels in table generation
+- [x] Update `displayOrderDetails()` function to use new field labels in modal
+- [x] Add extraction and display of new fields:
+  - [x] Extract `totalPackagingUnitCount` and display as "Case Count"
+  - [x] Extract `totalItemPackageCount` and display as "Item Count"  
+  - [x] Extract `totalShipUnitCount` and display as "Pallet Count"
+  - [x] Extract `lateDeliveryDate` and display as "Deliver By"
+- [x] Add proper null value handling for all new fields:
+  ```javascript
+  const caseCount = order.totalPackagingUnitCount || 'N/A';
+  const itemCount = order.totalItemPackageCount || 'N/A';
+  const palletCount = order.totalShipUnitCount || 'N/A';
+  const deliverBy = order.lateDeliveryDate?.value ? formatOrderDate(order.lateDeliveryDate.value) : 'N/A';
+  ```
+- [x] Update table row generation to include new columns
+- [x] Update modal content sections to show new fields with proper labels
+- [x] Ensure consistent formatting for all numeric fields (weights, volumes, counts)
 
 ## Additional Tasks for Integration
 

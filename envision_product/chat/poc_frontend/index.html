@@ -104,6 +104,15 @@
         #order-release-content::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        
+        /* Auto-generation toggle styling */
+        .auto-toggle-container {
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        .auto-toggle-container:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-800 min-h-screen">
@@ -137,7 +146,7 @@
                             <i class="fas fa-comments text-xl text-blue-300"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-semibold">RAG Chatbot</h2>
+                            <h2 class="text-lg font-semibold">EnvisionDynamics</h2>
                             <p class="text-sm text-neutral-300">AI Platform</p>
                         </div>
                     </div>
@@ -171,9 +180,9 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" id="nav-chat" class="nav-link flex items-center px-3 py-3 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white transition-all duration-300 group" data-section="chat" title="Chat">
+                    <a href="#" id="nav-chat" class="nav-link flex items-center px-3 py-3 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white transition-all duration-300 group" data-section="chat" title="Intelligent Carrier Selection">
                         <i class="fas fa-comments text-lg flex-shrink-0 w-6 text-center"></i>
-                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Chat</span>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Envision Dynamics</span>
                     </a>
                 </li>
             </ul>
@@ -483,15 +492,23 @@
                         
                         <!-- Right Column -->
                         <div class="flex flex-col space-y-6">
-                            <!-- AI Transportation Recommendations Card - Resized to match chat height -->
+                            <!-- Recommendations Powered by AI Card - Resized to match chat height -->
                             <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[550px] flex flex-col flex-shrink-0 overflow-hidden">
                                 <div class="p-4 border-b border-neutral-100 flex-shrink-0">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center">
                                             <i class="fas fa-brain text-indigo-500 mr-3 text-xl"></i>
-                                            <h3 class="text-lg font-semibold text-neutral-900">AI Transportation Recommendations</h3>
+                                            <h3 class="text-lg font-semibold text-neutral-900">Recommendations Powered by AI</h3>
                                         </div>
                                         <div class="flex items-center space-x-3">
+                                            <!-- Auto-generation toggle -->
+                                            <div class="flex items-center space-x-2 auto-toggle-container" title="Enable/disable automatic generation when all 4 data sources are available">
+                                                <span class="text-xs text-neutral-600">Auto</span>
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" id="auto-generation-toggle" class="sr-only peer" onchange="toggleAutoGeneration()">
+                                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                                </label>
+                                            </div>
                                             <span id="ai-recommendations-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                                                 Awaiting Data
                                             </span>
@@ -509,7 +526,7 @@
                                     <div id="ai-recommendations-content" class="space-y-4">
                                         <div class="text-center py-6 text-neutral-500">
                                             <i class="fas fa-lightbulb text-3xl mb-3 text-neutral-300"></i>
-                                            <p class="text-sm mb-2">AI-Powered Transportation Recommendations</p>
+                                            <p class="text-sm mb-2">Recommendations Powered by AI</p>
                                             <p class="text-xs text-neutral-400 mb-4">Gather transportation data from multiple sources to unlock intelligent recommendations</p>
                                             <div class="max-w-md mx-auto">
                                                 <div class="text-xs text-neutral-600 mb-2">Data Collection Progress</div>
