@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased] - 2025-06-09
+### Added
+- Implemented automatic SPOT analysis that triggers when lane information is detected after RIQ completion.
+- Auto-populates the "Ship Date" input field with the current date (YYYY-MM-DD) if it's empty.
+- Added a 2.5-second delay for the auto-trigger of spot analysis to ensure sequential execution.
+- Updated the Spot API Analysis card to display "Auto-analyzing for [date]..." during automatic analysis.
+- Added a visual indicator in the Spot API Analysis card header to show when a date is auto-selected.
+
+### Changed
+
+### Fixed
+
 ## [Unreleased] - 2025-06-03
 ### Added
 - **Spot Rate Matrix API Backend**: Complete implementation of spot rate matrix functionality

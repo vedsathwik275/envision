@@ -1556,6 +1556,21 @@ function updateSpotAPICard(laneInfo, userMessage, response) {
     const statusElement = document.getElementById('spot-api-status');
     const contentElement = document.getElementById('spot-api-content');
     
+    // Auto-populate date input field with current date if empty
+    const shipDateInput = document.getElementById('spot-ship-date');
+    if (shipDateInput && !shipDateInput.value) {
+        const currentDate = new Date().toISOString().split('T')[0];
+        shipDateInput.value = currentDate;
+        
+        // Show auto-selected date indicator
+        const autoDateIndicator = document.getElementById('spot-auto-date-indicator');
+        const autoSelectedDate = document.getElementById('auto-selected-date');
+        if (autoDateIndicator && autoSelectedDate) {
+            autoSelectedDate.textContent = currentDate;
+            autoDateIndicator.classList.remove('hidden');
+        }
+    }
+    
     // Update status
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
     statusElement.textContent = 'Ready for Analysis';
@@ -2227,6 +2242,9 @@ window.retrieveRateInquiry = async function() {
             updateRecommendationDataCollection('riq_rates', results, true);
         }
         
+        // Auto-trigger spot analysis after RIQ completion with delay
+        autoTriggerSpotAnalysis();
+        
     } catch (error) {
         console.error('Comprehensive rate inquiry failed:', error);
         
@@ -2330,6 +2348,9 @@ window.retrieveRateInquiryComprehensive = async function() {
             showNotification(`Found ${results.metadata.totalOptions} rate options from ${results.metadata.carriers.length} carriers`, 'success');
         }
         
+        // Auto-trigger spot analysis after RIQ completion with delay
+        autoTriggerSpotAnalysis();
+        
     } catch (error) {
         console.error('Comprehensive rate inquiry failed:', error);
         
@@ -2359,12 +2380,14 @@ window.retrieveRateInquiryComprehensive = async function() {
     }
 };
 
-window.performSpotAnalysis = function() {
+window.performSpotAnalysis = function(isAutoTriggered = false) {
     // Get the date value
     const shipmentDate = document.getElementById('spot-ship-date')?.value;
     
     if (!shipmentDate) {
-        showNotification('Please select a shipment date', 'warning');
+        if (!isAutoTriggered) {
+            showNotification('Please select a shipment date', 'warning');
+        }
         return;
     }
     
@@ -2372,21 +2395,59 @@ window.performSpotAnalysis = function() {
     const laneInfo = window.currentLaneInfo;
     
     if (!laneInfo || !laneInfo.sourceCity || !laneInfo.destinationCity) {
-        showNotification('Lane information is incomplete. Please provide source and destination cities.', 'warning');
+        if (!isAutoTriggered) {
+            showNotification('Lane information is incomplete. Please provide source and destination cities.', 'warning');
+        }
         return;
     }
     
     console.log('Performing spot analysis with:', {
         laneInfo,
-        shipmentDate
+        shipmentDate,
+        isAutoTriggered
     });
     
-    // Update the card to show loading state
-    updateSpotAnalysisLoadingState();
+    // Update the card to show loading state with auto-analysis message if triggered automatically
+    updateSpotAnalysisLoadingState(isAutoTriggered, shipmentDate);
     
     // Call the spot rate matrix API
     fetchSpotRateMatrix(laneInfo, shipmentDate);
 };
+
+// Auto-trigger spot analysis after RIQ completion
+function autoTriggerSpotAnalysis() {
+    console.log('🔄 Auto-triggering spot analysis after RIQ completion...');
+    
+    // Check if we have the necessary lane information
+    const laneInfo = window.currentLaneInfo;
+    if (!laneInfo || !laneInfo.sourceCity || !laneInfo.destinationCity) {
+        console.log('❌ Cannot auto-trigger spot analysis: insufficient lane information');
+        return;
+    }
+    
+    // Check if date input is available and populated
+    const shipDateInput = document.getElementById('spot-ship-date');
+    if (!shipDateInput) {
+        console.log('❌ Cannot auto-trigger spot analysis: date input element not found');
+        return;
+    }
+    
+    // Auto-populate date if not already set
+    if (!shipDateInput.value) {
+        shipDateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    // Add delay before auto-triggering (2-3 seconds)
+    setTimeout(() => {
+        console.log('✅ Auto-triggering spot analysis with delay...');
+        
+        // Show notification about auto-trigger
+        showNotification('Auto-analyzing spot rates for current date...', 'info');
+        
+        // Trigger spot analysis with auto-trigger flag
+        window.performSpotAnalysis(true);
+    }, 2500); // 2.5 second delay
+}
 
 async function fetchSpotRateMatrix(laneInfo, shipmentDate) {
     try {
@@ -2454,17 +2515,22 @@ async function fetchSpotRateMatrix(laneInfo, shipmentDate) {
     }
 }
 
-function updateSpotAnalysisLoadingState() {
+function updateSpotAnalysisLoadingState(isAutoTriggered = false, shipmentDate = null) {
     const statusElement = document.getElementById('spot-api-status');
     const contentElement = document.getElementById('spot-api-content');
     
     statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
     statusElement.textContent = 'Loading...';
     
+    const loadingMessage = isAutoTriggered 
+        ? `Auto-analyzing for ${shipmentDate}...` 
+        : 'Loading spot rate matrix...';
+    
     contentElement.innerHTML = `
         <div class="text-center py-8 text-neutral-500">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
-            <p>Loading spot rate matrix...</p>
+            <p>${loadingMessage}</p>
+            ${isAutoTriggered ? '<p class="text-xs mt-2 text-blue-600">Analysis triggered automatically after RIQ completion</p>' : ''}
         </div>
     `;
 }
