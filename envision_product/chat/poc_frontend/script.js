@@ -177,6 +177,28 @@ function setupEventListeners() {
     
     // Spot Matrix Modal
     document.getElementById('close-spot-matrix-modal').addEventListener('click', closeSpotMatrixModal);
+    
+    // Create Shipment Button
+    const createShipmentBtn = document.getElementById('create-shipment-btn');
+    if (createShipmentBtn) {
+        createShipmentBtn.addEventListener('click', handleCreateShipmentClick);
+    }
+    
+    // Shipment Success Modal
+    const closeShipmentSuccessBtn = document.getElementById('close-shipment-success');
+    if (closeShipmentSuccessBtn) {
+        closeShipmentSuccessBtn.addEventListener('click', closeShipmentSuccessModal);
+    }
+    
+    // Close modal when clicking outside
+    const shipmentSuccessModal = document.getElementById('shipment-success-modal');
+    if (shipmentSuccessModal) {
+        shipmentSuccessModal.addEventListener('click', (e) => {
+            if (e.target === shipmentSuccessModal) {
+                closeShipmentSuccessModal();
+            }
+        });
+    }
 }
 
 // Navigation functions
@@ -1006,6 +1028,12 @@ function clearLaneInfoCards() {
             </div>
         `;
     }
+    
+    // Clear carrier dropdown
+    clearCarrierDropdown();
+    
+    // Clear shipment selections and reset button
+    clearShipmentSelections();
 }
 
 // Function to reset AI recommendations panel to initial state
@@ -2132,6 +2160,9 @@ function displayRateResults(results, laneInfo) {
     
     content += '</div>';
     contentElement.innerHTML = content;
+    
+    // Populate carrier dropdown after displaying rate results
+    populateCarrierDropdown(results);
 }
 
 // Global functions for API button actions
@@ -3070,8 +3101,11 @@ async function fetchUnplannedOrders(laneInfo) {
     }
 }
 
+// Global state for selected orders
+window.selectedOrders = [];
+
 /**
- * Displays the list of unplanned orders in the card content
+ * Displays the list of unplanned orders in a table format with selectable checkboxes
  */
 function displayUnplannedOrders(orders, contentElement, laneInfo) {
     console.log('=== DEBUG: displayUnplannedOrders started ===');
@@ -3095,7 +3129,8 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
 
     console.log('DEBUG: Processing', orders.length, 'orders');
     
-    const ordersHtml = orders.map((order, index) => {
+    // Generate table rows for orders
+    const tableRows = orders.map((order, index) => {
         console.log(`DEBUG: Processing order ${index + 1}:`, order);
         
         // Extract basic order information
@@ -3152,60 +3187,547 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
         }
         console.log(`DEBUG: Order ${index + 1} - Service provider: ${serviceProvider}`);
 
-        const orderHtml = `
-            <div class="border border-neutral-200 rounded-lg p-2 hover:bg-neutral-50 cursor-pointer transition-colors order-item" 
-                 data-order-gid="${escapeHtml(orderReleaseId)}" 
-                 onclick="selectOrder('${escapeHtml(orderReleaseId)}')">
-                <div class="flex justify-between items-start mb-1">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-xs font-medium text-neutral-900 truncate">${escapeHtml(orderName)}</h4>
-                        <p class="text-xs text-neutral-500">ID: ${escapeHtml(orderReleaseId)}</p>
-                    </div>
-                    <div class="text-right flex-shrink-0 ml-2">
-                        <p class="text-xs font-medium text-green-600">${escapeHtml(bestDirectCost)}</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-1 text-xs text-neutral-600">
-                    <div>
-                        <i class="fas fa-calendar text-neutral-400"></i>
-                        <span class="ml-1">${formatOrderDate(latePickupDate)}</span>
-                    </div>
-                    <div>
-                        <i class="fas fa-weight text-neutral-400"></i>
-                        <span class="ml-1">${escapeHtml(totalWeight)}</span>
-                    </div>
-                    <div>
-                        <i class="fas fa-cube text-neutral-400"></i>
-                        <span class="ml-1">${escapeHtml(totalVolume)}</span>
-                    </div>
-                    <div class="truncate">
-                        <i class="fas fa-truck text-neutral-400"></i>
-                        <span class="ml-1">${escapeHtml(serviceProvider)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        console.log(`DEBUG: Order ${index + 1} - Generated HTML length: ${orderHtml.length}`);
-        return orderHtml;
+        return createOrderTableRow(order, orderReleaseId, orderName, bestDirectCost, latePickupDate, totalWeight, totalVolume, serviceProvider);
     }).join('');
 
-    console.log('DEBUG: Final ordersHtml length:', ordersHtml.length);
+    console.log('DEBUG: Final tableRows length:', tableRows.length);
 
-    const finalHtml = `
-        <div class="space-y-2">
+    const tableHtml = `
+        <div class="mb-3">
             <div class="text-xs text-neutral-600 mb-2">
                 <i class="fas fa-route text-orange-500"></i>
                 <span class="ml-1">${escapeHtml(laneInfo.laneName || 'Lane Orders')} (${orders.length} orders)</span>
             </div>
-            ${ordersHtml}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 text-left">
+                                <input type="checkbox" id="select-all-orders" onchange="toggleAllOrders()" class="rounded">
+                            </th>
+                            <th class="px-3 py-2 text-left">Order ID</th>
+                            <th class="px-3 py-2 text-left">Cost</th>
+                            <th class="px-3 py-2 text-left">Pickup Date</th>
+                            <th class="px-3 py-2 text-left">Weight</th>
+                            <th class="px-3 py-2 text-left">Volume</th>
+                            <th class="px-3 py-2 text-left">Carrier</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body">
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 
-    console.log('DEBUG: Final HTML being set:', finalHtml);
-    contentElement.innerHTML = finalHtml;
+    console.log('DEBUG: Final HTML being set:', tableHtml);
+    contentElement.innerHTML = tableHtml;
     console.log('DEBUG: contentElement.innerHTML after setting:', contentElement.innerHTML);
+    
+    // Reset selected orders when new data is loaded
+    window.selectedOrders = [];
+    
     console.log('=== DEBUG: displayUnplannedOrders completed ===');
+}
+
+/**
+ * Creates a table row for an order with checkbox and data
+ */
+function createOrderTableRow(order, orderReleaseId, orderName, bestDirectCost, latePickupDate, totalWeight, totalVolume, serviceProvider) {
+    return `
+        <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="selectOrderRow('${escapeHtml(orderReleaseId)}', event)">
+            <td class="px-3 py-2" onclick="event.stopPropagation()">
+                <input type="checkbox" class="order-checkbox rounded" data-order-id="${escapeHtml(orderReleaseId)}" onchange="updateSelectedOrders()">
+            </td>
+            <td class="px-3 py-2">
+                <div class="font-medium text-neutral-900 text-xs">${escapeHtml(orderName)}</div>
+                <div class="text-xs text-neutral-500">ID: ${escapeHtml(orderReleaseId)}</div>
+            </td>
+            <td class="px-3 py-2">
+                <span class="text-xs font-medium text-green-600">${escapeHtml(bestDirectCost)}</span>
+            </td>
+            <td class="px-3 py-2">
+                <span class="text-xs text-neutral-600">${formatOrderDate(latePickupDate)}</span>
+            </td>
+            <td class="px-3 py-2">
+                <span class="text-xs text-neutral-600">${escapeHtml(totalWeight)}</span>
+            </td>
+            <td class="px-3 py-2">
+                <span class="text-xs text-neutral-600">${escapeHtml(totalVolume)}</span>
+            </td>
+            <td class="px-3 py-2">
+                <span class="text-xs text-neutral-600">${escapeHtml(serviceProvider)}</span>
+            </td>
+        </tr>
+    `;
+}
+
+/**
+ * Updates the global selectedOrders array based on checked checkboxes
+ */
+function updateSelectedOrders() {
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    window.selectedOrders = Array.from(checkboxes).map(cb => cb.dataset.orderId);
+    
+    console.log('DEBUG: Selected orders updated:', window.selectedOrders);
+    
+    // Update the "Select All" checkbox state
+    updateSelectAllCheckbox();
+    
+    // Update create shipment button state
+    updateCreateShipmentButton();
+}
+
+/**
+ * Toggles all order checkboxes based on the "Select All" checkbox state
+ */
+function toggleAllOrders() {
+    const selectAllCheckbox = document.getElementById('select-all-orders');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    
+    if (selectAllCheckbox && selectAllCheckbox.checked) {
+        // Check all order checkboxes
+        orderCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    } else {
+        // Uncheck all order checkboxes
+        orderCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+    
+    // Update the selected orders array
+    updateSelectedOrders();
+}
+
+/**
+ * Updates the Create Shipment button state based on selected orders and carrier
+ */
+function updateCreateShipmentButton() {
+    const btn = document.getElementById('create-shipment-btn');
+    
+    if (!btn) return;
+    
+    const hasOrders = window.selectedOrders && window.selectedOrders.length > 0;
+    const carrierDropdown = document.getElementById('carrier-selection-dropdown');
+    const hasCarrier = carrierDropdown && carrierDropdown.value && carrierDropdown.value !== '';
+    
+    console.log('DEBUG: UpdateCreateShipmentButton - hasOrders:', hasOrders, 'hasCarrier:', hasCarrier);
+    console.log('DEBUG: Selected orders count:', window.selectedOrders?.length || 0);
+    console.log('DEBUG: Selected carrier:', carrierDropdown?.value || 'none');
+    
+    if (hasOrders && hasCarrier) {
+        // Enable button
+        btn.disabled = false;
+        btn.classList.remove('disabled:bg-gray-400', 'disabled:cursor-not-allowed');
+        btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        btn.title = `Ready to create shipment for ${window.selectedOrders.length} order(s)`;
+    } else {
+        // Disable button
+        btn.disabled = true;
+        btn.classList.add('disabled:bg-gray-400', 'disabled:cursor-not-allowed');
+        btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        
+        if (!hasOrders && !hasCarrier) {
+            btn.title = 'Select orders and carrier to enable';
+        } else if (!hasOrders) {
+            btn.title = 'Select orders to enable';
+        } else if (!hasCarrier) {
+            btn.title = 'Select carrier to enable';
+        }
+    }
+}
+
+/**
+ * Handles Create Shipment button click
+ */
+function handleCreateShipmentClick() {
+    const selectedOrders = window.selectedOrders || [];
+    const carrierDropdown = document.getElementById('carrier-selection-dropdown');
+    const selectedCarrier = carrierDropdown?.value;
+    
+    if (selectedOrders.length === 0 || !selectedCarrier) {
+        console.warn('Cannot create shipment: missing orders or carrier');
+        return;
+    }
+    
+    console.log('DEBUG: Creating shipment for orders:', selectedOrders);
+    console.log('DEBUG: Using carrier:', selectedCarrier);
+    
+    // Call the main shipment creation handler
+    handleCreateShipment(selectedOrders, selectedCarrier);
+}
+
+/**
+ * Main shipment creation handler with loading and success modal
+ */
+async function handleCreateShipment(selectedOrders, selectedCarrier) {
+    try {
+        // Show loading state
+        showLoading('Creating shipment...');
+        
+        // Simulate API call delay (2-3 seconds)
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        // Hide loading
+        hideLoading();
+        
+        // Show success modal with shipment details
+        showShipmentSuccess(selectedOrders, selectedCarrier);
+        
+    } catch (error) {
+        hideLoading();
+        console.error('Shipment creation failed:', error);
+        showNotification('Failed to create shipment. Please try again.', 'error');
+    }
+}
+
+/**
+ * Shows the shipment success modal with details
+ */
+function showShipmentSuccess(orders, carrier) {
+    const modal = document.getElementById('shipment-success-modal');
+    const summary = document.getElementById('shipment-summary');
+    
+    if (!modal || !summary) {
+        console.error('Shipment success modal elements not found');
+        return;
+    }
+    
+    // Generate fake shipment ID using timestamp
+    const shipmentId = `SHP-${Date.now()}`;
+    
+    // Clean carrier name for display
+    const carrierName = cleanServiceProviderGid(carrier);
+    
+    // Create summary content
+    const summaryContent = `
+        <div class="space-y-1">
+            <div class="flex justify-between">
+                <span class="text-gray-500">Orders:</span>
+                <span class="font-medium">${orders.length}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Carrier:</span>
+                <span class="font-medium">${carrierName}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Shipment ID:</span>
+                <span class="font-medium">${shipmentId}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Status:</span>
+                <span class="font-medium text-green-600">Processing</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Created:</span>
+                <span class="font-medium">${new Date().toLocaleString()}</span>
+            </div>
+        </div>
+    `;
+    
+    summary.innerHTML = summaryContent;
+    
+    // Show the modal
+    modal.classList.remove('hidden');
+    
+    console.log('DEBUG: Shipment success modal displayed');
+    console.log('DEBUG: Shipment ID:', shipmentId);
+    console.log('DEBUG: Orders count:', orders.length);
+    console.log('DEBUG: Carrier:', carrierName);
+}
+
+/**
+ * Clears order selections and resets the create shipment button
+ */
+function clearShipmentSelections() {
+    // Clear order selections
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    orderCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Clear select all checkbox
+    const selectAllCheckbox = document.getElementById('select-all-orders');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+    
+    // Reset carrier dropdown
+    const carrierDropdown = document.getElementById('carrier-selection-dropdown');
+    if (carrierDropdown && !carrierDropdown.disabled) {
+        carrierDropdown.value = '';
+    }
+    
+    // Update global state
+    window.selectedOrders = [];
+    
+    // Update button state
+    updateCreateShipmentButton();
+    
+    console.log('DEBUG: Shipment selections cleared');
+}
+
+/**
+ * Closes the shipment success modal and clears selections
+ */
+function closeShipmentSuccessModal() {
+    const modal = document.getElementById('shipment-success-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Clear selections after successful shipment creation
+    clearShipmentSelections();
+    
+    console.log('DEBUG: Shipment success modal closed and selections cleared');
+}
+
+/**
+ * Updates the "Select All" checkbox state based on individual checkbox states
+ */
+function updateSelectAllCheckbox() {
+    const selectAllCheckbox = document.getElementById('select-all-orders');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    
+    if (!selectAllCheckbox || orderCheckboxes.length === 0) return;
+    
+    const checkedCount = document.querySelectorAll('.order-checkbox:checked').length;
+    
+    if (checkedCount === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (checkedCount === orderCheckboxes.length) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+/**
+ * Handles clicking on an order row to show order details
+ */
+function selectOrderRow(orderGid, event) {
+    // Don't trigger if clicking on checkbox
+    if (event && event.target.type === 'checkbox') {
+        return;
+    }
+    
+    // Call the existing selectOrder function to show details
+    selectOrder(orderGid);
+}
+
+/**
+ * Populates the carrier dropdown with carriers from RIQ response
+ */
+function populateCarrierDropdown(riqResults) {
+    const dropdown = document.getElementById('carrier-selection-dropdown');
+    if (!dropdown) return;
+    
+    console.log('DEBUG: Populating carrier dropdown with RIQ results:', riqResults);
+    
+    // Clear existing options except the default one
+    dropdown.innerHTML = '<option value="">Select Carrier...</option>';
+    
+    let carriers = [];
+    
+    // First try to get carriers from metadata (comprehensive results)
+    if (riqResults.metadata && riqResults.metadata.carriers && Array.isArray(riqResults.metadata.carriers)) {
+        carriers = [...riqResults.metadata.carriers];
+        console.log('DEBUG: Using carriers from metadata:', carriers.length, 'carriers');
+    } else {
+        // Fallback: Extract unique carriers from rate responses
+        const carrierSet = new Set();
+        
+        // Extract carriers from cheapest results
+        if (riqResults.cheapest?.data?.rateAndRouteResponse) {
+            riqResults.cheapest.data.rateAndRouteResponse.forEach(rate => {
+                if (rate.serviceProvider?.servprovGid) {
+                    carrierSet.add(rate.serviceProvider.servprovGid);
+                }
+            });
+        }
+        
+        // Extract carriers from bestCarrier results
+        if (riqResults.bestCarrier?.data?.rateAndRouteResponse) {
+            riqResults.bestCarrier.data.rateAndRouteResponse.forEach(rate => {
+                if (rate.serviceProvider?.servprovGid) {
+                    carrierSet.add(rate.serviceProvider.servprovGid);
+                }
+            });
+        }
+        
+        carriers = Array.from(carrierSet);
+        console.log('DEBUG: Using carriers from rate responses:', carriers.length, 'carriers');
+    }
+    
+    console.log('DEBUG: Final carrier list:', carriers);
+    
+    // Determine recommended carrier
+    const recommendedCarrier = getRecommendedCarrier(riqResults);
+    console.log('DEBUG: Recommended carrier:', recommendedCarrier);
+    
+    // Sort carriers for consistent display
+    const sortedCarriers = carriers.sort();
+    
+    // Add each carrier as an option with special handling for recommended carrier
+    sortedCarriers.forEach(carrier => {
+        const option = document.createElement('option');
+        option.value = carrier;
+        
+        // Check if this is the recommended carrier
+        const isRecommended = isCarrierMatch(carrier, recommendedCarrier);
+        
+        if (isRecommended) {
+            option.textContent = `★ ${cleanServiceProviderGid(carrier)} (Recommended)`;
+            option.dataset.recommended = 'true';
+        } else {
+            option.textContent = cleanServiceProviderGid(carrier);
+        }
+        
+        dropdown.appendChild(option);
+    });
+    
+    // Enable dropdown if we have carriers
+    if (sortedCarriers.length > 0) {
+        dropdown.disabled = false;
+        dropdown.classList.remove('disabled:bg-gray-100', 'disabled:text-gray-400');
+        console.log(`DEBUG: Populated dropdown with ${sortedCarriers.length} carriers`);
+        
+        // Auto-select recommended carrier after populating
+        autoSelectRecommendedCarrier(riqResults, dropdown, recommendedCarrier);
+    } else {
+        dropdown.disabled = true;
+        dropdown.classList.add('disabled:bg-gray-100', 'disabled:text-gray-400');
+        console.log('DEBUG: No carriers found, keeping dropdown disabled');
+    }
+    
+    // Set up event listener for carrier selection changes
+    dropdown.removeEventListener('change', handleCarrierSelectionChange);
+    dropdown.addEventListener('change', handleCarrierSelectionChange);
+}
+
+/**
+ * Determines the recommended carrier from RIQ results
+ */
+function getRecommendedCarrier(riqResults) {
+    // First try to get from lane info (best performer)
+    if (window.currentLaneInfo && window.currentLaneInfo.bestCarrier) {
+        return window.currentLaneInfo.bestCarrier;
+    }
+    
+    // Then try to get from cheapest option in results
+    if (riqResults.cheapest?.data?.rateAndRouteResponse?.length > 0) {
+        const cheapestRate = riqResults.cheapest.data.rateAndRouteResponse.reduce((min, rate) => {
+            const currentCost = parseFloat(rate.totalActualCost?.value || rate.primaryTotalCost?.value || 0);
+            const minCost = parseFloat(min.totalActualCost?.value || min.primaryTotalCost?.value || Infinity);
+            return currentCost < minCost ? rate : min;
+        });
+        
+        return cheapestRate.serviceProvider?.servprovGid;
+    }
+    
+    // Fallback to best carrier if available
+    if (riqResults.bestCarrier?.data?.rateAndRouteResponse?.length > 0) {
+        return riqResults.bestCarrier.data.rateAndRouteResponse[0].serviceProvider?.servprovGid;
+    }
+    
+    return null;
+}
+
+/**
+ * Checks if a carrier matches the recommended carrier (handles partial matches)
+ */
+function isCarrierMatch(carrier, recommendedCarrier) {
+    if (!carrier || !recommendedCarrier) return false;
+    
+    const cleanCarrier = cleanServiceProviderGid(carrier).toLowerCase();
+    const cleanRecommended = cleanServiceProviderGid(recommendedCarrier).toLowerCase();
+    
+    // Exact match
+    if (cleanCarrier === cleanRecommended) return true;
+    
+    // Partial matches (either direction)
+    if (cleanCarrier.includes(cleanRecommended) || cleanRecommended.includes(cleanCarrier)) return true;
+    
+    // Handle BSL prefix variations
+    if (carrier === recommendedCarrier) return true;
+    if (carrier.includes(recommendedCarrier) || recommendedCarrier.includes(carrier)) return true;
+    
+    return false;
+}
+
+/**
+ * Auto-selects the recommended carrier in the dropdown
+ */
+function autoSelectRecommendedCarrier(riqResults, dropdown, recommendedCarrier) {
+    if (!recommendedCarrier) {
+        console.log('DEBUG: No recommended carrier to auto-select');
+        return;
+    }
+    
+    console.log('DEBUG: Attempting to auto-select recommended carrier:', recommendedCarrier);
+    
+    // Find matching option
+    const options = Array.from(dropdown.options);
+    const matchingOption = options.find(option => {
+        if (option.value === '') return false; // Skip the default option
+        return isCarrierMatch(option.value, recommendedCarrier);
+    });
+    
+    if (matchingOption) {
+        dropdown.value = matchingOption.value;
+        console.log('DEBUG: Auto-selected carrier:', matchingOption.value, 'Display:', matchingOption.textContent);
+        
+        // Trigger change event to notify other components
+        dropdown.dispatchEvent(new Event('change'));
+        
+        // Update create shipment button state after auto-selection
+        updateCreateShipmentButton();
+    } else {
+        console.log('DEBUG: Could not find matching option for recommended carrier:', recommendedCarrier);
+        console.log('DEBUG: Available options:', options.map(opt => opt.value));
+    }
+}
+
+/**
+ * Handles carrier selection changes
+ */
+function handleCarrierSelectionChange(event) {
+    const selectedCarrier = event.target.value;
+    console.log('DEBUG: Carrier selection changed to:', selectedCarrier);
+    
+    // Here you can add logic to filter orders or update other UI elements
+    // based on the selected carrier
+    
+    // For now, just log the selection
+    if (selectedCarrier) {
+        console.log(`DEBUG: Selected carrier: ${cleanServiceProviderGid(selectedCarrier)}`);
+    } else {
+        console.log('DEBUG: No carrier selected');
+    }
+    
+    // Update create shipment button state
+    updateCreateShipmentButton();
+}
+
+/**
+ * Clears the carrier dropdown and resets it to default state
+ */
+function clearCarrierDropdown() {
+    const dropdown = document.getElementById('carrier-selection-dropdown');
+    if (!dropdown) return;
+    
+    dropdown.innerHTML = '<option value="">Select Carrier...</option>';
+    dropdown.disabled = true;
+    dropdown.classList.add('disabled:bg-gray-100', 'disabled:text-gray-400');
+    
+    console.log('DEBUG: Carrier dropdown cleared and disabled');
 }
 
 /**
@@ -5021,6 +5543,9 @@ function displayRateResultsComprehensive(results, laneInfo) {
     
     content += '</div>';
     contentElement.innerHTML = content;
+    
+    // Populate carrier dropdown after displaying comprehensive rate results
+    populateCarrierDropdown(results);
 }
 
 document.addEventListener('DOMContentLoaded', function() {

@@ -42,7 +42,7 @@
 ## 3. Convert Order Release Management to Table with Checkboxes
 
 ### HTML Changes (index.html)
-- [ ] Replace the order list div structure with a table:
+- [x] Replace the order list div structure with a table:
   ```html
   <div class="overflow-x-auto">
     <table class="w-full text-sm">
@@ -65,8 +65,8 @@
   ```
 
 ### Frontend Changes (script.js)
-- [ ] Rewrite `displayUnplannedOrders()` function to generate table rows instead of cards
-- [ ] Add checkbox functionality:
+- [x] Rewrite `displayUnplannedOrders()` function to generate table rows instead of cards
+- [x] Add checkbox functionality:
   ```javascript
   function createOrderTableRow(order, index) {
     return `
@@ -80,7 +80,7 @@
     `;
   }
   ```
-- [ ] Add global selection tracking:
+- [x] Add global selection tracking:
   ```javascript
   window.selectedOrders = [];
   function updateSelectedOrders() {
@@ -88,13 +88,13 @@
     window.selectedOrders = Array.from(checkboxes).map(cb => cb.dataset.orderId);
   }
   ```
-- [ ] Add "Select All" functionality in table header
-- [ ] Update order selection behavior (remove single order modal, use multi-select)
+- [x] Add "Select All" functionality in table header
+- [x] Update order selection behavior (remove single order modal, use multi-select)
 
 ## 4. Add Carrier Dropdown to Order Release Management Header
 
 ### HTML Changes (index.html)
-- [ ] Add carrier dropdown to Order Release Management card header:
+- [x] Add carrier dropdown to Order Release Management card header:
   ```html
   <div class="flex items-center justify-between">
     <div class="flex items-center">
@@ -111,7 +111,7 @@
   ```
 
 ### Frontend Changes (script.js)
-- [ ] Create function to populate carrier dropdown from RIQ response:
+- [x] Create function to populate carrier dropdown from RIQ response:
   ```javascript
   function populateCarrierDropdown(riqResults) {
     const dropdown = document.getElementById('carrier-selection-dropdown');
@@ -126,14 +126,14 @@
     });
   }
   ```
-- [ ] Hook into RIQ completion to populate dropdown
-- [ ] Add carrier selection change handler
-- [ ] Update order display based on selected carrier
+- [x] Hook into RIQ completion to populate dropdown
+- [x] Add carrier selection change handler
+- [x] Update order display based on selected carrier
 
 ## 5. Auto Select Recommended Carrier
 
 ### Frontend Changes (script.js)
-- [ ] Modify carrier dropdown population to auto-select recommended carrier:
+- [x] Modify carrier dropdown population to auto-select recommended carrier:
   ```javascript
   function autoSelectRecommendedCarrier(riqResults, laneInfo) {
     const dropdown = document.getElementById('carrier-selection-dropdown');
@@ -145,13 +145,13 @@
     }
   }
   ```
-- [ ] Add visual indicator for auto-selected carrier (star icon, different styling)
-- [ ] Update carrier dropdown to show "★ Recommended" next to auto-selected option
+- [x] Add visual indicator for auto-selected carrier (star icon, different styling)
+- [x] Update carrier dropdown to show "★ Recommended" next to auto-selected option
 
 ## 6. Create "Create Shipment" Button Under All Cards
 
 ### HTML Changes (index.html)
-- [ ] Add shipment creation section below the cards grid:
+- [x] Add shipment creation section below the cards grid:
   ```html
   <!-- Create Shipment Section -->
   <div class="mt-8 bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
@@ -167,7 +167,7 @@
   ```
 
 ### Frontend Changes (script.js)
-- [ ] Add button state management:
+- [x] Add button state management:
   ```javascript
   function updateCreateShipmentButton() {
     const btn = document.getElementById('create-shipment-btn');
@@ -184,13 +184,13 @@
     }
   }
   ```
-- [ ] Add event listener for button click
-- [ ] Integrate with order selection and carrier dropdown changes
+- [x] Add event listener for button click
+- [x] Integrate with order selection and carrier dropdown changes
 
 ## 7. Create Fake Success Screen for Shipment Creation
 
 ### HTML Changes (index.html)
-- [ ] Add shipment success modal:
+- [x] Add shipment success modal:
   ```html
   <!-- Shipment Success Modal -->
   <div id="shipment-success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
@@ -219,7 +219,7 @@
   ```
 
 ### Frontend Changes (script.js)
-- [ ] Create shipment creation handler:
+- [x] Create shipment creation handler:
   ```javascript
   async function handleCreateShipment() {
     const selectedOrders = window.selectedOrders;
@@ -249,8 +249,8 @@
     modal.classList.remove('hidden');
   }
   ```
-- [ ] Add modal close functionality
-- [ ] Add cleanup after successful shipment creation (clear selections, reset forms)
+- [x] Add modal close functionality
+- [x] Add cleanup after successful shipment creation (clear selections, reset forms)
 
 ## 8. Change Label from "Shipments" to "Order Volume"
 

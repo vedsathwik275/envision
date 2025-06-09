@@ -8,6 +8,12 @@
 - Updated the Spot API Analysis card to display "Auto-analyzing for [date]..." during automatic analysis.
 - Added a visual indicator in the Spot API Analysis card header to show when a date is auto-selected.
 - Added transport mode information to the Spot API Analysis card and the Spot Matrix modal, including a mode breakdown in the summary statistics.
+- Converted Order Release Management to a data table with checkboxes, including headers like Order ID, Cost, and a "Select All" feature.
+- Added carrier selection dropdown to the Order Release Management header, populated from API responses with event handlers and clearing logic.
+- Implemented auto-selection of recommended carriers with visual indicators and fixed carrier extraction issues.
+- Added "Create Shipment" button section below analysis cards, enabling based on order selections.
+- Created modal success screen for shipment creation, showing fake details after a delay.
+- Moved the Create Shipment button to the same line as the Order Release Management header and removed the separate card.
 
 ### Changed
 

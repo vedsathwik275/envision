@@ -555,30 +555,43 @@
                                 </div>
                             </div>
                             
-                            <!-- Order Release Management Card - Expanded to use remaining space -->
-                            <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[380px] flex flex-col flex-shrink-0 overflow-hidden">
-                                <div class="p-4 border-b border-neutral-100 flex-shrink-0">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
-                                            <h3 class="text-lg font-semibold text-neutral-900">Order Release Management</h3>
-                                        </div>
-                                        <span id="order-release-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                            No data
-                                        </span>
+                                            <!-- Order Release Management Card - Expanded to use remaining space -->
+                <div class="bg-white rounded-xl shadow-sm border border-neutral-200 h-[380px] flex flex-col flex-shrink-0 overflow-hidden">
+                    <div class="p-4 border-b border-neutral-100 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-shipping-fast text-orange-500 mr-3 text-xl"></i>
+                                <h3 class="text-lg font-semibold text-neutral-900">Order Release Management</h3>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <button id="create-shipment-btn" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-sm" disabled>
+                                    <i class="fas fa-shipping-fast mr-2"></i>
+                                    Create Shipment
+                                </button>
+                                <div class="relative">
+                                    <select id="carrier-selection-dropdown" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-1 text-sm pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:text-gray-400" disabled>
+                                        <option value="">Select Carrier...</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                        <i class="fas fa-chevron-down text-xs"></i>
                                     </div>
                                 </div>
-                                <div class="p-4 flex-1 overflow-y-auto min-h-0">
-                                    <div id="order-release-content" class="space-y-4 overflow-y-auto">
-                                        <div class="text-center py-8 text-neutral-500">
-                                            <i class="fas fa-truck text-4xl mb-4 text-neutral-300"></i>
-                                            <p>Ask about lane orders to see unplanned order releases</p>
-                                            <p class="text-sm mt-2">Example: "Show me orders from Atlanta to Miami"</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <span id="order-release-status" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                    No data
+                                </span>
                             </div>
                         </div>
+                    </div>
+                    <div class="p-4 flex-1 overflow-y-auto min-h-0">
+                        <div id="order-release-content" class="overflow-y-auto">
+                            <div class="text-center py-8 text-neutral-500">
+                                <i class="fas fa-truck text-4xl mb-4 text-neutral-300"></i>
+                                <p>Ask about lane orders to see unplanned order releases</p>
+                                <p class="text-sm mt-2">Example: "Show me orders from Atlanta to Miami"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                     </div>
                 </section>
             </div>
@@ -710,6 +723,31 @@
                             <p class="text-sm text-neutral-400">Perform a spot analysis first to generate the 7-day matrix</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipment Success Modal -->
+    <div id="shipment-success-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div class="p-6 text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                        <i class="fas fa-check text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Shipment Creation Initiated</h3>
+                    <p class="text-sm text-gray-600 mb-4" id="shipment-success-details">
+                        Your shipment request has been submitted successfully.
+                    </p>
+                    <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                        <div class="text-xs text-gray-600" id="shipment-summary">
+                            <!-- Summary details -->
+                        </div>
+                    </div>
+                    <button id="close-shipment-success" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Continue
+                    </button>
                 </div>
             </div>
         </div>
