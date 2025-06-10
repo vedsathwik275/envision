@@ -45,6 +45,59 @@ const uploadDocModal = document.getElementById('upload-doc-modal');
 const loadingOverlay = document.getElementById('loading-overlay');
 const loadingText = document.getElementById('loading-text');
 
+// Global state for order processing
+window.processingOrders = []; // Array of order IDs that are being processed
+
+/**
+ * Marks a single order as processing
+ * @param {string} orderId - The order ID to mark as processing
+ */
+function markOrderAsProcessing(orderId) {
+    if (!window.processingOrders.includes(orderId)) {
+        window.processingOrders.push(orderId);
+        console.log('DEBUG: Marked order as processing:', orderId);
+    }
+}
+
+/**
+ * Checks if an order is currently being processed
+ * @param {string} orderId - The order ID to check
+ * @returns {boolean} True if the order is being processed
+ */
+function isOrderProcessing(orderId) {
+    return window.processingOrders.includes(orderId);
+}
+
+/**
+ * Marks multiple orders as processing
+ * @param {Array<string>} orderIds - Array of order IDs to mark as processing
+ */
+function markOrdersAsProcessing(orderIds) {
+    orderIds.forEach(orderId => markOrderAsProcessing(orderId));
+    console.log('DEBUG: Marked multiple orders as processing:', orderIds);
+}
+
+/**
+ * Removes an order from the processing state
+ * @param {string} orderId - The order ID to remove from processing
+ */
+function removeOrderFromProcessing(orderId) {
+    const index = window.processingOrders.indexOf(orderId);
+    if (index > -1) {
+        window.processingOrders.splice(index, 1);
+        console.log('DEBUG: Removed order from processing:', orderId);
+    }
+}
+
+/**
+ * Removes multiple orders from the processing state
+ * @param {Array<string>} orderIds - Array of order IDs to remove from processing
+ */
+function removeOrdersFromProcessing(orderIds) {
+    orderIds.forEach(orderId => removeOrderFromProcessing(orderId));
+    console.log('DEBUG: Removed multiple orders from processing:', orderIds);
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -776,25 +829,10 @@ function loadChatView() {
 
 function handleKBSelection() {
     const selectedKBId = chatKBSelect.value;
-    const kbStatusElement = document.getElementById('kb-selection-status');
     
     if (selectedKBId) {
         const kb = knowledgeBases.find(k => k.id === selectedKBId);
         if (kb) {
-            // Update the inline status indicator next to KB selector
-            const statusDot = kbStatusElement.querySelector('.w-2');
-            const statusText = kbStatusElement.querySelector('span');
-            
-            if (kb.status === 'ready') {
-                statusDot.className = 'w-2 h-2 bg-green-500 rounded-full mr-2';
-                statusText.textContent = 'Ready';
-                statusText.className = 'text-sm text-green-600';
-            } else {
-                statusDot.className = 'w-2 h-2 bg-yellow-500 rounded-full mr-2';
-                statusText.textContent = kb.status;
-                statusText.className = 'text-sm text-yellow-600';
-            }
-            
             // Update the dropdown to show selected KB name (without the dropdown arrow text)
             const defaultKBId = getDefaultKB();
             const isDefault = kb.id === defaultKBId;
@@ -816,14 +854,6 @@ function handleKBSelection() {
             }
         }
     } else {
-        // Reset status indicator when no KB is selected
-        const statusDot = kbStatusElement.querySelector('.w-2');
-        const statusText = kbStatusElement.querySelector('span');
-        
-        statusDot.className = 'w-2 h-2 bg-gray-400 rounded-full mr-2';
-        statusText.textContent = 'Ready';
-        statusText.className = 'text-sm text-neutral-500';
-        
         currentKBId = null;
         disableChat('Please select a knowledge base');
         updateChatConnectionStatus(false);
@@ -871,12 +901,49 @@ function disableChat(reason) {
     chatInput.classList.add('text-neutral-400');
 }
 
+function addLoadingMessage() {
+    const messagesContainer = chatMessages;
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'flex items-start space-x-3 loading-message';
+    loadingDiv.id = 'chat-loading-message';
+    
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    loadingDiv.innerHTML = `
+        <div class="flex-shrink-0 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+        </div>
+        <div class="flex-1">
+            <div class="bg-neutral-100 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-3"></div>
+                    <p class="text-neutral-800">Generating Lane Analysis...</p>
+                </div>
+            </div>
+            <p class="text-xs text-neutral-500 mt-1">${timestamp}</p>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(loadingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    return loadingDiv.id;
+}
+
+function removeLoadingMessage() {
+    const loadingMessage = document.getElementById('chat-loading-message');
+    if (loadingMessage) {
+        loadingMessage.remove();
+    }
+}
+
 async function sendMessage() {
     const message = chatInput.value.trim();
     if (!message || !currentKBId) return;
     
     addChatMessage(message, 'user');
     chatInput.value = '';
+    
+    addLoadingMessage();
     
     // Disable chat while processing
     enableChat();
@@ -891,11 +958,13 @@ async function sendMessage() {
             })
         });
         
+        removeLoadingMessage();
         addChatMessage(response.answer, 'assistant', response);
         
         // Parse lane information from the message and update cards
         parseAndUpdateLaneInfo(message, response);
     } catch (error) {
+        removeLoadingMessage();
         addChatMessage('Sorry, I encountered an error processing your question. Please try again.', 'assistant');
         showNotification(`Chat error: ${error.message}`, 'error');
     } finally {
@@ -3338,6 +3407,10 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
     console.log('DEBUG: contentElement:', contentElement);
     console.log('DEBUG: laneInfo:', laneInfo);
     
+    // Store orders globally for refresh functionality
+    window.currentOrdersData = orders;
+    console.log('DEBUG: Stored orders in window.currentOrdersData:', orders?.length, 'orders');
+    
     if (!orders || orders.length === 0) {
         console.log('DEBUG: No orders to display - showing empty state');
         contentElement.innerHTML = `
@@ -3470,16 +3543,24 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
 }
 
 /**
- * Creates a table row for an order with checkbox and data
+ * Creates a table row for an order with checkbox and data, including processing state
  */
 function createOrderTableRow(order, orderReleaseId, orderName, shipByDate, deliveryDate, totalWeight, totalVolume, caseCount, itemCount, palletCount) {
+    const isProcessing = isOrderProcessing(orderReleaseId);
+    const rowClass = isProcessing 
+        ? 'border-b cursor-default opacity-50 bg-gray-50' 
+        : 'border-b hover:bg-gray-50 cursor-pointer';
+    const onclickAttr = isProcessing ? '' : `onclick="selectOrderRow('${escapeHtml(orderReleaseId)}', event)"`;
+    const checkboxDisabled = isProcessing ? 'disabled' : '';
+    const processingLabel = isProcessing ? '<span class="text-xs text-gray-500 font-medium ml-2">(Processing)</span>' : '';
+    
     return `
-        <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="selectOrderRow('${escapeHtml(orderReleaseId)}', event)">
+        <tr class="${rowClass}" ${onclickAttr}>
             <td class="px-2 py-2 w-8" onclick="event.stopPropagation()">
-                <input type="checkbox" class="order-checkbox rounded" data-order-id="${escapeHtml(orderReleaseId)}" onchange="updateSelectedOrders()">
+                <input type="checkbox" class="order-checkbox rounded" data-order-id="${escapeHtml(orderReleaseId)}" onchange="updateSelectedOrders()" ${checkboxDisabled}>
             </td>
             <td class="px-3 py-2 w-32">
-                <div class="font-medium text-neutral-900 text-xs truncate">${escapeHtml(orderName)}</div>
+                <div class="font-medium text-neutral-900 text-xs truncate">${escapeHtml(orderName)}${processingLabel}</div>
                 <div class="text-xs text-neutral-500 truncate">ID: ${escapeHtml(orderReleaseId)}</div>
             </td>
             <td class="px-3 py-2 w-20">
@@ -3511,7 +3592,7 @@ function createOrderTableRow(order, orderReleaseId, orderName, shipByDate, deliv
  * Updates the global selectedOrders array based on checked checkboxes
  */
 function updateSelectedOrders() {
-    const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+    const checkboxes = document.querySelectorAll('.order-checkbox:checked:not([disabled])');
     window.selectedOrders = Array.from(checkboxes).map(cb => cb.dataset.orderId);
     
     console.log('DEBUG: Selected orders updated:', window.selectedOrders);
@@ -3528,15 +3609,15 @@ function updateSelectedOrders() {
  */
 function toggleAllOrders() {
     const selectAllCheckbox = document.getElementById('select-all-orders');
-    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox:not([disabled])');
     
     if (selectAllCheckbox && selectAllCheckbox.checked) {
-        // Check all order checkboxes
+        // Check all non-disabled order checkboxes
         orderCheckboxes.forEach(checkbox => {
             checkbox.checked = true;
         });
     } else {
-        // Uncheck all order checkboxes
+        // Uncheck all non-disabled order checkboxes
         orderCheckboxes.forEach(checkbox => {
             checkbox.checked = false;
         });
@@ -3716,7 +3797,7 @@ function clearShipmentSelections() {
 }
 
 /**
- * Closes the shipment success modal and clears selections
+ * Closes the shipment success modal and marks selected orders as processing
  */
 function closeShipmentSuccessModal() {
     const modal = document.getElementById('shipment-success-modal');
@@ -3724,10 +3805,40 @@ function closeShipmentSuccessModal() {
         modal.classList.add('hidden');
     }
     
-    // Clear selections after successful shipment creation
+    // Mark selected orders as processing before clearing selections
+    if (window.selectedOrders && window.selectedOrders.length > 0) {
+        markOrdersAsProcessing(window.selectedOrders);
+        console.log('DEBUG: Marked orders as processing:', window.selectedOrders);
+    }
+    
+    // Clear selections after marking as processing
     clearShipmentSelections();
     
-    console.log('DEBUG: Shipment success modal closed and selections cleared');
+    // Refresh the order display to show processing state
+    refreshOrderDisplay();
+    
+    console.log('DEBUG: Shipment success modal closed and orders marked as processing');
+}
+
+/**
+ * Refreshes the order display to show current processing state
+ */
+function refreshOrderDisplay() {
+    // Re-render the current orders to show processing state
+    if (window.currentOrdersData && window.currentOrdersData.length > 0) {
+        const contentElement = document.getElementById('order-release-content');
+        const laneInfo = window.currentLaneInfo;
+        if (contentElement && laneInfo) {
+            console.log('DEBUG: Refreshing order display with processing state');
+            console.log('DEBUG: Processing orders list:', window.processingOrders);
+            console.log('DEBUG: Total orders to display:', window.currentOrdersData.length);
+            
+            // Display all orders (processing orders will be shown as greyed out)
+            displayUnplannedOrders(window.currentOrdersData, contentElement, laneInfo);
+        }
+    } else {
+        console.log('DEBUG: No order data available for refresh');
+    }
 }
 
 /**
@@ -3735,11 +3846,11 @@ function closeShipmentSuccessModal() {
  */
 function updateSelectAllCheckbox() {
     const selectAllCheckbox = document.getElementById('select-all-orders');
-    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox:not([disabled])');
     
     if (!selectAllCheckbox || orderCheckboxes.length === 0) return;
     
-    const checkedCount = document.querySelectorAll('.order-checkbox:checked').length;
+    const checkedCount = document.querySelectorAll('.order-checkbox:checked:not([disabled])').length;
     
     if (checkedCount === 0) {
         selectAllCheckbox.checked = false;

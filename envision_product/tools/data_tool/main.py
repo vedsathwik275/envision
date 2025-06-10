@@ -226,6 +226,30 @@ class OrderReleaseResponse(BaseModel):
     error: Optional[str] = Field(None, description="Error message if any")
     order_release_gid: Optional[str] = Field(None, description="The order release GID that was queried")
 
+class LocationDetail(BaseModel):
+    """Detailed location information."""
+    city: str = Field(..., description="City name")
+    province_code: str = Field(..., description="Province/state code")
+    country_code: str = Field(..., description="Country code")
+    postal_code: Optional[str] = Field(None, description="Postal/ZIP code")
+    location_xid: str = Field(..., description="Location XID")
+    location_name: Optional[str] = Field(None, description="Location name")
+
+class LaneSummary(BaseModel):
+    """Lane summary information."""
+    route: str = Field(..., description="Route description (City, State to City, State)")
+    origin: str = Field(..., description="Origin city and state")
+    destination: str = Field(..., description="Destination city and state")
+
+class OrderReleaseLocationResponse(BaseModel):
+    """Response model for order release location consolidation."""
+    success: bool = Field(..., description="Whether the request was successful")
+    order_release_gid: str = Field(..., description="The order release GID queried")
+    source_location: Optional[LocationDetail] = Field(None, description="Source location details")
+    destination_location: Optional[LocationDetail] = Field(None, description="Destination location details")
+    lane_summary: Optional[LaneSummary] = Field(None, description="Lane summary information")
+    error: Optional[str] = Field(None, description="Error message if any")
+
 class UnplannedOrdersRequest(BaseModel):
     """Request model for querying unplanned orders by lane."""
     origin_city: str = Field(..., description="Origin city for the lane")
@@ -851,6 +875,120 @@ async def get_order_release(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while fetching order release: {str(e)}"
+        )
+
+@app.get(
+    "/order-release/{order_release_gid}/locations",
+    response_model=OrderReleaseLocationResponse,
+    tags=["Order Release"],
+    summary="Get Consolidated Location Details for Order Release",
+    description="Fetches order release data and returns consolidated source and destination location information including city, state, and country details.",
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorResponse, "description": "Bad Request"},
+        status.HTTP_404_NOT_FOUND: {"model": ErrorResponse, "description": "Order Release Not Found"},
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {"model": ErrorResponse, "description": "Internal Server Error"},
+    }
+)
+async def get_order_release_locations(
+    order_release_gid: str,
+    service: OrderReleaseService = Depends(get_order_release_service)
+) -> OrderReleaseLocationResponse:
+    """
+    Get consolidated location information for an order release.
+    
+    This endpoint fetches the order release data, extracts location URLs,
+    fetches detailed location information for both source and destination,
+    and returns consolidated location details.
+    
+    Args:
+        order_release_gid: The order release GID to fetch locations for
+        service: OrderReleaseService instance
+        
+    Returns:
+        OrderReleaseLocationResponse containing consolidated location information
+    """
+    try:
+        logger.info(f"Received order release locations query for GID: {order_release_gid}")
+        
+        # Call the service to get consolidated location information
+        result = service.get_order_release_locations(order_release_gid)
+        
+        # Check if the service call was successful
+        if not result.get("success", False):
+            error_msg = result.get("error", "Unknown error occurred")
+            
+            if "Order release not found" in error_msg or "404" in error_msg:
+                logger.warning(f"Order release not found for locations query GID: {order_release_gid}")
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Order release with GID '{order_release_gid}' not found"
+                )
+            else:
+                logger.error(f"Order release locations service error for GID {order_release_gid}: {error_msg}")
+                # Return partial success response for other errors (e.g., location API failures)
+                return OrderReleaseLocationResponse(
+                    success=False,
+                    order_release_gid=order_release_gid,
+                    source_location=None,
+                    destination_location=None,
+                    lane_summary=None,
+                    error=error_msg
+                )
+        
+        # Build LocationDetail objects from the raw location data
+        source_location_detail = None
+        dest_location_detail = None
+        
+        if result.get("source_location"):
+            source_data = result["source_location"]
+            source_location_detail = LocationDetail(
+                city=source_data.get("city", ""),
+                province_code=source_data.get("provinceCode", ""),
+                country_code=source_data.get("countryCode3Gid", ""),
+                postal_code=source_data.get("postalCode"),
+                location_xid=source_data.get("locationXid", ""),
+                location_name=source_data.get("locationName")
+            )
+        
+        if result.get("destination_location"):
+            dest_data = result["destination_location"]
+            dest_location_detail = LocationDetail(
+                city=dest_data.get("city", ""),
+                province_code=dest_data.get("provinceCode", ""),
+                country_code=dest_data.get("countryCode3Gid", ""),
+                postal_code=dest_data.get("postalCode"),
+                location_xid=dest_data.get("locationXid", ""),
+                location_name=dest_data.get("locationName")
+            )
+        
+        # Build LaneSummary object if available
+        lane_summary_detail = None
+        if result.get("lane_summary"):
+            lane_data = result["lane_summary"]
+            lane_summary_detail = LaneSummary(
+                route=lane_data.get("route", ""),
+                origin=lane_data.get("origin", ""),
+                destination=lane_data.get("destination", "")
+            )
+        
+        logger.info(f"Successfully retrieved consolidated locations for GID: {order_release_gid}")
+        return OrderReleaseLocationResponse(
+            success=result.get("success", False),
+            order_release_gid=order_release_gid,
+            source_location=source_location_detail,
+            destination_location=dest_location_detail,
+            lane_summary=lane_summary_detail,
+            error=result.get("error")
+        )
+        
+    except HTTPException:
+        # Re-raise HTTPExceptions directly
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error processing order release locations query for GID {order_release_gid}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred while fetching order release locations: {str(e)}"
         )
 
 @app.post(

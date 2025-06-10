@@ -121,8 +121,8 @@
         <div class="flex items-center justify-between px-6 py-4">
             <div class="flex items-center space-x-4">
                 <div>
-                    <h1 id="page-title" class="text-xl font-bold text-neutral-900">Dashboard</h1>
-                    <p id="page-subtitle" class="text-sm text-neutral-600">RAG Chatbot Management</p>
+                    <h1 id="page-title" class="text-xl font-bold text-neutral-900">Data Management</h1>
+                    <p id="page-subtitle" class="text-sm text-neutral-600">EnvisionDynamics Management</p>
                 </div>
             </div>
             
@@ -170,7 +170,7 @@
                 <li>
                     <a href="#" id="nav-dashboard" class="nav-link flex items-center px-3 py-3 rounded-lg text-white bg-white/20 transition-all duration-300 group" data-section="dashboard" title="Dashboard">
                         <i class="fas fa-tachometer-alt text-lg flex-shrink-0 w-6 text-center"></i>
-                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Dashboard</span>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Data Management</span>
                     </a>
                 </li>
                 <li>
@@ -182,7 +182,7 @@
                 <li>
                     <a href="#" id="nav-chat" class="nav-link flex items-center px-3 py-3 rounded-lg text-neutral-300 hover:bg-white/10 hover:text-white transition-all duration-300 group" data-section="chat" title="Intelligent Carrier Selection">
                         <i class="fas fa-comments text-lg flex-shrink-0 w-6 text-center"></i>
-                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">Envision Dynamics</span>
+                        <span class="font-medium ml-3 sidebar-text whitespace-nowrap">ICS Dashboard</span>
                     </a>
                 </li>
             </ul>
@@ -211,7 +211,7 @@
                     <div class="mb-8">
                         <h2 class="text-2xl font-bold text-neutral-900 flex items-center">
                             <i class="fas fa-tachometer-alt mr-3 text-primary-500"></i>
-                            Dashboard Overview
+                            Data Management Overview
                         </h2>
                         <p class="text-neutral-600 mt-2">Monitor your knowledge bases and chat activity</p>
                     </div>
@@ -320,23 +320,19 @@
                                     <div class="p-4 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
                                         <div class="flex items-center space-x-4">
                                             <div class="flex items-center space-x-3">
-                                                <div class="relative">
-                                                    <select id="chat-kb-select" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[200px]">
-                                                        <option value="">★ All sources ▼</option>
-                                                    </select>
-                                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                        <i class="fas fa-chevron-down text-neutral-400 text-xs"></i>
-                                                    </div>
-                                                </div>
-                                                <div id="kb-selection-status" class="flex items-center">
-                                                    <div class="w-2 h-2 bg-gray-400 rounded-full mr-2"></div>
-                                                    <span class="text-sm text-neutral-500">Ready</span>
-                                                </div>
+                                                                                <div class="relative">
+                                    <select id="chat-kb-select" class="appearance-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-2 pr-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[200px]">
+                                        <option value="">★ All sources ▼</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                        <i class="fas fa-chevron-down text-neutral-400 text-xs"></i>
+                                    </div>
+                                </div>
                                             </div>
-                                            <div class="flex items-center">
+                                            <!-- <div class="flex items-center">
                                                 <i class="fas fa-robot text-primary-500 mr-2"></i>
                                                 <h3 class="font-semibold text-neutral-900">RAG Assistant</h3>
-                                            </div>
+                                            </div> -->
                                         </div>
                                         <div class="flex items-center space-x-4">
                                             <div id="connection-status" class="flex items-center text-sm">
