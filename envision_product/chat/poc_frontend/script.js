@@ -15,6 +15,9 @@ let lastAutoGenerationAttempt = null;
 // Global storage for AI recommendation results
 window.aiRecommendationResults = null;
 
+// Global state for order ID filtering
+window.currentOrderIdFilter = null;
+
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -936,9 +939,244 @@ function removeLoadingMessage() {
     }
 }
 
+// Order ID Detection and Processing Functions
+function detectOrderIdInput(message) {
+    /**
+     * Detect if user input contains order ID pattern and extract the order number
+     * 
+     * @param {string} message - User input message  
+     * @returns {string|null} - Extracted order ID number or null if not found
+     */
+    
+    // Define patterns to match (case-insensitive)
+    const ORDER_ID_PATTERNS = [
+        /order\s+id\s*:\s*(\d+)/i,           // "Order ID: 313736"
+        /order\s+number\s*:\s*(\d+)/i,       // "Order Number: 313736" 
+        /order\s+(\d+)/i,                    // "Order 313736"
+        /shipment\s+id\s*:\s*(\d+)/i,        // "Shipment ID: 313736"
+        /^(\d+)$/                            // "313736" (standalone number)
+    ];
+    
+    // Try each pattern and return first match
+    for (const pattern of ORDER_ID_PATTERNS) {
+        const match = message.trim().match(pattern);
+        if (match) {
+            return match[1]; // Return the captured group (the number)
+        }
+    }
+    
+    return null; // No order ID pattern found
+}
+
+async function fetchOrderReleaseLocations(orderGid) {
+    /**
+     * Fetch order release location data from the backend API
+     * 
+     * @param {string} orderGid - Full order GID (e.g., "BSL.313736")
+     * @returns {Object} - Location response data or error object
+     */
+    try {
+        console.log('Fetching order release locations for:', orderGid);
+        
+        const endpoint = `${DATA_TOOLS_API_BASE_URL}/order-release/${encodeURIComponent(orderGid)}/locations`;
+        
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error(`Order ${orderGid} not found`);
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+        
+        const result = await response.json();
+        console.log('Order location response:', result);
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch order locations');
+        }
+        
+        return result;
+        
+    } catch (error) {
+        console.error('Failed to fetch order release locations:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+function processOrderLocationResponse(locationData) {
+    /**
+     * Process location response and format lane query string
+     * 
+     * @param {Object} locationData - API response with source and destination locations
+     * @returns {string|null} - Formatted lane query or null if invalid data
+     */
+    try {
+        if (!locationData || !locationData.success) {
+            console.error('Invalid location data:', locationData);
+            return null;
+        }
+        
+        const { source_location, destination_location, lane_summary } = locationData;
+        
+        // First try to use the pre-formatted lane summary
+        if (lane_summary && lane_summary.route) {
+            return lane_summary.route;
+        }
+        
+        // Fallback: construct from individual location data
+        if (source_location && destination_location) {
+            // Capitalize city names for better display
+            const sourceCity = capitalizeLocation(source_location.city);
+            const destCity = capitalizeLocation(destination_location.city);
+            const sourceState = source_location.province_code;
+            const destState = destination_location.province_code;
+            
+            return `${sourceCity}, ${sourceState} to ${destCity}, ${destState}`;
+        }
+        
+        console.error('Insufficient location data to create lane query');
+        return null;
+        
+    } catch (error) {
+        console.error('Error processing order location response:', error);
+        return null;
+    }
+}
+
+async function handleOrderIdInput(orderIdNumber, originalMessage) {
+    /**
+     * Handle order ID input by fetching locations and triggering lane analysis
+     * 
+     * @param {string} orderIdNumber - The extracted order ID number
+     * @param {string} originalMessage - The original user message  
+     */
+    try {
+        // Add the original user message to chat
+        addChatMessage(originalMessage, 'user');
+        chatInput.value = '';
+        
+        // Show loading message for order lookup
+        const loadingMessageId = addChatMessage('🔍 Looking up order ' + orderIdNumber + ' locations...', 'assistant');
+        
+        // Disable chat while processing
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+        
+        // Format order GID with service provider prefix
+        const orderGid = `${SERVICE_PROVIDER}.${orderIdNumber}`;
+        
+        // Fetch order location data
+        const locationData = await fetchOrderReleaseLocations(orderGid);
+        
+        // Remove loading message
+        const loadingElement = document.getElementById(loadingMessageId);
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+        
+        if (!locationData.success) {
+            // Handle error
+            addChatMessage(`❌ ${locationData.error}. Please check the order ID and try again.`, 'assistant');
+            
+            // Re-enable chat
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
+            return;
+        }
+        
+        // NEW: Store the order ID for filtering
+        window.currentOrderIdFilter = orderIdNumber;
+        console.log('Set order ID filter to:', orderIdNumber);
+        
+        // Process location data to get lane query
+        const laneQuery = processOrderLocationResponse(locationData);
+        
+        if (!laneQuery) {
+            addChatMessage('❌ Unable to extract lane information from order data.', 'assistant');
+            
+            // Re-enable chat
+            sendBtn.disabled = false; 
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
+            return;
+        }
+        
+        // Show intermediate success message
+        addChatMessage(`✅ Found route: ${laneQuery}`, 'assistant');
+        
+        // Show that we're now analyzing the lane
+        addChatMessage(`🤖 Analyzing ${laneQuery} transportation data...`, 'assistant');
+        
+        // Automatically submit the lane query to chat
+        await submitAutomaticLaneQuery(laneQuery);
+        
+    } catch (error) {
+        console.error('Error handling order ID input:', error);
+        addChatMessage('⚠️ Unable to process order lookup. Please try again or ask a different question.', 'assistant');
+        
+        // Re-enable chat
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
+    }
+}
+
+async function submitAutomaticLaneQuery(laneQuery) {
+    /**
+     * Automatically submit a lane query to the chat system
+     * 
+     * @param {string} laneQuery - The formatted lane query (e.g., "Richmond, VA to Findlay, OH")
+     */
+    try {
+        // Use the existing chat API call logic from sendMessage()
+        const response = await makeAPIRequest(`/knowledge_bases/${currentKBId}/chat`, {
+            method: 'POST',
+            body: JSON.stringify({
+                query: laneQuery
+            })
+        });
+        
+        // Process the response using existing logic
+        addChatMessage(response.answer, 'assistant', response);
+        
+        // Parse lane information and update cards (this should work automatically)
+        parseAndUpdateLaneInfo(laneQuery, response);
+        
+    } catch (error) {
+        console.error('Failed to submit automatic lane query:', error);
+        addChatMessage('Sorry, I encountered an error analyzing the lane information. Please try asking about the route manually.', 'assistant');
+    } finally {
+        // Re-enable chat
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i>';
+    }
+}
+
 async function sendMessage() {
     const message = chatInput.value.trim();
     if (!message || !currentKBId) return;
+    
+    // NEW: Check if user input contains an order ID
+    const orderIdNumber = detectOrderIdInput(message);
+    if (orderIdNumber) {
+        // Process order ID input
+        await handleOrderIdInput(orderIdNumber, message);
+        return; // Exit early, don't process as normal chat
+    }
+    
+    // NEW: Clear order ID filter for normal chat
+    if (window.currentOrderIdFilter) {
+        console.log('DEBUG: Clearing order ID filter for normal chat');
+        window.currentOrderIdFilter = null;
+    }
     
     addChatMessage(message, 'user');
     chatInput.value = '';
@@ -979,6 +1217,10 @@ function addChatMessage(content, sender, metadata = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'flex items-start space-x-3';
     
+    // Generate unique ID for this message
+    const messageId = 'message-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    messageDiv.id = messageId;
+    
     const isUser = sender === 'user';
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
@@ -1002,6 +1244,9 @@ function addChatMessage(content, sender, metadata = null) {
     
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Return the message ID so it can be removed later if needed
+    return messageId;
 }
 
 // Function to format RAG response content
@@ -1193,6 +1438,10 @@ function clearChat() {
 
 // Function to clear lane information cards
 function clearLaneInfoCards() {
+    // NEW: Clear order ID filter when clearing lane info
+    window.currentOrderIdFilter = null;
+    console.log('DEBUG: Cleared order ID filter');
+    
     // Clear Rate Inquiry Card
     const rateInquiryStatus = document.getElementById('rate-inquiry-status');
     const rateInquiryContent = document.getElementById('rate-inquiry-content');
@@ -3397,6 +3646,7 @@ window.selectedOrders = [];
 
 /**
  * Displays the list of unplanned orders in a table format with selectable checkboxes
+ * Supports filtering by order ID when window.currentOrderIdFilter is set
  */
 function displayUnplannedOrders(orders, contentElement, laneInfo) {
     console.log('=== DEBUG: displayUnplannedOrders started ===');
@@ -3404,6 +3654,7 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
     console.log('DEBUG: Orders type:', typeof orders);
     console.log('DEBUG: Orders is array:', Array.isArray(orders));
     console.log('DEBUG: Orders length:', orders?.length);
+    console.log('DEBUG: Current order ID filter:', window.currentOrderIdFilter);
     console.log('DEBUG: contentElement:', contentElement);
     console.log('DEBUG: laneInfo:', laneInfo);
     
@@ -3424,8 +3675,47 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
 
     console.log('DEBUG: Processing', orders.length, 'orders');
     
-    // Generate table rows for orders
-    const tableRows = orders.map((order, index) => {
+    // NEW: Filter orders if we have a specific order ID filter
+    let filteredOrders = orders;
+    let isFiltered = false;
+    
+    if (window.currentOrderIdFilter) {
+        const targetOrderId = window.currentOrderIdFilter;
+        console.log('DEBUG: Filtering orders for order ID:', targetOrderId);
+        
+        // Filter orders to match the target order ID
+        filteredOrders = orders.filter(order => {
+            const orderReleaseId = order.orderReleaseXid || '';
+            const orderName = order.orderReleaseName || '';
+            
+            // Check if order ID matches (handle with or without BSL prefix)
+            const matchesXid = orderReleaseId === targetOrderId || orderReleaseId === `BSL.${targetOrderId}` || orderReleaseId.endsWith(`.${targetOrderId}`);
+            const matchesName = orderName === targetOrderId;
+            
+            return matchesXid || matchesName;
+        });
+        
+        isFiltered = true;
+        console.log('DEBUG: Filtered to', filteredOrders.length, 'orders matching ID:', targetOrderId);
+        
+        if (filteredOrders.length === 0) {
+            console.log('DEBUG: No orders match the filter, showing message');
+            contentElement.innerHTML = `
+                <div class="text-center py-4 text-neutral-500">
+                    <i class="fas fa-search text-2xl mb-2 text-neutral-300"></i>
+                    <p class="text-xs text-neutral-700 mb-2">Order ${targetOrderId} not found in this lane</p>
+                    <p class="text-xs text-neutral-500">Found ${orders.length} other orders</p>
+                    <button onclick="showAllOrdersInLane()" class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors">
+                        Show All ${orders.length} Orders
+                    </button>
+                </div>
+            `;
+            return;
+        }
+    }
+    
+    // Generate table rows for filtered orders
+    const tableRows = filteredOrders.map((order, index) => {
         console.log(`DEBUG: Processing order ${index + 1}:`, order);
         
         // Extract basic order information
@@ -3464,31 +3754,6 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
         }
         console.log(`DEBUG: Order ${index + 1} - Total volume: ${totalVolume}`);
         
-        // Extract cost information (nested object)
-        let bestDirectCost = 'N/A';
-        if (order.bestDirectCostBuy && order.bestDirectCostBuy.value !== undefined) {
-            const currency = order.bestDirectCostBuy.currency || 'USD';
-            bestDirectCost = `$${order.bestDirectCostBuy.value} ${currency}`;
-        }
-        console.log(`DEBUG: Order ${index + 1} - Best direct cost: ${bestDirectCost}`);
-        
-        // Extract service provider information (from nested links or direct field)
-        let serviceProvider = 'N/A';
-        if (order.bestDirectRateofferGidBuy) {
-            // Extract service provider from rate offer GID (e.g., "BSL.TL_BNCH" -> "BNCH")
-            const parts = order.bestDirectRateofferGidBuy.split('.');
-            serviceProvider = parts.length > 1 ? parts[parts.length - 1].replace('TL_', '') : order.bestDirectRateofferGidBuy;
-        } else if (order.servprov && order.servprov.links) {
-            // Try to extract from servprov links if available
-            const canonical = order.servprov.links.find(link => link.rel === 'canonical');
-            if (canonical && canonical.href) {
-                const parts = canonical.href.split('/');
-                const gid = parts[parts.length - 1];
-                serviceProvider = gid.split('.').pop() || gid;
-            }
-        }
-        console.log(`DEBUG: Order ${index + 1} - Service provider: ${serviceProvider}`);
-        
         // Extract count fields with proper null handling
         const caseCount = order.totalPackagingUnitCount || 'N/A';
         const itemCount = order.totalItemPackageCount || 'N/A';
@@ -3501,11 +3766,30 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
 
     console.log('DEBUG: Final tableRows length:', tableRows.length);
 
+    // NEW: Build filter indicator and controls
+    let filterIndicator = '';
+    if (isFiltered) {
+        filterIndicator = `
+            <div class="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center text-blue-700">
+                        <i class="fas fa-filter mr-2"></i>
+                        <span>Showing order ${window.currentOrderIdFilter} only (${filteredOrders.length} of ${orders.length} orders)</span>
+                    </div>
+                    <button onclick="showAllOrdersInLane()" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        Show All ${orders.length}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
     const tableHtml = `
+        ${filterIndicator}
         <div class="mb-3">
             <div class="text-xs text-neutral-600 mb-2">
                 <i class="fas fa-route text-orange-500"></i>
-                <span class="ml-1">${escapeHtml(laneInfo.laneName || 'Lane Orders')} (${orders.length} orders)</span>
+                <span class="ml-1">${escapeHtml(laneInfo.laneName || 'Lane Orders')} (${isFiltered ? `${filteredOrders.length} filtered, ${orders.length} total` : `${orders.length} orders`})</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -3541,6 +3825,28 @@ function displayUnplannedOrders(orders, contentElement, laneInfo) {
     
     console.log('=== DEBUG: displayUnplannedOrders completed ===');
 }
+
+/**
+ * Show all orders in the lane (remove order ID filter)
+ */
+window.showAllOrdersInLane = function() {
+    console.log('DEBUG: Showing all orders, removing filter');
+    
+    // Clear the order ID filter
+    window.currentOrderIdFilter = null;
+    
+    // Re-display orders without filter
+    if (window.currentOrdersData && window.currentOrdersData.length > 0) {
+        const contentElement = document.getElementById('order-release-content');
+        const laneInfo = window.currentLaneInfo;
+        if (contentElement && laneInfo) {
+            console.log('DEBUG: Re-displaying all orders without filter');
+            displayUnplannedOrders(window.currentOrdersData, contentElement, laneInfo);
+        }
+    } else {
+        console.log('DEBUG: No order data available to show all orders');
+    }
+};
 
 /**
  * Creates a table row for an order with checkbox and data, including processing state
