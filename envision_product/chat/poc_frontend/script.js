@@ -2953,7 +2953,8 @@ async function updateHistoricalDataCard(laneInfo, userMessage, response) {
         displayHistoricalData(historicalData, contentElement, laneInfo);
         
         statusElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800';
-        statusElement.textContent = `${historicalData.total_count} Records`;
+        // statusElement.textContent = `${historicalData.total_count} Records`;
+        statusElement.textContent = `Found Data`;
         
     } catch (error) {
         console.error('Failed to fetch or display historical data:', error);
@@ -3035,18 +3036,53 @@ function displayHistoricalData(data, contentElement, laneInfo) {
     const queryRoute = `${query_parameters.source_city || 'Any'} to ${query_parameters.dest_city || 'Any'}`;
 
     let content = `
-        <div class="bg-purple-50 rounded-lg p-3">
-            <h4 class="font-medium text-purple-900 mb-2 flex items-center text-sm">
+        <div class="mx-2 bg-purple-50 rounded-lg p-4">
+            <h4 class="font-medium text-purple-900 mb-4 flex items-center text-sm">
                 <i class="fas fa-route text-purple-600 mr-2"></i>
                 Lane Summary: ${escapeHtml(lane_summary.route || queryRoute)}
             </h4>
-            <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <div><span class="text-neutral-600">Matches:</span> <span class="font-medium">${total_count}</span></div>
-                <div><span class="text-neutral-600">Avg $/Mile:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_mile === 'number' ? '$'+cost_statistics.avg_cost_per_mile.toFixed(2) : 'N/A'}</span></div>
-                <div><span class="text-neutral-600">Mode:</span> <span class="font-medium">${escapeHtml(lane_summary.most_common_mode || 'N/A')}</span></div>
-                <div><span class="text-neutral-600">Avg $/Lb:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_lb === 'number' ? '$'+cost_statistics.avg_cost_per_lb.toFixed(2) : 'N/A'}</span></div>
-                <div><span class="text-neutral-600">Avg $/CUFT:</span> <span class="font-medium">${typeof cost_statistics.avg_cost_per_cuft === 'number' ? '$'+cost_statistics.avg_cost_per_cuft.toFixed(2) : 'N/A'}</span></div>
-                <div><span class="text-neutral-600">Order Volume:</span> <span class="font-medium">${lane_summary.total_shipments_in_data || 'N/A'}</span></div>
+            
+            <!-- Properly Sized Single Column Layout -->
+            <div class="space-y-3">
+                <!-- Average Cost per Mile -->
+                <div class="flex justify-between items-center py-1 border-b border-purple-100 last:border-b-0">
+                    <span class="text-sm text-purple-700 font-medium">Avg Cost/Mile:</span>
+                    <span class="text-base font-semibold text-purple-900">
+                        ${typeof cost_statistics.avg_cost_per_mile === 'number' ? '$'+cost_statistics.avg_cost_per_mile.toFixed(2) : 'N/A'}
+                    </span>
+                </div>
+                
+                <!-- Transport Mode -->
+                <div class="flex justify-between items-center py-1 border-b border-purple-100 last:border-b-0">
+                    <span class="text-sm text-purple-700 font-medium">Preferred Mode:</span>
+                    <span class="text-base font-semibold text-purple-900">
+                        ${escapeHtml(lane_summary.most_common_mode || 'N/A')}
+                    </span>
+                </div>
+                
+                <!-- Average Cost per Pound -->
+                <div class="flex justify-between items-center py-1 border-b border-purple-100 last:border-b-0">
+                    <span class="text-sm text-purple-700 font-medium">Avg Cost/Lb:</span>
+                    <span class="text-base font-semibold text-purple-900">
+                        ${typeof cost_statistics.avg_cost_per_lb === 'number' ? '$'+cost_statistics.avg_cost_per_lb.toFixed(2) : 'N/A'}
+                    </span>
+                </div>
+                
+                <!-- Average Cost per Cubic Foot -->
+                <div class="flex justify-between items-center py-1 border-b border-purple-100 last:border-b-0">
+                    <span class="text-sm text-purple-700 font-medium">Avg Cost/CUFT:</span>
+                    <span class="text-base font-semibold text-purple-900">
+                        ${typeof cost_statistics.avg_cost_per_cuft === 'number' ? '$'+cost_statistics.avg_cost_per_cuft.toFixed(2) : 'N/A'}
+                    </span>
+                </div>
+                
+                <!-- Order Volume -->
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-sm text-purple-700 font-medium">Order Volume:</span>
+                    <span class="text-base font-semibold text-purple-900">
+                        ${lane_summary.total_shipments_in_data || 'N/A'}
+                    </span>
+                </div>
             </div>
         </div>
     `;
@@ -4967,7 +5003,7 @@ async function executeRecommendationGeneration(isAutoGenerated = false) {
                 <button onclick="handleGenerateRecommendationsClick()" class="mt-4 px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
                     Try Again
                 </button>
-            </div>
+        </div>
         `;
         
         // For auto-generation failures, don't block manual generation
@@ -5036,7 +5072,7 @@ function displayAIRecommendations(recommendationData, isAutoGenerated = false) {
     
     // Parse sections from the response
     const sections = parseRecommendationSections(cleanResponse);
-    
+
     let content = `
         <div class="space-y-6">
             <!-- Primary Recommendation Table (First Thing User Sees) -->
@@ -5131,11 +5167,11 @@ function displayAIRecommendations(recommendationData, isAutoGenerated = false) {
             
             <!-- Market Timing Table -->
             ${sections.marketTiming ? `
-            <div class="bg-purple-50 rounded-lg p-4">
+        <div class="bg-purple-50 rounded-lg p-4">
                 <h4 class="font-medium text-purple-900 mb-3 flex items-center">
                     <i class="fas fa-clock text-purple-600 mr-2"></i>
                     Market Timing Analysis
-                </h4>
+            </h4>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <tbody class="bg-white">
