@@ -550,6 +550,22 @@
       "created_at": "2025-06-10T09:20:44.618300",
       "prediction_count": 1930,
       "prediction_file": "data\\predictions\\pred_c0d37b4b_20250610\\prediction_data.json"
+    },
+    "pred_44466def_20250611": {
+      "prediction_id": "pred_44466def_20250611",
+      "model_id": "carrier_performance_20250611094421",
+      "model_type": "carrier_performance",
+      "created_at": "2025-06-11T09:44:28.455085",
+      "prediction_count": 671,
+      "prediction_file": "data/predictions/pred_44466def_20250611/prediction_data.json"
+    },
+    "pred_e1161267_20250611": {
+      "prediction_id": "pred_e1161267_20250611",
+      "model_id": "carrier_performance_20250611220053",
+      "model_type": "carrier_performance",
+      "created_at": "2025-06-11T22:01:08.245450",
+      "prediction_count": 671,
+      "prediction_file": "data/predictions/pred_e1161267_20250611/prediction_data.json"
     }
   }
 }

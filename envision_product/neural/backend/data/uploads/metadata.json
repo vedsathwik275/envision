@@ -463,6 +463,22 @@
       "size": 30284,
       "upload_time": "2025-06-04T14:55:35.697672",
       "path": "data/uploads/8fd3222f-b83d-4aab-b819-78c14be4105e"
+    },
+    "77dcedc7-af7d-4feb-b74c-4595af34e8da": {
+      "file_id": "77dcedc7-af7d-4feb-b74c-4595af34e8da",
+      "filename": "carrier_performance_v2.csv",
+      "content_type": "text/csv",
+      "size": 30284,
+      "upload_time": "2025-06-11T09:44:11.211777",
+      "path": "data/uploads/77dcedc7-af7d-4feb-b74c-4595af34e8da"
+    },
+    "6f24bd68-eb47-45d5-867b-713ca1196d62": {
+      "file_id": "6f24bd68-eb47-45d5-867b-713ca1196d62",
+      "filename": "carrier_performance_v2.csv",
+      "content_type": "text/csv",
+      "size": 30284,
+      "upload_time": "2025-06-11T22:00:33.506872",
+      "path": "data/uploads/6f24bd68-eb47-45d5-867b-713ca1196d62"
     }
   }
 }

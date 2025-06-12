@@ -437,7 +437,7 @@ function navigateTo(view) {
     }
 
     // Hide all sections
-    const sections = document.querySelectorAll('#dashboard, #knowledge-bases, #chat');
+    const sections = document.querySelectorAll('#dashboard, #knowledge-bases, #chat, #smart-quote, #endless-aisle');
     sections.forEach(section => {
         section.classList.add('hidden');
         section.classList.remove('block');
@@ -464,9 +464,11 @@ function navigateTo(view) {
 
 function updatePageTitle(view) {
     const titles = {
-        dashboard: { title: 'Dashboard', subtitle: 'EnvisionDynamics Management' },
+        dashboard: { title: 'Data Management', subtitle: 'EnvisionDynamics Management' },
         knowledgeBases: { title: 'Knowledge Bases', subtitle: 'Manage your document collections' },
-        chat: { title: 'Intelligent Carrier Selection', subtitle: 'AI-powered carrier recommendations' }
+        chat: { title: 'Intelligent Carrier Selection', subtitle: 'AI-powered carrier recommendations' },
+        'smart-quote': { title: 'Smart Quote', subtitle: 'Intelligent quote generation and pricing optimization' },
+        'endless-aisle': { title: 'Endless Aisle', subtitle: 'Unlimited inventory access and cross-platform integration' }
     };
     
     const config = titles[view] || titles.dashboard;
@@ -875,7 +877,7 @@ function updateChatConnectionStatus(connected) {
     
     if (connected) {
         statusDot.className = 'w-2 h-2 bg-green-500 rounded-full mr-2';
-        statusText.textContent = 'Ready (HTTP)';
+        statusText.textContent = 'Ready (HTTPS)';
         statusText.className = 'text-green-600';
     } else {
         statusDot.className = 'w-2 h-2 bg-neutral-400 rounded-full mr-2';
@@ -3162,22 +3164,22 @@ function displaySpotRateMatrix(data) {
                 <div class="border-t border-green-200 pt-4">
                     <div class="grid grid-cols-3 gap-4 text-sm">
                         <div class="text-center">
-                            <div class="text-neutral-600 mb-1">Lowest Rate</div>
-                            <div class="font-medium text-lg text-green-700">$${minRateData.cost.toFixed(2)}</div>
+                            <div class="text-neutral-600 mb-1">Lowest</div>
+                            <div class="font-medium text-base text-green-700">$${minRateData.cost.toFixed(2)}</div>
                             <div class="text-xs text-neutral-500">${minRateData.carrier} (${minRateData.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${minRateData.date}</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-neutral-600 mb-1">Best Carrier Rate</div>`;
+                            <div class="text-neutral-600 mb-1">Best</div>`;
         
         if (bestCarrierBestRate) {
             content += `
-                            <div class="font-medium text-lg text-green-700">$${bestCarrierBestRate.cost.toFixed(2)}</div>
+                            <div class="font-medium text-base text-green-700">$${bestCarrierBestRate.cost.toFixed(2)}</div>
                             <div class="text-xs text-neutral-500">${bestCarrierBestRate.carrier} (${bestCarrierBestRate.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${bestCarrierBestRate.date}</div>`;
         } else if (laneInfo && laneInfo.bestCarrier) {
             content += `
-                            <div class="font-medium text-lg text-gray-500">Not Available</div>
+                            <div class="font-medium text-base text-gray-500">Not Available</div>
                             <div class="text-xs text-neutral-500">${laneInfo.bestCarrier}</div>
                             <div class="text-xs text-neutral-500">Not in spot data</div>`;
         } else {
@@ -3190,8 +3192,8 @@ function displaySpotRateMatrix(data) {
         content += `
                         </div>
                         <div class="text-center">
-                            <div class="text-neutral-600 mb-1">Highest Rate</div>
-                            <div class="font-medium text-lg text-red-600">$${maxRateData.cost.toFixed(2)}</div>
+                            <div class="text-neutral-600 mb-1">Highest</div>
+                            <div class="font-medium text-base text-red-600">$${maxRateData.cost.toFixed(2)}</div>
                             <div class="text-xs text-neutral-500">${maxRateData.carrier} (${maxRateData.mode || 'N/A'})</div>
                             <div class="text-xs text-neutral-500">${maxRateData.date}</div>
                         </div>
@@ -4045,10 +4047,6 @@ function showShipmentSuccess(orders, carrier) {
                 <span class="font-medium">${carrierName}</span>
             </div>
             <div class="flex justify-between">
-                <span class="text-gray-500">Shipment ID:</span>
-                <span class="font-medium">${shipmentId}</span>
-            </div>
-            <div class="flex justify-between">
                 <span class="text-gray-500">Status:</span>
                 <span class="font-medium text-green-600">Processing</span>
             </div>
@@ -4058,6 +4056,12 @@ function showShipmentSuccess(orders, carrier) {
             </div>
         </div>
     `;
+
+    // TODO: Add Shipment ID to the summary
+    // <div class="flex justify-between">
+    //             <span class="text-gray-500">Shipment ID:</span>
+    //             <span class="font-medium">${shipmentId}</span>
+    // </div>
     
     summary.innerHTML = summaryContent;
     
